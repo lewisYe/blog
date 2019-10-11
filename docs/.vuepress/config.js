@@ -1,12 +1,12 @@
 module.exports = {
-  title: 'Hello VuePress',
-  description: 'Just playing around',
+  title: 'FE Knowledge',
+  description: '前端知识点梳理',
   themeConfig: {
     nav: [
       { text: 'Github', link: 'https://github.com/lewisYe' },
     ],
     sidebar: [
-      '/',
+      '/html'
     ],
     sidebarDepth: 2
   }
