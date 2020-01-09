@@ -6,7 +6,8 @@ module.exports = {
       { text: 'Github', link: 'https://github.com/lewisYe' },
     ],
     sidebar: [
-      '/html'
+      '/html',
+      '/css'
     ],
     sidebarDepth: 2
   }
