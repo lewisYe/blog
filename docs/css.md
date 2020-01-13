@@ -85,7 +85,6 @@
 	<div class="left">left</div>
 	<div class="right">right</div>
 </div>
-
 // css
 .clearfloat{
   overflow:hidden;
@@ -103,5 +102,67 @@ BFC(Block formatting context)直译为"块级格式化上下文"。它是一个�
 ### 规则
 1. 内部的Box会在垂直方向上，一个接一个的摆放
 2. Box垂直方向的距离由margin决定。属于同一个BFC的两个相邻的Box的margin会发生重叠
+3. 每个元素的margin box的左边，与包含border box的左边相接触，即使存在浮动也是如此。
+4. BFC的区域不会与float box 重叠
+5. BFC是页面上的一个隔离的独立容器，容器里面的子元素不会影响到外面的元素。反之也是如此。
+6. 计算BFC的高度时，浮动元素也参与计算
+
+### 生成条件
+
+1. 根元素 `<html>`
+2. float 属性值不为 none
+3. position 属性值为 absolute 或者 fixed
+4. display 属性值为 inline-block 、table-cell 、table-caption、flex、flex-inline等
+5. overflow 属性值不为visible  
+
+`overflow：hidden` 可以解决浮动问题 就是触发了BFC机制
+
+
+## css单位
+
+### 绝对单位
+
+* px: Pixel 像素
+* pt: Points 磅
+* pc: Picas 派卡
+* in: Inches 英寸
+* mm: Millimeter 毫米
+* cm: Centimeter 厘米
+* q: Quarter millimeters 1/4毫米
+
+### 相对单位
+
+* %: 百分比
+* em: Element meter 根据文档字体计算尺寸
+* rem: Root element meter 根据根文档（ body/html ）字体计算尺寸
+* ex: 文档字符“x”的高度
+* ch: 文档数字“0”的的宽度
+* vh: View height 可视范围高度
+* vw: View width 可视范围宽度
+* vmin: View min 可视范围的宽度或高度中较小的那个尺寸
+* vmax: View max 可视范围的宽度或高度中较大的那个尺寸
+
+### 运算
+
+使用 `calc` 属性进行四则运算
+
+```
+div {
+  width: calc(100% - 10px + 2rem)
+}
+```
+
+### 单位比例
+
+ 1. `1in = 2.54cm = 25.4 mm = 101.6q = 72pt = 6pc = 96px`
+ 2. `1px=0.75pt`
+
+### 常用单位
+
+#### px - Pixel 像素
+
+像素px相对于设备显示器屏幕分辨率而言
+
+
 
 
