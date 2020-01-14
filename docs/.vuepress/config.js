@@ -7,7 +7,9 @@ module.exports = {
     ],
     sidebar: [
       '/html',
-      '/css'
+      '/css',
+      '/js_base',
+      '/js_advanced'
     ],
     sidebarDepth: 2
   }
