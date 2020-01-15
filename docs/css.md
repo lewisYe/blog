@@ -188,7 +188,7 @@ div {
 
 ## 层叠上下文
 
-## Flex 布局
+## Flex
 
 ### 定义 
 
@@ -310,3 +310,169 @@ flex 是 flex-grow、flex-shrink、flex-basis 的简写。默认值 0 1 auto。�
 
 align-self属性允许单个项目有与其他项目不一样的对齐方式，可覆盖align-items属性。默认值为auto，表示继承父元素的align-items属性，如果没有父元素，则等同于stretch。
 属性值与align-items值相同，多增加了auto属性值。
+
+### 注意点
+
+flex 布局具有浏览器兼容问题 需要加上前缀；设为 Flex 布局以后，子元素的float、clear和vertical-align属性将失效。
+
+## 经典布局
+
+### 垂直水平居中
+
+html 结构
+
+```
+<div class="box">
+ <span>垂直水平居中</span>
+</div>
+```
+
+1. flex布局
+
+```
+.box{
+  display:flex;
+  flex-derition:row;
+  justifly-content:center;
+  aligin-items:center;
+}
+```
+
+2. 定位 
+
+未知子元素宽高情况
+```
+.box{
+  position:relative;
+}
+.box span{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%)
+}
+```
+
+已知子元素宽高情况
+
+```
+.box{
+  position:relative;
+}
+.box span{
+  position:absolute;
+  left:50%;
+  top:50%;
+  margin-left:负的一半宽度；
+  margin-top:负的一半高度；
+}
+```
+
+3. table-cell
+
+```
+.box{
+  display:table-cell;
+  vertical-aligin:middle;
+  text-align:center;
+}
+```
+
+当然还有其他的方法可以实现垂直水平居中，常用的是这几种。
+
+### 左右两栏布局 （左定宽、右自适应）
+
+html 结构
+
+```
+<div class="box">
+	<div class="left">left</div>
+	<div class="right">right</div>
+</div>
+```
+1. 定位
+```
+.left{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    width:200px;
+}
+.right{
+    position:absolute;
+    top:0;
+    left:200px;
+    right:0;
+    bottom:0;
+}
+```
+2. flex
+
+```
+.box{
+    display:flex;
+}
+.left{
+   width:200px;
+}
+.right:{
+    flex:1;
+}
+```
+3. 浮动
+```
+.left{
+    float:left;
+    width:200px;
+}
+.right{
+    margin-left:200px;
+}
+```
+
+## 动画
+
+css 实现动画效果可以通过transition、tansform、animation等3个属性。
+
+### transition
+
+使用语法：`transition: property duration timing-function delay`; 默认值：all 0 ease 0。
+
+1. transition-property
+
+设置过渡效果的css属性名称，具有以下等值。
+* none 表示没有属性获得过渡效果
+* all 表示所有属性都将获得过渡效果
+* property 表示css属性列表，多个属性用逗号隔开
+
+2. transition-duration 
+
+规定完成过渡效果需要多少秒或毫秒(s/ms)。
+
+3. transition-timing-funtion
+
+规定速度效果的速度曲线。默认 ease 还有linear、ease-in、ease-out、ease-in-out和cubic-bezier等
+
+4. transition-delay
+
+定义过渡效果何时开始。
+
+### transform
+
+transform 属性应用于2D 或 3D 转换。该属性允许我们能够对元素进行旋转、缩放、倾斜、移动等操作
+
+使用语法：`transform: none|transform-functions`
+
+#### 旋转
+
+#### 缩放
+
+#### 倾斜
+
+#### 移动
+
+
+### animation
+
