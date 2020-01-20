@@ -94,6 +94,7 @@
 
 综上所述的三种方法中，第一种方法是比较推崇的。其实清楚浮动不光这三种方法还有许多其他的。比如：父元素定高、父元素overflow：auto、父元素一起浮动等 但都有一些弊端，这上述三种是比较常见的。
 
+
 ## BFC
 
 ### 定义
@@ -116,6 +117,37 @@ BFC(Block formatting context)直译为"块级格式化上下文"。它是一个�
 5. overflow 属性值不为visible  
 
 `overflow：hidden` 可以解决浮动问题 就是触发了BFC机制
+
+## 选择器
+
+### 分类
+
+1. 标签选择器 如：body div 等
+2. 类选择器
+3. id选择器
+4. 全局选择器 如： *号
+5. 组合选择器 如：.head .head-logo
+6. 后代选择器
+7. 群组选择器
+8. 继承选择器
+9. 伪类选择器 如：a:link,a:hover
+10. 字符串匹配的属性选择符(^ $ *三种，分别对应开始、结尾、包含)
+11. 子选择器 如：div > p
+12. 相邻兄弟选择器 如：h1 + p
+
+### 权重
+
+选择器 | 权重
+-- | --
+元素选择符 | 1
+class选择符 | 10
+id选择符 | 100
+内联样式表 | 1000
+1. !important 声明的样式优先级最高，如果冲突再进行计算。
+2. 如果优先级相同，则选择最后出现的样式。
+3. 继承得到的样式的优先级最低。
+
+总结排序：!important > 行内样式>ID选择器 > 类选择器 > 标签 > 通配符 > 继承 > 浏览器默认属性；后写的会覆盖先写的样式
 
 
 ## 单位
@@ -467,12 +499,63 @@ transform 属性应用于2D 或 3D 转换。该属性允许我们能够对元素
 
 #### 旋转
 
+roate(): 通过指定的角度参数对原元素指定一个2D rotation （2D 旋转），需先有transfrom-origin属性的定义。transform-origin定义的是旋转的基点，其中angle是指旋转角度，如果设置的值为正数表示顺时针旋转，如果设置的值为负数表示逆时针旋转。例如：`transform:rotate(30deg)`
+
 #### 缩放
+
+用法：transform: scale(0.5) 或者 transform: scale(0.5, 2);一个参数时：表示水平和垂直同时缩放该倍率； 两个参数时：第一个参数指定水平方向的缩放倍率，第二个参数指定垂直方向的缩放倍率
 
 #### 倾斜
 
+transform: skew(30deg) 或者 transform: skew(30deg, 30deg);一个参数时：表示水平方向的倾斜角度；两个参数时：第一个参数表示水平方向的倾斜角度，第二个参数表示垂直方向的倾斜角度。
+
 #### 移动
 
+ransform: translate(45px) 或者 transform: translate(45px, 150px);
+
+一个参数时：表示水平方向的移动距离；两个参数时：第一个参数表示水平方向的移动距离，第二个参数表示垂直方向的移动距离。
+
+###  基准点 transform-origin
+
+在使用transform方法进行文字或图像的变形时，是以元素的中心点为基准点进行的。使用transform-origin属性，可以改变变形的基准点。
+
+用法：transform-origin: 10px 10px;
+
+共两个参数，表示相对左上角原点的距离，单位px
+
+第一个参数表示相对左上角原点水平方向的距离，第二个参数表示相对左上角原点垂直方向的距离；
+
+其中第一个参数也可以指定为left、center、right，第二个参数也可以指定为top、center、bottom。
+
+这四种变形方法顺序可以随意，但不同的顺序导致变形结果不同，原因是变形的顺序是从左到右依次进行。
 
 ### animation
 
+* animation-name 规定需要绑定到选择器的 keyframe 名称
+* animation-duration 规定完成动画所花费的时间，以秒或毫秒计。
+* animation-timing-function 规定动画的速度曲线。
+* animation-delay 规定在动画开始之前的延迟。
+* animation-iteration-count 规定动画应该播放的次数
+* animation-direction 规定是否应该轮流反向播放动画
+
+```
+@-webkit-keyframes anim1 {
+	0% {
+	opacity: 0;
+	font-size: 12px;
+	}
+	100% {
+	opacity: 1;
+	font-size: 24px;
+	}
+}
+.anim1Div {
+-webkit-animation-name: anim1 ;
+-webkit-animation-duration: 1.5s;
+-webkit-animation-iteration-count: 4;
+-webkit-animation-direction: alternate;
+-webkit-animation-timing-function: ease-in-out;
+
+}
+transition 和 animation 区别 transition需要触发事件。
+```
