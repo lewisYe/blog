@@ -559,3 +559,52 @@ ransform: translate(45px) 或者 transform: translate(45px, 150px);
 }
 transition 和 animation 区别 transition需要触发事件。
 ```
+
+## css实现各种效果
+
+### 三角形
+
+三角形是利用border 来实现的。例如
+
+```
+// html
+<div class="example"></div>
+
+//css 
+.example{
+  width:0;
+  height:0;
+  border-width:100px;
+  border-style:solid;
+  botder-color:#000000 transparent transparent transparent;
+}
+```
+
+##### 扩展
+
+1.实现箭头 
+变换思维你会发现箭头可以使用2个三角形叠加在一起颜色不同产生偏移量就可以了。
+```
+// html
+<i class="left" ></div>
+//css
+.left{
+ position: absolute;
+}
+.left:before,.left:after{
+ position: absolute;
+ content: '';
+ border-top: 10px transparent dashed;
+ border-left: 10px transparent dashed;
+ border-bottom: 10px transparent dashed;
+ border-right: 10px #fff solid;
+}
+.left:before{
+ border-right: 10px #0099CC solid;
+}
+.left:after{
+ left: 1px; /*覆盖并错开1px*/
+ border-right: 10px #fff solid;
+}
+
+```
