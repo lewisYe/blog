@@ -6,8 +6,8 @@
   可以通过box-sizing进行切换
 
   * content-box 默认值，只计算内容的高度，border和padding不计算入宽度之内
-  * padding-box padding计算宽度之内
-  * border-box border 和 padding 计算入宽度之内
+  * padding-box padding计算宽度之内(火狐特有)
+  * border-box  border 和 padding 计算入宽度之内
 
 ## 文档流
 
@@ -98,7 +98,7 @@
 ## BFC
 
 ### 定义
-BFC(Block formatting context)直译为"块级格式化上下文"。它是一个独立的渲染区域。只有Block-levelbox参与，它规定了内部的Block-level Box如何布局，并且与这个区域外部毫不相干。
+BFC(Block formatting context)直译为"块级格式化上下文"。它是一个独立的渲染区域。让内部元素和外部的元素相互隔离，使内外元素的互相不影响。
 
 ### 规则
 1. 内部的Box会在垂直方向上，一个接一个的摆放
@@ -219,6 +219,28 @@ div {
 相对于可是范围的高度和宽度，可视范围被均分为100单位的vh/vw;可视范围是指屏幕可见范围，不是父元素的，百分比是相对于包含它的最近的父元素的高度和宽度。
 
 ## 层叠上下文
+
+元素提升为一个比较特殊的图层，在三维空间中（z轴）高出普通元素
+
+### 触发条件
+
+* 根层叠上下文 html
+* 定位 position属性为非static 并且设置z-index属性值
+* css3属性
+    * flex
+    * transfrom
+    * opacity
+    * filter
+
+### 层叠等级
+
+层叠上下文在z轴的排列顺序
+
+* 在同一个层叠上下文中，它描述定义的是该层叠上下文中的层叠上下文元素在z轴上的顺序
+
+1. 普通元素的层叠等级优先由其所在的层叠上下文决定。
+2. 层叠等级的比较只有在当前层叠上下文元素中才有意义。不同层叠上下文中比较层叠等级是没有意义的。
+
 
 ## Flex
 
