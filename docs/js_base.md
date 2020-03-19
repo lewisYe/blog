@@ -105,5 +105,85 @@ NaN == NaN              // false
 
 ```
 
+## 数据类型判断
 
+JS 数据类型的判断主要有三种方法：typeof、instanceof 、Objeact.prototype.toString.call()
+
+### typeof 
+
+返回一个表示数据类型的字符串，返回结果包含：number、boolean、string、symbol、object、undefined、function、bigint等 缺点不能判断null和array
+
+```
+typeof ''                 // string    有效
+typeof 1                  // number    有效
+typeof true               // boolean   有效
+typeof undefined          // undefined 有效
+typeof new Function()     // function  有效
+typeof 11n                // bigint    有效
+typeof null               // object    无效
+typeof []                 // object    无效
+typeof new Date()         // object    无效
+typeof new RegExp()       // object    无效
+```
+
+### instanceof
+
+instanceof 是用来判断 A 是否为 B 的实例，表达式为 A instanceof B；如果 A 是 B 的实例，则返回 true，否则返回 false。
+
+```
+[] instanceof  Array            // true
+{} instanceof  Objeact          // true
+new Date() instanceof Date      // true
+
+[] instanceof  Objeact          // true
+null instanceof Null            // 报错
+null instanceof Objeact         // false 
+```
+
+会发现 [] 既是 Array的实例，又是Object的实例。因为 instanceOf 检测的是原型。[] 的 __proto__ 直接指向 Array.prototype, Array的 __proto__ 指向 Object.prototype. 所以 [] 间接指向了 Object.prototype. 所以 instanceof 只能用来判断两个对象是否属于实例关系，而不能判断一个对象实例具体属于哪种类型。
+
+#### instanceof 的实现原理
+
+原理是在实例的 原型对象链 中找到该构造函数的prototype属性所指向的 原型对象，就返回true。
+
+##### 简易实现
+
+```
+function newInstanceof(l,r){
+  var o = r.prototype;
+  l = l.__proto__;
+  while(true){
+    if(l=== null){
+      return false
+    }
+    if(o===l){
+      return true
+    }
+    l = l.__proto__
+  }
+}
+```
+### Object.prototype.toString.call()
+
+这是最准确的类型判断方法
+
+toString() 是 Object 的原型方法，调用该方法，默认返回当前对象的 [[Class]] 。这是一个内部属性，其格式为 [object Xxx] ，其中 Xxx 就是对象的类型。
+
+对于 Object 对象，直接调用 toString() 就能返回 [object Object] 。而对于其他对象，则需要通过 call / apply 来调用才能返回正确的类型信息。
+
+```
+Object.prototype.toString.call('') ;               // [object String]
+Object.prototype.toString.call(1) ;                // [object Number]
+Object.prototype.toString.call(true) ;             // [object Boolean]
+Object.prototype.toString.call(Symbol());          //[object Symbol]
+Object.prototype.toString.call(undefined) ;        // [object Undefined]
+Object.prototype.toString.call(null) ;             // [object Null]
+Object.prototype.toString.call(new Function()) ;   // [object Function]
+Object.prototype.toString.call(new Date()) ;       // [object Date]
+Object.prototype.toString.call([]) ;               // [object Array]
+Object.prototype.toString.call(new RegExp()) ;     // [object RegExp]
+Object.prototype.toString.call(new Error()) ;      // [object Error]
+Object.prototype.toString.call(document) ;         // [object HTMLDocument]
+Object.prototype.toString.call(window) ;           //[object global] window 是全局对象 global 的引用
+```
 
