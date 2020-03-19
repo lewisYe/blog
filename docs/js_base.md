@@ -107,7 +107,7 @@ NaN == NaN              // false
 
 ## 数据类型判断
 
-JS 数据类型的判断主要有三种方法：typeof、instanceof 、Objeact.prototype.toString.call()
+JS 数据类型的判断主要有以下几种方法：typeof、instanceof 、Objeact.prototype.toString.call()、constructor
 
 ### typeof 
 
@@ -116,6 +116,7 @@ JS 数据类型的判断主要有三种方法：typeof、instanceof 、Objeact.p
 ```
 typeof ''                 // string    有效
 typeof 1                  // number    有效
+typeof NaN                // number    有效
 typeof true               // boolean   有效
 typeof undefined          // undefined 有效
 typeof new Function()     // function  有效
@@ -187,3 +188,105 @@ Object.prototype.toString.call(document) ;         // [object HTMLDocument]
 Object.prototype.toString.call(window) ;           //[object global] window 是全局对象 global 的引用
 ```
 
+#### constructor 属性
+constructor 属性返回所有 JavaScript 变量的构造函数。
+```
+"John".constructor                 // 返回函数 String()  { [native code] }
+(3.14).constructor                 // 返回函数 Number()  { [native code] }
+false.constructor                  // 返回函数 Boolean() { [native code] }
+[1,2,3,4].constructor              // 返回函数 Array()   { [native code] }
+{name:'John', age:34}.constructor  // 返回函数 Object()  { [native code] }
+new Date().constructor             // 返回函数 Date()    { [native code] }
+function () {}.constructor         // 返回函数 Function(){ [native code] }
+```
+
+例子： [].constructor.toString().indexOf("Array") > -1
+
+## 类型转换之隐式转换
+
+### 定义
+
+在js中，当运算符在运算时，如果两边数据不统一，cpu就无法计算，这时编辑器会自动将运算符两边的数据进行类型转换，转换成一样的类型进行计算。
+这种编辑器自动转换的操作被称为隐式转换。
+
+### 触发条件
+
+* 转成String 类型  `+` (字符串连接符)
+* 转成Number 类型  `++/--`(自增自减运算符) `+ - * / %` (算法运算符) `> < >= <= == != `(关系运算符)
+* 转成Boolean 类型 `!`（逻辑非运算符）
+
+### 问题解析
+
+#### 字符串连接符与算术运算符
+
+```
+1. console.log(1 + "true")        // 1true
+2. console.log(1 + true )         // 2
+3. console.log(1 + undefined )    // NaN
+4. console.log(1 + null )         // 1
+```
+**解析**
+
+只要`+`号两边有一边是字符串 作为字符串连接理解，反之作为算术运算符理解。
+1. 作为字符串连接符时，会将其他数据类型调用String()方法转为字符串然后拼接
+2. 作为算法运算符时，会将其他数据调用Number()方法转为数字然后加法运算
+
+问题对应转换理解
+```
+1. String(1) + 'true' = '1true'
+2. 1 + Number(true) = 1 + 1 = 2
+3. 1 + Number(undefined) = 1 + NaN = NaN
+4. 1 + Number(null) = 1 + 0 = 1
+```
+
+#### 关系运算符
+
+```
+1. console.log('2' > 10)              // false
+2. console.log('2' == 2)              // false
+3. console.log('2' > '10')            // true
+4. console.log('abc' > 'b')           // false
+5. console.log('abc' > 'aad')         // false
+6. console.log(undefined == null)     // false
+7. console.log(NaN == NaN)            // false
+```
+
+**解析**
+
+1. 当关系运算符两边有一边是字符串时，会将其他数据类型使用Number()转换后比较。
+```
+1. console.log('2' > 10) -> Number('2') > 10 
+2. console.log('2' == 2) -> Number('2') == 2
+```
+
+2. 当关系运算符两边都是字符串的时候，此时同时转成Number然后比较关系，但此时不用Number()方法来转换，而是按照字符串的unicode编码来转换为数字
+
+charCodeAt 方法可以查看字符的unicode编码
+
+```
+1. console.log('2' > '10')  -> '2'.charCodeAt() > '10'.charCodeAt() = 59 > 49
+2. console.log('abc' > 'b') -> 'abc'.charCodeAt() > 'b'.charCodeAt() = 97 > 98
+// 将2个数都是多位字符串时从左往右依次对位比较
+3. console.log('abc' > 'aad')  先是比较'a'和 'a' 比较 然后是第二个字符 
+```
+
+3. 特殊情况 如果数据类型是 Undefined 和 Null 得出固定结果；NaN与任何数据类型比较都是NaN 
+
+```
+1. console.log(undefined == null)                 // true
+2. console.log(undefined == undefined)            // true
+3. console.log(nul == null)                       // true
+4. console.log(NaN == NaN)                        // false
+```
+
+#### 复杂数据类型隐式转换
+
+```
+var a = ? 
+if(a == 1 && a == 2 && a === 3){
+  console.log(1)
+}
+```
+如何完善a，使得能正确输出
+
+复杂数据类型在隐式转换时会先使用valueOf()方法获取原始值如果原始值不是Number类型，则使用toString()转成String，然后再将String转成Number运算
