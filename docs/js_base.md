@@ -176,7 +176,7 @@ toString() 是 Object 的原型方法，调用该方法，默认返回当前对�
 Object.prototype.toString.call('') ;               // [object String]
 Object.prototype.toString.call(1) ;                // [object Number]
 Object.prototype.toString.call(true) ;             // [object Boolean]
-Object.prototype.toString.call(Symbol());          //[object Symbol]
+Object.prototype.toString.call(Symbol());          // [object Symbol]
 Object.prototype.toString.call(undefined) ;        // [object Undefined]
 Object.prototype.toString.call(null) ;             // [object Null]
 Object.prototype.toString.call(new Function()) ;   // [object Function]
@@ -185,7 +185,7 @@ Object.prototype.toString.call([]) ;               // [object Array]
 Object.prototype.toString.call(new RegExp()) ;     // [object RegExp]
 Object.prototype.toString.call(new Error()) ;      // [object Error]
 Object.prototype.toString.call(document) ;         // [object HTMLDocument]
-Object.prototype.toString.call(window) ;           //[object global] window 是全局对象 global 的引用
+Object.prototype.toString.call(window) ;           // [object global] window 是全局对象 global 的引用
 ```
 
 #### constructor 属性
@@ -281,12 +281,84 @@ charCodeAt 方法可以查看字符的unicode编码
 
 #### 复杂数据类型隐式转换
 
+复杂数据类型在隐式转换时会先使用valueOf()方法获取原始值如果原始值不是Number类型，则使用toString()转成String，然后再将String转成Number运算
+
+例如：
+```
+console.log([1,2]=='1,2');
+
+[1,2].valueOf() -> [1,2] -> [1,2].toString() -> '1,2'
+
+var a = {}
+console.log(a == "[object Object]")
+
+a.valueOf() -> {} -> a.valueOf().toString() -> "[object Object]"
+```
+
+**经典试题**
+
+如何完善a，使得能正确输出
 ```
 var a = ? 
-if(a == 1 && a == 2 && a === 3){
+if(a == 1 && a == 2 && a == 3){
   console.log(1)
 }
 ```
-如何完善a，使得能正确输出
+分析题目得出要有输出结果 那么需要满足a等于1且等于2且等于3，在数学逻辑上一个简单类型的常量是不能实现的，那么转变思维，那是一个复杂数据类型呢。当a是一个对象时是不是可以满足。这就满足了上面讲述的复杂数据类型隐式转换.
 
-复杂数据类型在隐式转换时会先使用valueOf()方法获取原始值如果原始值不是Number类型，则使用toString()转成String，然后再将String转成Number运算
+```
+var a = {
+  i:0,
+  valueOf:()=>{
+    return ++a.i
+  }
+}
+```
+
+我们重写valueOf 方法 便可以满足条件成功输出，因为每一次 比较 '==' 时 都会调用一次valueOf 方法
+
+
+#### 逻辑非隐式转换 与 关系运算符结合
+
+```
+[].toString() -> ''
+{}.toSrring() -> '[object Object]'
+```
+注意：空数组的toString()得到的是空字符串，空对象得到的是'[object,Object]'
+
+**例题**
+
+```
+1. console.log([]  == 0)              //true
+2. console.log(![] == 0)              //true
+3. console.log([]  == ![])            //true
+4. console.log([]  == [])             //false
+5. console.log({}  == !{})            //false
+6. console.log({}  == {})             //false
+```
+1. 关系运算符：将其他数据类型转换成数字
+2. 逻辑非：将其他数据类型使用Boolean()转换成布尔类型
+
+以下情况转换为布尔值为false,反则为true
+* 0 或 -0
+* NaN
+* undefined
+* null
+* 空字符串
+
+**问题分析**
+
+问题1：该问题是复杂数据类型和关系运算符的结合，[].valueOf().toString()得到空字符串，空字符串使用Number()转换得到的是0 所以输出true
+
+问题2：逻辑非优先级高于关系运算符，所以问题变为![] 和 0 比较，[]转换为布尔值为ture，取非为false，0为false 所以输出ture
+
+问题3：问题本质是[] 与 ![] 但是不是转换为布尔值比较而是转变为数字比较 []转为数字 [].valueOf().toString() -> '' -> Number('') -> 0,![]转化为数字 ![] -> false -> 0 所以输出为true
+
+问题4：[]为引用类型,数据存在堆中,栈中存储的是地址，所以结果是false
+
+问题5：问题本质是{} 与 !{} 也是转换为数字比较不是布尔值比较。{}.valueOf().toString() -> '[object Object]' -> Number('[object Object]') -> NaN, !{} -> false -> 0 所以结果是 false
+
+问题6：该问题同问题4 都是引用类型数据的比较问题。
+
+
+
