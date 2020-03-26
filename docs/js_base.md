@@ -363,3 +363,16 @@ var a = {
 
 ## 原型和原型链
 
+### 原型
+
+每个构造函数(constructor)都有一个原型对象(prototype),原型对象都包含一个指向构造函数的指针,而实例(instance)都包含一个指向原型对象的内部指针(__proto__).
+
+每个对象都有__proto__ 属性，指向创建该对象的构造函数的原型。大多数情况下 __proto__ 可以理解为 构造器的原型，即：`__proto__ === constructor.prototype`
+
+Object.__proto__ === Function.prototype;
+
+Function.prototype.__proto__ === Object.prototype;
+
+Object.prototype.__proto__ === null;
+
+Function.__proto__ === Function.prototype;
