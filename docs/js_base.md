@@ -549,6 +549,8 @@ var a = {
 
 ## 基本类型和引用类型
 
+基本类型值指的是简单的数据段；引用类型值指那些可能由多个值构成的对象
+
 基本类型：Number、String、Null、Undefined、Boolean
 引用类型：object、Fuction、Array、Date等
 
@@ -559,6 +561,82 @@ js的变量的存储方式--栈（stack）和堆（heap）
 堆：动态分配的内存，大小不定，也不会自动释放。里面存放引用类型的值。
 
 基本类型的比较是值比较；引用类型的比较是引用的比较。
+
+### 动态属性 
+
+对于引用类型的值，可以添加属性和方法，也可以改变和删除其属性和方法,基本类型不行。
+
+```
+var o = new Objeact()
+o.name = 'name'
+console.log(0.name) // 'name'
+
+var name = 'name'
+name.age = 1
+console.log(name.age) // undefined
+```
+### 复制变量值
+
+基本类型复制的是值，引用类型复制的是地址。
+
+```
+var num1 = 5
+var num2 = num1;
+
+num1 = 6 
+
+console.log(num1) // 6
+console.log(num2) // 5
+
+var obj1 = new Object()
+var obj2 = obj1;
+obj1.name = 'name'
+
+console.log(obj2.name)  // name
+
+obj1、obj2 指向的是同一片内存
+```
+
+### 传递参数
+
+函数的参数都是按值传递的。
+
+```
+1.
+function addTen(num){
+  return num += 10;
+}
+
+var count = 20;
+var res = addTen(count)
+
+console.log(count) // 20
+console.log(res) // 30
+
+2.
+function setName(obj){
+  obj.name = 'ye'
+}
+
+var person = new Object()
+setName(person)
+console.log(person.name) // ye
+
+3.
+function setName(obj){
+  obj.name = 'ye'
+  obj = new Object()
+  obj.name = 'a'
+}
+
+var person = new Object()
+setName(person)
+console.log(person.name) // ye
+```
+
+示例3与示例2的比较在于重新定义了一个对象，如果是按传地址的方式话  name 会被修改的
+
+
 
 ## 原型和原型链
 
