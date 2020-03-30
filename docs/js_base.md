@@ -753,8 +753,218 @@ ECStack.pop(<fun1> funContext)//<fun2> funContext 弹出
 
 **执行过程**
 
+执行上下文的代码会分成两个阶段进行处理：分析和执行，也可以叫做：
+1. 进入执行上下文
+2. 代码执行
 
+**进入执行上下文**
 
+当进入执行上下文时，这时候还没有执行代码，变量对象会包括：
+
+1. 函数的所有形参(当是函数上下文时)
+* 由名称和对应值组成的一个变量对象的属性被创建
+* 没有实参，属性值设为undefined
+
+2. 函数声明
+* 由名称和对应值组成的一个变量对象的属性被创建
+* 如果变量对象已经存在相同名称的属性，则完全替换这个属性
+
+3. 变量声明
+
+* 由名称和对应值（undefined）组成的一个变量对象的属性被创建
+* 如果变量名称跟已经声明的形式参数或者函数相同，则变量声明不会干扰已经存在的这类属性
+
+示例:
+
+```
+function foo(a){
+  var b = 2;
+  function c(){}
+  var d = function(){}
+  b = 3
+}
+
+foo(1)
+```
+在进入执行上下文后，这时候的活动对象(activation object,简称AO)是:
+
+```
+AO = {
+  arguments:{
+    0:1,
+    length:1
+  },
+  a:1,
+  b:undefined,
+  c:reference to function c(){},
+  d:undefined
+}
+```
+
+**代码执行**
+
+在代码执行阶段，会顺序执行代码，根据代码，修改变量对象的值，接着上文的示例转换之后。
+
+```
+AO = {
+  arguments:{
+    0:1,
+    length:1
+  },
+  a:1,
+  b:3,
+  c:reference to function c(){},
+  d:reference to FunctionExpression 'd'
+}
+```
+
+#### 作用域链
+
+> 当代码在一个环境中执行时，会创建变量对象的一个作用域链。作用域的用途，是保证对执行环境有权访问的所有变量和函数的有序访问。作用域的前端，始终都是当前执行的代码所在环境的变量对象。作用域链中的下一个变量对象来自包含（外部）环境，则再一个变量对象则来自下一个包含环境。这样，一直延续到全局执行环境；全局执行环境的变量对象始终都是作用域链中的最后一个对象
+
+这样由多个执行上下文的变量对象构成的链表就叫做作用域链。
+
+以一个函数的创建和激活两个时期来讲解作用域链是如何创建和变化的
+
+**函数创建**
+
+JS采用的是词法作用域，所以函数的作用域在函数定义的时候就决定了。这是因为函数有一个内部属性[[scope]],当函数创建的时候，就会保存所有父变量对象到其中，你可以理解[[scope]]就是所有父变量对象的层级链，但注意[[scope]]并不代表完整的作用域链
+
+实例:
+```
+function foo(){
+  function bar(){
+    ...
+  }
+}
+```
+函数创建时，各自的[[scope]]为:
+
+```
+foo.[[scope]] = [
+  globalContext.VO
+]
+
+bar.[[scope]] = [
+  fooContext.AO,
+  globalContext.VO
+]
+```
+
+**函数激活**
+当函数激活时，进入函数上下文，创建VO/AO后，就会将活动对象添加到作用域链的前端。这时候执行上下文的作用域链，我们命名为Scope：
+```
+Scope = [AO].concat([[Scope]])
+```
+至此，作用域链创建完毕
+
+### 总结归纳
+
+想必看完上面的执行上下文栈、变量对象、作用域链会很混乱，那就结合知识点和例题一起解析。
+
+```
+var scope = "global scope";
+function checkscope(){
+    var scope = "local scope";
+    function f(){
+        return scope;
+    }
+    return f();
+}
+checkscope();
+```
+
+执行过程如下：
+1. 执行全局代码，创建全局执行上下文，全局上下文被压入执行上下文栈
+```
+ECStack = [
+  globalContext
+]
+```
+2.全局上下文初始化
+```
+globalContext = {
+  VO:[global],
+  Scope:[globalContext.VO],
+  this.globalContext.VO
+}
+```
+初始化的同时，checkscope函数被创建，保存作用域链到函数内部属性[[scope]]
+```
+checkscope.[[scope]] = [
+  globalContext.VO
+]
+```
+
+3.执行checkscope函数，创建checkscope函数执行上下文，checkscope函数执行上下文被压入执行上下文栈
+```
+ECStack = [
+  globalContext,
+  checkscopeContext
+]
+```
+4.checkscope 函数执行上下文初始化
+  1. 复制函数[[scope]]属性创建作用域链
+  2. 用arguments创建活动对象
+  3. 初始化活动对象，即加入形参、函数声明、变量声明
+  4. 将活动对象压入checkscope作用域链顶端
+
+同时f函数被创建，保存作用域链到f函数的内部属性[[scope]]
+
+```
+checkscopeContext = {
+  AO:{
+    arguments:{
+      length:0
+    },
+    scope:undefined,
+    f：reference to function f(){}
+  },
+  Scope:[AO,globalContext.VO],
+  this:undefined
+}
+```
+5. 执行f函数，创建f函数执行上下文，f函数执行上下文被压入执行上下文栈
+```
+ECStack = [
+  globalContext
+  checkscopeContext,
+  fContext
+]
+```
+6. f函数执行上下文初始化：
+  1. 复制函数[[scope]]属性创建作用域链
+  2. 用arguments创建活动对象
+  3. 初始化活动对象，即加入形参、函数声明、变量声明
+  4. 将活动对象压入f作用域链顶端
+
+```
+fContext = {
+        AO: {
+            arguments: {
+                length: 0
+            }
+        },
+        Scope: [AO, checkscopeContext.AO, globalContext.VO],
+        this: undefined
+    }
+```
+7. f函数执行，沿着作用域链查找scope值，返回scope值
+
+8. f函数执行完毕，f函数上下文从执行上下文栈中弹出
+
+```
+ECStack = [
+  globalContext
+  checkscopeContext,
+]
+```
+9.checkscope函数执行完毕，checkscope执行上下文弹出
+```
+ECStack = [
+  globalContext
+]
+```
 ## 原型和原型链
 
 ### 原型
