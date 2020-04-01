@@ -968,12 +968,248 @@ ECStack = [
 
 ## This
 
-this一般有几种调用场景
+想必this指向问题是一个让很多同学都头疼的问题，当一些常用场景还是明确的。如下：
+```
 var obj = {a: 1, b: function(){console.log(this);}}
 1、作为对象调用时，指向该对象 obj.b(); // 指向obj
 2、作为函数调用, var b = obj.b; b(); // 指向全局window
 3、作为构造函数调用 var b = new Fun(); // this指向当前实例对象
-4、作为call与apply调用 obj.b.apply(object, []); // this指向当前的object
+4、作为call与apply调用 obj.b.apply(object, []); // this指向当前的object 
+```
+但是如果遇到更复杂的情况呢 例如：
+```
+var foo = {
+  bar: function () {
+    alert(this);
+  }
+};
+ 
+1. foo.bar(); 
+2. (foo.bar)(); 
+3. (foo.bar = foo.bar)(); 
+4. (false || foo.bar)();
+5. (foo.bar, foo.bar)(); 
+```
+这5道题又该输出什么呢。
+
+那么接下来我们将介绍 引用类型（Reference type），它与this的指向有密切关系。你会觉得这是一种什么类型，这其实是ECMAScript 规范中的一种规范类型，它们的作用是用来描述语言底层行为逻辑。
+
+抄袭尤雨溪大大的话，就是：
+
+> 这里的 Reference 是一个 Specification Type，也就是 “只存在于规范里的抽象类型”。它们是为了更好地描述语言的底层行为逻辑才存在的，但并不存在于实际的 js 代码中。
+
+ECMASciript5 规范地址
+
+英文版：[http://es5.github.io/#](http://es5.github.io/#)
+
+中文版：[http://yanhaijing.com/es5/#](http://yanhaijing.com/es5/#)
+
+### Reference
+
+Reference 由三部分组成
+* base (基值)
+* referenced name (引用名称)
+* strict reference 严格引用标识
+
+base value 就是**属性所在的对象**或者就是 **EnvironmentRecord**，它的值只可能是 undefined, an Object, a Boolean, a String, a Number, or an environment record 其中的一种。
+
+示例说明：
+```
+var foo = 1;
+
+// 对应的reference
+var fooReference = {
+  base:EnvironmentRecord,
+  name:'foo',
+  strict:false
+}
+
+// 或者
+var foo ={
+  bar:function(){
+    return this
+  }
+}
+foo.bar() // foo
+
+对应的reference 
+var barReference = {
+  base:foo,
+  name:'bar',
+  strict:false
+}
+```
+规范中具有以下几种方法与reference相关
+
+#### GetBase
+
+GetBase()方法用于获取到reference的base value
+
+#### IsPropertyReference
+
+用于判断base value 是否是一个对象，是返回true
+
+#### GetValue
+
+用于从reference 类型获取对应的值。GetValue 返回对象属性真正的值，但是要注意：调用 GetValue，返回的将是具体的值，而不再是一个 Reference
+
+### 如何确定this的值
+
+规范第11.2.3节 函数的调用中描述了如何确定this 的值。
+>The production CallExpression : MemberExpression Arguments is evaluated as follows:
+
+>Let ref be the result of evaluating MemberExpression.
+
+>Let func be GetValue(ref).
+
+>Let argList be the result of evaluating Arguments, producing an internal list of argument values (see 11.2.4).
+
+>If Type(func) is not Object, throw a TypeError exception.
+
+>If IsCallable(func) is false, throw a TypeError exception.
+
+>If Type(ref) is Reference, then
+
+>If IsPropertyReference(ref) is true, then
+
+>Let thisValue be GetBase(ref).
+
+>Else, the base of ref is an Environment Record
+
+>Let thisValue be the result of calling the ImplicitThisValue concrete method of GetBase(ref).
+
+>Else, Type(ref) is not Reference.
+
+>Let thisValue be undefined.
+
+>Return the result of calling the [[Call]] internal method on func, providing thisValue as the this value and providing the list argList as the argument values.
+
+主要的信息是：
+1. 令ref为评估MemberExpression的结果。
+2. 三种逻辑情况
+* 如果Type（ref）是Reference，且 IsPropertyReference（ref）为true，那么令thisValue为GetBase（ref）
+* 如果Type（ref）是Reference，且 ref 是 Environment Record，令thisValue为调用GetBase（ref）的ImplicitThisValue具体方法的结果
+* Type（ref）不是Reference。让thisValue为undefined。
+3. thisValue 就是this
+
+
+那么 MemberExpression 又是什么呢，见规范11.2 Left-Hand-Side Expressions，左值表达式
+
+#### MemberExpression
+
+MemberExpression :
+
+PrimaryExpression // 原始表达式 可以参见《JavaScript权威指南第四章》
+
+FunctionExpression // 函数定义表达式
+
+MemberExpression [ Expression ] // 属性访问表达式
+
+MemberExpression . IdentifierName // 属性访问表达式
+
+new MemberExpression Arguments // 对象创建表达式
+
+示例说明
+
+```
+function foo() {
+    console.log(this)
+}
+
+foo(); // MemberExpression 是 foo
+
+function foo() {
+    return function() {
+        console.log(this)
+    }
+}
+
+foo()(); // MemberExpression 是 foo()
+
+var foo = {
+    bar: function () {
+        return this;
+    }
+}
+
+foo.bar(); // MemberExpression 是 foo.bar
+```
+
+所以简单理解 MemberExpression 其实就是()左边的部分。
+
+
+那么 MemberExpression的值又怎么计算
+
+
+规范11.2.1
+```
+// MemberExpression [ Expression ] 可以理解为 foo[bar] MemberExpression == foo ,Expression == bar
+The production MemberExpression : MemberExpression [ Expression ] is evaluated as follows:
+
+1. Let baseReference be the result of evaluating MemberExpression.
+
+2. Let baseValue be GetValue(baseReference).
+
+3. Let propertyNameReference be the result of evaluating Expression.
+
+4. Let propertyNameValue be GetValue(propertyNameReference).
+
+5. Call CheckObjectCoercible(baseValue).
+
+6. Let propertyNameString be ToString(propertyNameValue).
+
+7. If the syntactic production that is being evaluated is contained in strict mode code, let strict be true, else let strict be false.
+
+8. Return a value of type Reference whose base value is baseValue and whose referenced name is propertyNameString, and whose strict mode flag is strict.
+```
+
+重要信息未第8条 返回一个 Reference 类型，其基值为 baseValue 且其引用名为 propertyNameString, 严格模式标记为 strict. baseValue第2条讲述如何获取，propertyNameString第6条讲述如何获取。
+
+### 示例解析
+
+现在所有的涉及知识点都已经讲述清楚，那么用最开始的示例来结合知识点具体分析
+```
+var foo = {
+  bar: function () {
+    alert(this);
+  }
+};
+ 
+1. foo.bar();  // foo
+2. (foo.bar)();  // foo 
+3. (foo.bar = foo.bar)();  // global
+4. (false || foo.bar)(); // global
+5. (foo.bar, foo.bar)(); // global
+```
+
+1. MemberExpression 的值是foo.bar  返回的值是 
+```
+Reference = {
+  base:foo,
+  name:bar,
+  strict:false
+}
+```
+ref = Reference,
+结合this的逻辑判断三种情况，符合第一种，那么 this == GetBase（ref）所以this 指向foo
+
+问题2，3，4，5中涉及了运算符 ，还需要涉及了解下[运算符优先级](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Operator_Precedence)
+
+2. 分组操作符 查看规范 [11.1.6 The Grouping Operator](http://es5.github.io/#x11.1.6)
+> 分组表达式 ,产生式 PrimaryExpression : ( Expression ) 
+
+> 按照下面的过程执行 :返回执行Expression的结果，它可能是Reference类型。 
+
+所以那么 MemberExpression = foo.bar ,那this的结果就同问题一,指向foo
+
+3. 赋值操作符，查看规范 [11.13.1 Simple Assignment ( = )](http://es5.github.io/#x11.13.1) 得出结果 (foo.bar = foo.bar) 返回的值是 `Return rval` 、`Let rval be GetValue(rref).` 那么返回值就不是reference 类型，那么this是的值是undefined，隐式转换为全局变量
+
+4. 逻辑与操作符，查看规范 [11.11 Binary Logical Operators](http://es5.github.io/#x11.11) `Return GetValue(rref)`. 那么this 就是global
+
+5. 逗号操作符，查看规范[11.14 Comma Operator](http://es5.github.io/#x11.14)  'Return GetValue(rref).' 那么this 就是global
+
+
+
 
 ## 原型和原型链
 
