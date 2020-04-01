@@ -1208,7 +1208,18 @@ ref = Reference,
 
 5. 逗号操作符，查看规范[11.14 Comma Operator](http://es5.github.io/#x11.14)  'Return GetValue(rref).' 那么this 就是global
 
+#### 总结
 
+上述的this 判断规则是基于规范中的描述来判断的，可能有很多同学一遍看不懂，其实作者本人也是读了好几遍 [冴羽](https://github.com/mqyqingfeng/Blog/issues/7)和[汤姆大叔](https://www.cnblogs.com/TomXu/archive/2012/01/17/2310479.html)的this文章，并结合读规范才逐渐理解的
+
+如果你可能目前阶段不想理解这些，那么你可以记住this的几种调用运用场景
+```
+var obj = {a: 1, b: function(){console.log(this);}}
+1、作为对象调用时，指向该对象 obj.b(); // 指向obj
+2、作为函数调用, var b = obj.b; b(); // 指向全局window
+3、作为构造函数调用 var b = new Fun(); // this指向当前实例对象
+4、作为call与apply调用 obj.b.apply(object, []); // this指向当前的object
+```
 
 
 ## 原型和原型链
