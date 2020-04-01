@@ -1224,7 +1224,7 @@ var obj = {a: 1, b: function(){console.log(this);}}
 
 ## 原型和原型链
 
-### 构造函数、实例原型、和实例之间的关系
+### 构造函数、实例原型、实例之间的关系
 
 每个构造函数(constructor)都有一个原型对象(prototype),原型对象都包含一个指向构造函数的指针,而实例(instance)都包含一个指向原型对象的内部指针(`__proto__`).
 
@@ -1235,7 +1235,7 @@ var obj = {a: 1, b: function(){console.log(this);}}
 每个对象都有__proto__ 属性，指向创建该对象的构造函数的原型。大多数情况下 `__proto__` 可以理解为 构造器的原型，即：`__proto__ === constructor.prototype`
 
 那么原型也是对象，那它的原型是什么呢。既然是对象，那么最原始的创建方式就是 `new Object（）` ，那它的构造函数就是Object 构造函数，结合上述知识点那原型的原型就是`Object.prototype`
-更新关系图 ![An image](./images/prototype2.png)
+![An image](./images/prototype2.png)
 
 ### 原型链
 
@@ -1249,19 +1249,50 @@ var obj = {a: 1, b: function(){console.log(this);}}
 
 Object.prototype的原型其实是null。null表示程序级的、正常的或在意料之中的值的空缺。所以 `Object.prototype.__proto__ `的值为 null 跟 Object.prototype 没有原型，其实表达了一个意思。也可以理解为系统内置的一个值。所以查找属性的时候查到原型为null就可以停止查找了。
 
-更新关系图 ![An image](./images/prototype3.png)
+![An image](./images/prototype3.png)
 
 图中由相互关联的原型组成的链状结构就是原型链，也就是蓝色的这条线。
 
 
+### 函数的原型
+
+函数也是一种对象，那么它也有原型，那它的原型是什么呢。
+
+```
+function foo(x,y){
+  return x + y
+}
+console.log(foo(1,2))
+
+var foo1 = new Function("x","y","return x + y")
+console.log(foo1(1,2))
+```
+示例代码中有两种创建函数的方法，第一种是常用的，第二种通过 new Function创建，但是这种不推荐；只是为了说明函数的构造函数是**Function**
+
+那么可以得出 `foo.__proto__ === Function.prototype`
 
 
+其实`Object.__proto__ === Function.prototype`,Object 函数 个人理解作为内置对象在环境创建的时候就被内置，因为它们也是函数，也需要继承来自 Function.prototype 的方法，所以又将它们的`__proto__` 指向了 Function.prototype，
 
 
-Object.__proto__ === Function.prototype;
+你可能又会有疑问 那 `Function.__proto__ ` 等于什么呢 ?
 
-Function.prototype.__proto__ === Object.prototype;
+因为Funtion 函数也是系统内置的，默认的指向了Function.prototype.`Function.__proto__ === Function.prototype` 
 
-Object.prototype.__proto__ === null;
+那Function.prototype 的 `__proto__` 又是什么呢?
 
-Function.__proto__ === Function.prototype;
+因为Function.prototype也是一个对象，所以`Function.prototype.__proto__ == Object.prototype`
+
+完成的图如下：
+
+![An image](./images/prototype4.jpg)
+
+如下几点需要注意加深记忆理解：
+
+1. `Object.__proto__ === Function.prototype`
+
+2. `Object.prototype.__proto__ === null`
+
+3. `Function.prototype.__proto__ === Object.prototype`
+
+4. `Function.__proto__ === Function.prototype`
