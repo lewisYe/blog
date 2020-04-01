@@ -1208,7 +1208,7 @@ ref = Reference,
 
 5. 逗号操作符，查看规范[11.14 Comma Operator](http://es5.github.io/#x11.14)  'Return GetValue(rref).' 那么this 就是global
 
-#### 总结
+### 总结
 
 上述的this 判断规则是基于规范中的描述来判断的，可能有很多同学一遍看不懂，其实作者本人也是读了好几遍 [冴羽](https://github.com/mqyqingfeng/Blog/issues/7)和[汤姆大叔](https://www.cnblogs.com/TomXu/archive/2012/01/17/2310479.html)的this文章，并结合读规范才逐渐理解的
 
@@ -1224,11 +1224,39 @@ var obj = {a: 1, b: function(){console.log(this);}}
 
 ## 原型和原型链
 
-### 原型
+### 构造函数、实例原型、和实例之间的关系
 
 每个构造函数(constructor)都有一个原型对象(prototype),原型对象都包含一个指向构造函数的指针,而实例(instance)都包含一个指向原型对象的内部指针(`__proto__`).
 
+![An image](./images/prototype1.png)
+
+### 原型的原型
+
 每个对象都有__proto__ 属性，指向创建该对象的构造函数的原型。大多数情况下 `__proto__` 可以理解为 构造器的原型，即：`__proto__ === constructor.prototype`
+
+那么原型也是对象，那它的原型是什么呢。既然是对象，那么最原始的创建方式就是 `new Object（）` ，那它的构造函数就是Object 构造函数，结合上述知识点那原型的原型就是`Object.prototype`
+更新关系图 ![An image](./images/prototype2.png)
+
+### 原型链
+
+引用JavaScript高级程序设计中的话
+
+> ECMAScript 中描述了原型链的概念，并将原型链作为实现继承的主要方法。其基本思想是利用原型让一个引用类型继承另一个引用类型的属性和方法
+
+> 那么，假如我们让原型对象等于另一个类型的实例，结果会怎么样呢?显然，此时的 原型对象将包含一个指向另一个原型的指针，相应地，另一个原型中也包含着一个指向另一个构造函数 的指针。假如另一个原型又是另一个类型的实例，那么上述关系依然成立，如此层层递进，就构成了实 例与原型的链条。这就是所谓原型链的基本概念。
+
+你可能会觉得那么Object.prototype 的原型又是什么呢。
+
+Object.prototype的原型其实是null。null表示程序级的、正常的或在意料之中的值的空缺。所以 `Object.prototype.__proto__ `的值为 null 跟 Object.prototype 没有原型，其实表达了一个意思。也可以理解为系统内置的一个值。所以查找属性的时候查到原型为null就可以停止查找了。
+
+更新关系图 ![An image](./images/prototype3.png)
+
+图中由相互关联的原型组成的链状结构就是原型链，也就是蓝色的这条线。
+
+
+
+
+
 
 Object.__proto__ === Function.prototype;
 
