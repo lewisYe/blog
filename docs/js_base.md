@@ -1308,9 +1308,6 @@ console.log(foo1(1,2))
 function Animal(name){
   this.name = name || 'Tom'
   this.colors = ['red','bule']
-  this.sleep= function(){
-    return this.name + 'is sleeping!'
-  }
 }
 
 Animal.prototype.sayName = function(food){
@@ -1386,12 +1383,170 @@ console.log(cat2.colors) // ['red','bule','white']
 
 ### 借用构造函数继承
 
+在解决原型中包含引用类型值所带来问题的过程中开始使用一种叫做借用构造函数 (constructor stealing)的技术(有时候也叫做伪造对象或经典继承)。这种技术的基本思想相当简单，即在子类型构造函数的内部调用超类型构造函数。
+
+```
+function Cat(){
+  Animal.call(this)
+}
+
+var cat1 = new Cat()
+cat1.colors.push('white')
+console.log(cat1.colors) // ['red','bule','white']
+
+
+var cat2 = new Cat()
+console.log(cat2.colors) // ['red','bule','white']
+```
+
+#### 特点
+1. 解决了原型链继承中，子类实例共享父类引用属性的问题
+2. 创造子类实例时，可以向父类传递参数
+```
+function Cat(name){
+  Animal.call(this,name)
+}
+var cat1 = new Child()
+console.log(cat1.name) // Tom
+
+var cat2 = new Child('Jack')
+console.log(cat2.name) // Jack
+```
+3. 可以实现多继承 call 多个父类
+
+#### 缺点
+
+1. 实例是子类实例，不是父类实例 `console.log(cat instanceof Animal); // false`
+2. 方法都在构造函数中定义，因此无法实现函数复用，每次创建实例都会创建一遍方法，影响性能
+
 ### 组合继承
+
+组合继承，有时也叫做伪经典继承，指的是将原型链和借用构造函数的技术组合到一块，从而发挥二者之长的一种继承模式。其背后的思路是使用原型链实现对原型属性和方法的继承，而通过借用构造函数来实现对实例属性的继承。
+
+```
+function Cat(name,age){
+  // 继承属性
+  Animal.call(this,name) //第二次调用Animal() 父类构造器
+  this.age = age;
+}
+
+Cat.prototype = new Animal() //第一次调用Animal() 父类构造器
+Cat.prototype.constructor = Cat 
+
+// 继承属性
+Cat.prototype.sayAge = function(){
+  return this.age
+}
+
+var cat1 = new Cat('Jack',18)
+cat1.colors.push('white')
+console.log(cat.colors) // ['red','blue','white']
+cat1.sayName() // 'Jack'
+cat.sayAge() // 18
+
+var cat2 = new Cat('Rose',19)
+console.log(cat2.colors) // ['red','blue']
+cat2.sayName() // Rose
+cat2.sayAge() // 19
+```
+组合继承避免了原型链和借用构造函数的缺陷，融合了它们的优点，成为 JavaScript 中最常用的继 承模式。而且，instanceof 和 isPrototypeOf()也能够用于识别基于组合继承创建的对象。
+
+缺点：调用两次超类型构造函数:一次是在创建子类型原型的时候，另一次是 在子类型构造函数内部
 
 ### 原型式继承
 
+该方法是由道格拉斯·克罗克福德所提出，他的想法是借助原型可以基于已有的对象创建新的对象，同时还不必因此创建自定义类型。
+
+```
+function object(o){
+  function F()
+  F.prototype = 0
+  return new F()
+}
+```
+
+ECMAScript 5 通过新增 Object.create()方法规范化了原型式继承
+
+```
+var person = {
+    name: 'Tom',
+    friends: ['Jack', 'Rose']
+}
+
+var person1 = object(person)
+var person2 = object(person)
+
+
+person1.name = 'person1';
+console.log(person2.name); // Tom
+
+person1.firends.push('Tisa');
+console.log(person2.friends); // ["Jack", "Rose", "Tisa"]
+```
+
+缺点：
+
+包含引用类型的属性值始终都会共享相应的值，这点跟原型链继承一样。
+
 ### 寄生式继承
+```
+function createObj (o) {
+    var clone = Object.create(o);
+    clone.sayName = function () {
+        console.log('hi');
+    }
+    return clone;
+}
+```
+缺点：跟借用构造函数模式一样，每次创建对象都会创建一遍方法。
+
 
 ### 寄生组合式继承
+
+所谓寄生组合式继承，即通过借用构造函数来继承属性，通过原型链的混成形式来继承方法。其背 后的基本思路是:不必为了指定子类型的原型而调用超类型的构造函数，我们所需要的无非就是超类型 原型的一个副本而已。本质上，就是使用寄生式继承来继承超类型的原型，然后再将结果指定给子类型 的原型。
+
+核心:
+```
+function inheritPrototype(subType,superType){
+  var prototype = superType.prototype
+  prototype.constructor = subType
+  supType.prototype = prototype
+}
+
+```
+这个函数接收两个参数:子类型构造函数和超类型构造函数。在函数内部，
+
+第一步是创建超类型原型的一个副本。
+
+第二 步是为创建的副本添加 constructor 属性，从而弥补因重写原型而失去的默认的 constructor 属性。 
+
+最后一步，将新创建的对象(即副本)赋值给子类型的原型
+
+（简单理解就是找个中间商转接一下原型，为了不被看出来有中间商，指向一下constructor. 哈哈哈哈哈）
+
+如何使用：
+```
+function Animal(name){
+  this.name = name || 'Tom'
+  this.colors = ['red','bule']
+}
+
+Animal.prototype.sayName = function(food){
+  return this.name
+}
+
+function Cat(name,age){
+  Animal.call(this,name)
+  this.age = age
+}
+
+inheritPrototype(Cat,Animal)
+
+var cat1 = new Child('Jack', '18');
+
+
+```
+
+这个例子的高效率体现在它只调用了一次 Animal 构造函数，并且因此避免了在 Cat.prototype 上面创建不必要的、多余的属性。与此同时，原型链还能保持不变;因此，还能够正常使用 instanceof 和 isPrototypeOf()。开发人员普遍认为寄生组合式继承是引用类型最理想的继承范式。
 
 ## 闭包
