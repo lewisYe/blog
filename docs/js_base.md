@@ -1277,7 +1277,9 @@ console.log(foo1(1,2))
 
 你可能又会有疑问 那 `Function.__proto__ ` 等于什么呢 ?
 
-因为Funtion 函数也是系统内置的，默认的指向了Function.prototype.`Function.__proto__ === Function.prototype` 
+因为Funtion 函数也是系统内置的，默认的指向了Function.prototype.
+
+`Function.__proto__ === Function.prototype` 
 
 那Function.prototype 的 `__proto__` 又是什么呢?
 
@@ -1296,3 +1298,100 @@ console.log(foo1(1,2))
 3. `Function.prototype.__proto__ === Object.prototype`
 
 4. `Function.__proto__ === Function.prototype`
+
+## 继承
+
+实现继承的多种方式,以及其的优缺点。
+
+首先我们先创建一个父类
+```
+function Animal(name){
+  this.name = name || 'Tom'
+  this.colors = ['red','bule']
+  this.sleep= function(){
+    return this.name + 'is sleeping!'
+  }
+}
+
+Animal.prototype.sayName = function(food){
+  return this.name
+}
+```
+
+### 原型链继承
+
+核心：父类的实例作为子类的原型
+
+```
+function Cat(){}
+
+Cat.prototype = new Animal();
+
+var cat = new Cat()
+
+console.log(cat.sayName) // Tom
+
+console.log(cat instanceof Animal); // true
+console.log(cat instanceof Cat); // true
+```
+#### 特点
+* 非常简单的继承关系，实例是子类的实例，也是父类的实例
+* 父类新增原型方法/属性，子类都能访问到
+
+#### 缺点
+
+1. 子类型重写超类型中的方法，或者添加超类型中不存在的方法。给原型添加/重写方法的代码一定要放在替换原型的语句之后。
+
+示例说明
+```
+function Cat(){}
+
+// 1
+Cat.prototype.height = 20;
+Cat.prototype.sayHeight = function(){
+    return this.height;
+}
+
+Cat.prototype = new Animal();
+
+// 2
+Cat.prototype.height = 20;
+Cat.prototype.sayHeight = function(){
+    return this.height;
+}
+
+var cat = new Cat()
+
+console.log(cat.height); //1. undefined    2. 20
+console.log(cat.sayHeight()); //1. not a function     2. 20
+```
+
+如果放在1号位则输出的undfined，放在2号位则能正常输出数值20
+
+2. 引用类型的属性被所有实例共享
+
+示例说明
+```
+var cat1 = new Cat()
+cat1.colors.push('white')
+console.log(cat1.colors) // ['red','bule','white']
+
+
+var cat2 = new Cat()
+console.log(cat2.colors) // ['red','bule','white']
+```
+3. 创建子类实例时，无法向父类构造函数传参
+4. 无法实现多继承
+
+
+### 借用构造函数继承
+
+### 组合继承
+
+### 原型式继承
+
+### 寄生式继承
+
+### 寄生组合式继承
+
+## 闭包
