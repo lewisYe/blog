@@ -9,7 +9,8 @@ module.exports = {
       '/html',
       '/css',
       '/js_base',
-      '/js_advanced'
+      '/js_advanced',
+      '/algorithm'
     ],
     sidebarDepth: 2
   }
