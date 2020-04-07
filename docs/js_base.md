@@ -1550,3 +1550,206 @@ var cat1 = new Child('Jack', '18');
 这个例子的高效率体现在它只调用了一次 Animal 构造函数，并且因此避免了在 Cat.prototype 上面创建不必要的、多余的属性。与此同时，原型链还能保持不变;因此，还能够正常使用 instanceof 和 isPrototypeOf()。开发人员普遍认为寄生组合式继承是引用类型最理想的继承范式。
 
 ## 闭包
+
+### 定义
+
+《JavaScript高级程序设计》中指出 闭包是指有权访问另一个函数作用域中的变量的函数。
+
+《JavaScript权威指南》中就讲到：从技术的角度讲，所有的JavaScript函数都是闭包。
+
+ECMAScript中，闭包指的是：
+
+1. 从理论角度：所有的函数。因为它们都在创建的时候就将上层上下文的数据保存起来了。哪怕是简单的全局变量也是如此，因为函数中访问全局变量就相当于是在访问自由变量，这个时候使用最外层的作用域。
+2. 从实践角度：以下函数才算是闭包：
+    1. 即使创建它的上下文已经销毁，它仍然存在（比如，内部函数从父函数中返回）
+    2. 在代码中引用了自由变量
+
+自由变量是指在函数中使用的，但既不是函数参数也不是函数的局部变量的变量。
+
+
+### 案例说明
+
+示例1：
+
+```
+var a = 1;
+
+var foo(){
+  console.log(a)
+}
+
+foo()// 1
+```
+
+该示例 a 不是全局作用域下的变量，但是在函数foo作用域里面可以访问，那是不是就满足第一天定义所描述的闭包，那肯定也符合第二条。 但你会有疑问，这和我理解的闭包不一样啊。因为这是从理论上说嘛，那接下来谈谈从实践角度。
+
+
+示例2：
+```
+var scope = 'global scope';
+function checkscope(){
+  var scope = 'local scope';
+  function f(){
+    return scope
+  }
+  return f
+}
+checkscope()()  //输出什么
+```
+根据执行上下文的知识点，进行分析：
+1.执行全局代码，创建全局上下文、全局上下文进入执行栈、全局上下文初始化
+```
+ECStack=[
+  globalContext
+]
+globalContext = {
+  AO:{
+    scope:undefined,
+    checkscope:reference to function checkscope(){},
+  },
+  [[scope]]:[global],
+}
+```
+2.创建checkscope函数上下文、checkscope函数上下文初始化
+```
+scopeContext = {
+  AO:{
+    arguments:{
+      length:0
+    }
+    scope:undefined,
+    f:reference to function f(){},
+  },
+  [[scope]]:[globalContext.AO]
+}
+```
+3.创建f函数上下文、f函数上下文初始化
+
+```
+fContext = {
+  AO:{
+    arguments:{
+      length:0
+    }
+  },
+  [[scope]]:[globalContext.AO,scopeContext.AO]
+}
+```
+4.checkscope函数执行，checkscopeContext进入执行栈，修改变量对象的值
+
+5.checkscope函数执行结束，退出执行栈
+
+6.f函数执行，fContext进入执行栈，修改变量对象的值
+
+7.f函数执行结束，fContext退出执行栈
+
+
+当我们了解了具体的执行过程后，我们知道 f 执行上下文维护了一个作用域链：
+
+你会发现当checkscopeContext退出的执行栈的时候变量还是能被访问到，这是因为fContext中的作用域链。
+```
+fContext = {
+    Scope: [AO, checkscopeContext.AO, globalContext.VO],
+}
+```
+对的，就是因为这个作用域链，f 函数依然可以读取到 checkscopeContext.AO 的值，说明当 f 函数引用了 checkscopeContext.AO 中的值的时候，即使 checkscopeContext 被销毁了，但是 JavaScript 依然会让 checkscopeContext.AO 活在内存中，f 函数依然可以通过 f 函数的作用域链找到它，正是因为 JavaScript 做到了这一点，从而实现了闭包这个概念。
+
+这不是就符合了上述的第三条定义。 
+
+### 经典面试题
+
+```
+var result = [];
+for (var i=0; i < 3; i++){
+  result[i] = function(){
+    console.log(i)
+  };
+}
+result[0]() 
+result[1]() 
+result[2]() 
+// 上述3次输出分别为什么
+```
+输出结果都为3，但是想输出0，1，2改如何改呢。
+
+该面试题想必很多同学遇到过，也知道怎么解。最简单的就是将var 改为let；还有一种解法就是构建一个闭包。但是为什么呢，底层原理又是什么呢想必有不多同学不知道吧。
+
+这问题本质还是与执行上下文有关系。
+
+当执行result[0]之前，全局上下文
+```
+glbalContext:{
+  AO:{
+    result:[...],
+    i:3
+  }
+}
+```
+当执行 result[0] 函数的时候，result[0] 函数的上下文为：
+```
+result[0]Context = {
+  AO:{
+    arguments:{
+      length:0
+    }
+  }
+  [[scope]]: [AO, globalContext.VO]
+}
+```
+result[0]Context 的 AO 并没有 i 值，所以会从 globalContext.VO 中查找，i 为 3，所以打印的结果就是3
+
+result[1] 和 result[2]都是一样的原理
+
+#### 闭包解法
+
+但是使用闭包为什么有可以了呢,我们先改成闭包的写法
+
+```
+var result = [];
+for (var i=0; i < 3; i++){
+  result[i] = function(i){
+    return function()
+    console.log(i)
+  }(i)
+}
+result[0]() 
+result[1]() 
+result[2]() 
+```
+
+当执行result[0]之前，全局上下文没有变还是
+```
+glbalContext:{
+  AO:{
+    result:[...],
+    i:3
+  }
+}
+```
+但是当result[0]执行时，result[0] 函数的上下文变为：
+```
+result[0]Context = {
+  AO:{
+    arguments:{
+      length:0
+    }
+  }
+  [[scope]]: [globalContext.VO,匿名函数Context.AO,AO]
+}
+```
+那多当 result[0]Context 的 AO 并没有 i 值，所以会先从 匿名函数Context.AO中查找，再去 globalContext.VO 中查找。
+
+此时的匿名函数Context为:
+```
+匿名函数Context={
+  AO:{
+    arguments:{
+      0:0,
+      lenght:1
+    },
+    i:0
+  }
+}
+```
+所以输出结果为0. result[1] 和 result[2] 同理
+
