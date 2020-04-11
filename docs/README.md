@@ -1,7 +1,7 @@
 ---
 home: true
 actionText: 点击阅读 →
-actionLink: /html
+actionLink: /introduction
 features:
 - title: 前端入门
   details: 切图仔

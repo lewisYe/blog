@@ -6,11 +6,18 @@ module.exports = {
       { text: 'Github', link: 'https://github.com/lewisYe' },
     ],
     sidebar: [
+      '/introduction', 
       '/html',
       '/css',
       '/js_base',
       '/js_advanced',
-      '/algorithm'
+      '/es6',
+      '/browser',
+      '/network',
+      '/react',
+      '/webpack',
+      '/algorithm',
+      '/design'
     ],
     sidebarDepth: 2
   }
