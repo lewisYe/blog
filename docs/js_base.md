@@ -1843,3 +1843,176 @@ ECMAScript 中 采用的是双精度(64位)格式。构成如图所示：
 将它转换为10进制数就得到 0.30000000000000004440892098500626
 
 因为两次存储时的精度丢失加上一次运算时的精度丢失，最终导致了 0.1 + 0.2 !== 0.3
+
+
+## 类数组对象与arguments
+
+### 类数组对象
+
+所谓的类数组对象拥有一个 length 属性和若干索引属性的对象。
+
+具有数组length属性，也能使用索引访问，也能遍历。但是不能使用数组的方法。
+
+举个例子：
+
+```
+var array = ['name', 'age', 'sex'];
+
+var arrayLike = {
+    0: 'name',
+    1: 'age',
+    2: 'sex',
+    length: 3
+}
+
+console.log(array[0]); // name
+console.log(arrayLike[0]); // name
+
+array[0] = 'new name';
+arrayLike[0] = 'new name';
+
+console.log(array.length); // 3
+console.log(arrayLike.length); // 3
+
+console.log(array.length); // 3
+console.log(arrayLike.length); // 3
+
+array.push('4'); // ['name', 'age', 'sex','4'];
+arrayLike.push('4');arrayLike.push is not a function 
+
+```
+那类数组对象是否可以使用数组的方法呢？
+
+#### 调用数组方法
+
+不能直接的调用数组方法，可以使用 Functuon.call 间接调用
+
+```
+var arrayLike = {
+    0: 'name',
+    1: 'age',
+    2: 'sex',
+    length: 3
+}
+
+Array.prtototype.push.call(arrayLike,'4')
+```
+
+#### 类数组转数组方法
+
+1. Array.prototype.slice()
+2. Array.prototype.splice()
+3. Array.from()
+4. Array.prototype.concat()
+5. 扩展运算符
+```
+1. Array.prototype.slice.call(arguments) 或者 [].slice.call(arguments)
+2. Array.prototype.splice.call(arrayLike, 0)
+3. Array.from() // es6
+4. [...arguments] // es6
+5. Array.prototype.concat.apply([], arrayLike)  // 这里不使用call 是在于apply 的参数区别
+```
+
+要说到类数组对象，Arguments 对象就是一个类数组对象。在客户端 JavaScript 中，一些 DOM 方法(document.getElementsByTagName()等)也返回类数组对象。
+
+### arguments
+
+Arguments 对象只定义在函数体中，包括了函数的参数和其他属性。在函数体中，arguments 指代该函数的 Arguments 对象。
+
+示例：
+```
+function foo(name, age, sex) {
+    console.log(arguments);
+}
+
+foo('name', 'age', 'sex')
+```
+输出如下：
+![An image](./images/arguments.png)
+
+如图可以看出
+1. arguments的长度只与实参的个数有关，与形参定义的个数没有直接关系。
+2. arguments 具有 length、callee、Symbol.iterator等属性
+
+#### callee 属性
+
+指向当前执行的函数。
+
+闭包经典面试题使用 callee 的解决方法：
+```
+var data = []
+
+for(var i=0;i < 10;i++){
+  (data[i]=function(){
+    return arguments.callee.i
+  }).i = i
+}
+
+data[0] // 0
+data[1] // 1
+```
+arguments还具有caller属性 指向调用当前函数的函数。 但是该属性已经被删选了
+
+#### arguments对象与剩余参数、默认参数和解构赋值参数结合使用
+
+```
+function foo(...args) {
+  return args;
+}
+foo(1, 2, 3);  // [1,2,3]
+```
+
+在严格模式下，剩余参数、默认参数和解构赋值参数的存在不会改变 arguments对象的行为，但是在非严格模式下就有所不同了。
+
+
+当非严格模式中的函数**没有**包含剩余参数、默认参数和解构赋值，那么arguments对象中的值会跟踪参数的值（反之亦然） 看下面的代码：
+```
+function func(a) { 
+  arguments[0] = 99;   // 更新了arguments[0] 同样更新了a
+  console.log(a);
+}
+func(10); // 99
+
+function func(a) { 
+  a = 99;              // 更新了a 同样更新了arguments[0] 
+  console.log(arguments[0]);
+}
+func(10); // 99
+```
+
+当非严格模式中的函数**有**包含剩余参数、默认参数和解构赋值，那么arguments对象中的值不会跟踪参数的值（反之亦然）。相反, arguments反映了调用时提供的参数：
+
+```
+function func(a = 55) { 
+  arguments[0] = 99; // updating arguments[0] does not also update a
+  console.log(a);
+}
+func(10); // 10
+
+function func(a = 55) { 
+  a = 99; // updating a does not also update arguments[0]
+  console.log(arguments[0]);
+}
+func(10); // 10
+
+function func(a = 55) { 
+  console.log(arguments[0]);
+}
+func(); // undefined
+```
+
+### 类数组检测
+```
+function isArrayLike(o) {
+    if (o &&                                // o is not null, undefined, etc.
+        typeof o === 'object' &&            // o is an object
+        isFinite(o.length) &&               // o.length is a finite number
+        o.length >= 0 &&                    // o.length is non-negative
+        o.length===Math.floor(o.length) &&  // o.length is an integer
+        o.length < 4294967296)              // o.length < 2^32
+        return true;                        // Then o is array-like
+    else
+        return false;                       // Otherwise it is not
+}
+```
+代码来自《JavaScript权威指南》

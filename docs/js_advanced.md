@@ -35,7 +35,7 @@ bar.call(foo) // 1
 1. this指向被改变为指向foo
 2. bar 被执行了
 
-### 模拟实现call 
+### call模拟实现 
 
 #### 第一版: 实现改变this指向
 
@@ -177,7 +177,7 @@ var bindFoo = bar.bind(foo)
 bindFoo() // 1
 ```
 
-### 模拟实现
+### bind模拟实现
 
 ```
 Function.prototype.myBind = function(obj){
@@ -236,7 +236,7 @@ console.log(f.name) // undefined
 
 从例子可以看出，当具有返回值时，构造函数内部 this 还是正常的，但当返回值是对象时，返回值会被正常使用。
 
-### 模拟实现 new
+### new 模拟实现
 
 主要要实现的功能：
 1. new 操作符会返回一个对象
@@ -246,11 +246,13 @@ console.log(f.name) // undefined
 
 实现代码
 ```
-function myNew(fn,...args){
-  var obj = {};
+function myNew(){
+  var obj = new Object()
+  var fn = [].shift.call(arguments)
   obj.__proto__ = fn.prototype
-  var result = fn.apply(obj,args)
+  var result = fn.apply(obj,arguments)
   return result instanceof Object ? result : obj
 }
 ```
 
+## 深浅拷贝
