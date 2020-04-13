@@ -179,11 +179,78 @@ bindFoo() // 1
 
 ### 模拟实现
 
-### 第一版 改变this
-
 ```
 Function.prototype.myBind = function(obj){
   var that = this // this为调用myBind的函数
-  return 
+  var args = Array.prototype.slice.call(arguments,1) // 获取myBind函数从第二个参数到最后一个参数
+  return function(){
+     // 这个时候的arguments是指bind返回的函数传入的参数
+    var bindArgs = Array.prototype.slice.call(arguments);
+    return that.apply(obj,args.concat(bindArgs))
+  }
 }
 ```
+
+## new 操作符
+
+### new 的作用
+
+示例说明new操作的作用
+
+```
+function Foo(name){
+  this.name = name;
+}
+
+Foo.prototype.sayName = function (){
+  console.log(this.name)
+}
+
+const f = new Foo('ye')
+console.log(f.name) // ye
+f.sayName() //ye
+```
+
+根据例子可以得到以下结论：
+1. new 通过构造函数 Foo 创建出来的实例可以访问到构造函数中的属性
+2. new 通过构造函数 Foo 创建出来的实例可以访问到构造函数原型链中的属性
+
+构造函数一般是没有显示的返回值的，默认返回是undefined,那么当设置了返回值对于new 操作符会有什么影响呢。看下面的例子：
+
+```
+1. function Foo(name){
+  this.name = name
+  return 1
+}
+const f = new Foo('ye')
+console.log(t.name) // ye
+
+2. function Foo(name){
+  this.name = name
+  return { age:26}
+}
+const f = new Foo('ye')
+console.log(f) // {age:26}
+console.log(f.name) // undefined
+```
+
+从例子可以看出，当具有返回值时，构造函数内部 this 还是正常的，但当返回值是对象时，返回值会被正常使用。
+
+### 模拟实现 new
+
+主要要实现的功能：
+1. new 操作符会返回一个对象
+2. 返回的对象，可以访问到挂载在this身上的任意属性
+3. 返回的对象可以访问到构造函数原型上的属性
+4. 返回原始值需要忽略，返回对象需要正常处理
+
+实现代码
+```
+function myNew(fn,...args){
+  var obj = {};
+  obj.__proto__ = fn.prototype
+  var result = fn.apply(obj,args)
+  return result instanceof Object ? result : obj
+}
+```
+
