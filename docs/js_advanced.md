@@ -256,3 +256,97 @@ function myNew(){
 ```
 
 ## 深浅拷贝
+
+先用简单的例子来说明深浅拷贝的作用。
+
+```
+let Tom = {
+  age:18
+}
+
+ley Jack = Tom;
+Tom.age = 20;
+console.log(Jack.age) //20
+```
+
+从上面的例子中可以发现，如果给一个变量赋值一个对象，那么两者的值为同一个引用，其中一方改变，另一方也会改变。这在我们实际的开发场景中是不希望看见的。那么深浅拷贝就为了解决这个问题的。
+
+### 浅拷贝
+
+针对对象的情况可以使用Object.assgin 和 展开运算符（...）;针对数组的可以使用slice、concat等方法。
+
+```
+let Tom = {
+  age:18
+}
+let Jack = Object.assign({},Tom) 或者 let Jack = {...Tom}
+Tom.age = 20
+console.log(Jack.age) // 10
+```
+浅拷贝基本上可以解决大部分问题，但是如果是下面的情况，还是需要深拷贝。
+
+```
+let Tom = {
+    age: 18;
+    hair:{
+        color:'black',
+        length:'long'
+    }
+}
+let Jack = { ...Tom };
+Tom.hair.color = 'red';
+console.log(Jack.hair.color) // red
+```
+当有多层嵌套的时候，浅拷贝就不能满足需求了，那就需要深拷贝
+
+### 深拷贝
+
+那如何深拷贝呢，最简单的方法就是使用`JSON.parse(JSON.stringify(obj))`,但是这个方法具有一定的局限性。如图所示:
+![An image](./images/deepCopy.png)
+
+从上图中你会发现
+1. 不拷贝undefined和Symbol类型的值
+2. 不拷贝函数
+
+
+### 浅拷贝实现
+
+```
+function shallowCopy(obj){
+   // 只拷贝对象
+  if(typeof obj !== 'object') return;
+  var newObj = Array.isArray(obj) ? [] : {}
+  for(var key in obj){
+     // 遍历obj，并且判断是obj的属性才拷贝
+    if(obj.hasOwnProperty(key)){
+      newObj[key] = obj[key]
+    }
+  }
+  return newObj
+}
+```
+
+思路:
+1. 前提针对引用类型
+2. 判断类型进行不同的初始化
+3. 遍历排除不是自身的属性时不进行拷贝
+
+### 深拷贝实现
+
+```
+function deepCopy(obj){
+  if(typeof(obj) !== 'object') return;
+  var newObj = Array.isArray(obj) ? [] : {}
+  for(var key in obj){
+    if(obj.hasOwnProperty(key)){
+      if(typeof(obj[key]) == 'object'){
+        deepCopy(obj[key])
+      }else{
+        newObj[key] = obj[key]
+      }
+    }
+  }
+  return newObj
+}
+```
+思路与浅拷贝类似，只是添加在遍历中判断子项是否为object，如果是递归遍历，不是就赋值。
