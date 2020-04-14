@@ -350,3 +350,63 @@ function deepCopy(obj){
 }
 ```
 思路与浅拷贝类似，只是添加在遍历中判断子项是否为object，如果是递归遍历，不是就赋值。
+
+## 函数防抖与节流
+
+### 概念
+
+函数 防抖(debounce)与节流(throttle)都是为了限制函数的执行次数，以优化函数触发频率过高导致的响应速度跟不上触发频率，出现延迟、假死或者卡顿的现象。
+
+**函数防抖** 是指触发事件后在n秒内 函数只能被执行一次，如果在n秒内又触发了事件，则会重新计算函数执行时间。
+
+**函数节流** 对于持续触发的事件，规定一个间隔时间，每一个段间隔时间中函数只执行一次
+
+
+形象描述
+> 函数防抖 ：如果有人进电梯（触发事件），那电梯将在10秒钟后出发（执行事件监听器），这时如果又有人进电梯了（在10秒内再次触发该事件），我们又得等10秒再出发（重新计时）。
+
+> 函数节流 ：保证如果电梯第一个人进来后，10秒后准时运送一次，这个时间从第一个人上电梯开始计时，不等待，如果没有人，则不运行
+
+#### 使用场景
+* 窗口大小Resize
+* 拖拽时的mousemove事件
+* 搜索框搜索输入
+* 高频点击提交，表单重复提交
+* 滚动加载
+
+### 函数防抖实现
+
+```
+function debounce(fn,time){
+  var timer = null;
+  return function(){
+    clearTimeout(timer);
+    timer = setTimeout(()=>{
+      fn()
+    },time)
+  }
+}
+```
+
+### 函数节流实现
+
+```
+function throttle(fn,time){
+  var timer = null;
+  var stratTime = + new Date()
+  return furnction(){
+    var now = + new Date();
+    if(now - startTime <= time){
+      timer = setTimeout(()=>{
+        fn()
+      },time)
+    }else{
+      fn();
+      startTime = now
+    }
+  }
+}
+```
+
+
+以上的函数防抖与节流的实现，都只是一个简单版本；还有许多细节需要补充。但是理解了它们的原理。在实际运用中其实可以使用一些成熟的三方库。例如lodsh、underscore等
