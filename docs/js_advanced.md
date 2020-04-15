@@ -110,7 +110,7 @@ Function.prototype.myCall = function(obj){
   for(var i = 1; i < argumens.length; i++){
     args.push('arguments[' + i + ']')
   }
-  obj.fn = obj || window
+  obj.fn = this || window
   var result = eval('obj.fn('+args+')')
   delete obj.fn
   return result
