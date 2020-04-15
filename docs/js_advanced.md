@@ -410,3 +410,87 @@ function throttle(fn,time){
 
 
 以上的函数防抖与节流的实现，都只是一个简单版本；还有许多细节需要补充。但是理解了它们的原理。在实际运用中其实可以使用一些成熟的三方库。例如lodsh、underscore等
+
+## 函数柯里化
+
+### 概念
+
+函数柯里化（Currying）是把接受多个参数的函数变成接受一个单一参数的函数切返回结果的新函数的技术。
+
+举个例子：
+```
+function add(a,b){
+  returun a + b
+}
+add(1,2) //3
+
+// 假设有一个curry 函数可以做到柯里化
+
+var addCurry = curry(add)
+addCurry(1)(2) // 3
+```
+
+### 函数实现
+
+#### 第一版
+```
+var curry = function(fn){
+  var params = [].slice.call(arguments,1)
+  return function(){
+    var _params = [].slice.call(arguments)
+    return fn.apply(this,params.concat(_params))
+  }
+}
+```
+测试用例：
+```
+function add(a,b){
+  return a + b
+}
+
+var addCurry1 = curry(add,1,2)
+var addCurry2 = curry(add,1)
+var addCurry3 = curry(add)
+
+console.log(addCurry1())  //3
+console.log(addCurry2(2)) //3
+console.log(addCurry3(1,2)) //3
+console.log(addCurry3(1)(2)) // Uncaught TypeError: addCurry3(...) is not a function
+```
+
+会发现好像基本满足了要求，但是测试用例4好像不满足。需要改进
+
+#### 第二版
+
+```
+function subCurry(fn){
+  var params = [].slice.call(arguments,1)
+  return function(){
+    var _params = [].slice.call(arguments);
+    return fn.apply(this,params.concat(_params))
+  }
+}
+
+function curry(fn,length){
+  var lenghth = length || fn.length // 参数长度
+  return function(){
+    var len = arguments.length
+    if(len < length){
+      var params = [fn].concat([].slice.call(arguments))
+      return curry(subCurry.apply(this,params),len)
+    }else{
+      return fn.apply(this,arguments)
+    }
+  }
+}
+```
+
+#### ES6写法
+
+```
+var curry = fn =>
+    judge = (...args) =>
+        args.length === fn.length
+            ? fn(...args)
+            : (arg) => judge(...args, arg)
+```
