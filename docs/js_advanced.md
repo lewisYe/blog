@@ -248,7 +248,7 @@ console.log(f.name) // undefined
 ```
 function myNew(){
   var obj = new Object()
-  var fn = [].shift.call(arguments)
+  var fn = [].shift.call(arguments) //取出第一个参数，就是我们要传入的构造函数
   obj.__proto__ = fn.prototype
   var result = fn.apply(obj,arguments)
   return result instanceof Object ? result : obj
@@ -395,6 +395,7 @@ function throttle(fn,time){
   var timer = null;
   var stratTime = + new Date()
   return furnction(){
+    clearTimeout(timer);
     var now = + new Date();
     if(now - startTime <= time){
       timer = setTimeout(()=>{
