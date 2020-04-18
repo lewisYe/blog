@@ -526,3 +526,88 @@ function watch(obj,name,fn){
 ```
 
 ### Proxy
+
+Proxy 用于修改某些操作的默认行为，等同于在语言层面做出修改，所以属于一种“元编程”（meta programming），即对编程语言进行编程。
+
+Proxy 可以理解成，在目标对象之前架设一层“拦截”，外界对该对象的访问，都必须先通过这层拦截，因此提供了一种机制，可以对外界的访问进行过滤和改写。
+
+ES6 原生提供 Proxy 构造函数，用来生成 Proxy 实例。
+
+```
+proxy = new Proxy(target,handler)
+```
+Proxy 对象的所有用法，都是上面这种形式，不同的只是handler参数的写法。其中，new Proxy()表示生成一个Proxy实例，target参数表示所要拦截的目标对象，handler参数也是一个对象，用来定制拦截行为。
+
+```
+var proxy = new Proxy({}, {
+  get: function(target, propKey) {
+    return 35;
+  },
+  set: function(target,propKey,value){
+    target[propkey] = value
+  }
+});
+
+proxy.time // 35
+proxy.name // 35
+proxy.title // 35
+```
+
+注意，要使得Proxy起作用，必须针对Proxy实例（上例是proxy对象）进行操作，而不是针对目标对象（上例是空对象）进行操作。
+
+Proxy支持的拦截操作，共 13 种：
+1. **get(target, propKey, receiver)**：拦截对象属性的读取，比如proxy.foo和proxy['foo']。
+2. **set(target, propKey, value, receiver)**：拦截对象属性的设置，比如proxy.foo = v或proxy['foo'] = v，返回一个布尔值。
+3. **has(target, propKey)**：拦截propKey in proxy的操作，返回一个布尔值。
+4. **deleteProperty(target, propKey)**：拦截delete proxy[propKey]的操作，返回一个布尔值。
+5. **ownKeys(target)**：拦截Object.getOwnPropertyNames(proxy)、Object.getOwnPropertySymbols(proxy)、Object.keys(proxy)、for...in循环，返回一个数组。该方法返回目标对象所有自身的属性的属性名，而Object.keys()的返回结果仅包括目标对象自身的可遍历属性。
+6. **getOwnPropertyDescriptor(target, propKey)**：拦截Object.getOwnPropertyDescriptor(proxy, propKey)，返回属性的描述对象。
+7. **defineProperty(target, propKey, propDesc)**：拦截Object.defineProperty(proxy, propKey, propDesc）、Object.defineProperties(proxy, propDescs)，返回一个布尔值。
+8. **preventExtensions(target)**：拦截Object.preventExtensions(proxy)，返回一个布尔值。
+9. **getPrototypeOf(target)**：拦截Object.getPrototypeOf(proxy)，返回一个对象。
+10. **isExtensible(target)**：拦截Object.isExtensible(proxy)，返回一个布尔值。
+11. **setPrototypeOf(target, proto)**：拦截Object.setPrototypeOf(proxy, proto)，返回一个布尔值。如果目标对象是函数，那么还有两种额外操作可以拦截。
+12. **apply(target, object, args)**：拦截 Proxy 实例作为函数调用的操作，比如proxy(...args)、proxy.call(object, ...args)、proxy.apply(...)。
+13. **construct(target, args)**：拦截 Proxy 实例作为构造函数调用的操作，比如new proxy(...args)。
+
+拦截的具体细节可以查看阮一峰老师的 [《ECMAScript 6 入门》](https://es6.ruanyifeng.com/#docs/proxy)
+
+值得注意的是，proxy 的最大问题在于浏览器支持度不够，而且很多效果无法使用 poilyfill 来弥补。
+
+### Wacth Proxy 实现
+
+```
+function wacth(target,fn){
+  var proxy = new Proxy(target,{
+    get:function(target,prokey){
+      return target[prokey]
+    },
+    set:function(taget,prokey,value){
+      taget[prokey] = value
+      fn(prokey,value)
+    }
+  })
+  return proxy
+}
+```
+
+### defineProperty 和 Proxy 区别
+
+Proxy
+
+* 代理的是 对象
+* 可以拦截到数组的变化
+* 拦截的方法多达13种
+* 返回一个拦截后的数据
+
+Object.defineProperty
+
+* 代理的是属性
+* 对数组数据的变化无能为力
+* 直接修改原始数据
+
+
+### 应用场景
+vue 2 使用 defineProperty 通 getter / setter 进行数据劫持
+
+vue 3 换成 Proxy, 存在向下兼容问题
