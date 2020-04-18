@@ -611,3 +611,114 @@ Object.defineProperty
 vue 2 使用 defineProperty 通 getter / setter 进行数据劫持
 
 vue 3 换成 Proxy, 存在向下兼容问题
+
+## Promise对象
+
+### 介绍
+
+Promise 是异步编程的一种解决方案。相比传统的回调函数模式更加合理和强大。
+
+Promise对象 具有3个状态：`pending(进行中)`、`fulfilled(已完成)`、`rejected(已失败)`
+
+含有以下特点：
+1. 对象的状态不受外界影响
+2. 一旦状态改变，就不会再改变，而且任何时候可以获取到
+
+缺点：
+1. Promise 一旦新建它就会立即执行，无法中途取消。
+2. Promise内部抛出的错误，不会反应到外部。
+3. 当处于pending状态时，无法得知目前进展到哪一个阶段
+
+注意，为了方便，本章后面的resolved统一只指fulfilled状态。
+
+### 基本用法
+
+ES6 规定，Promise对象是一个构造函数，用来生成Promise实例。
+```
+const promise = new Promise(function(resolve,reject){
+  if (/* 异步操作成功 */){
+    resolve(value);
+  } else {
+    reject(error);
+  }
+})
+
+promise.then(function(value) {
+  // success
+}, function(error) {
+  // failure
+}).catch(function(error) {
+  console.log('发生错误！', error);
+});
+```
+
+Promise构造函数接受一个函数作为参数，该函数的两个参数分别是resolve和reject。它们是两个函数，由 JavaScript 引擎提供，不用自己部署。
+
+resolve函数的作用是，将Promise对象的状态从“未完成”变为“成功”（即从 pending 变为 resolved），在异步操作成功时调用，并将异步操作的结果，作为参数传递出去；
+
+reject函数的作用是，将Promise对象的状态从“未完成”变为“失败”（即从 pending 变为 rejected），在异步操作失败时调用，并将异步操作报出的错误，作为参数传递出去。
+
+Promise 实例具有then、catch、finally等方法，也就是说这些方法是定义在原型对象 Promise.prototype 上的。
+
+then方法 它的作用是为 Promise 实例添加状态改变时的回调函数。第一个参数是resolved状态的回调函数，第二个参数（可选）是rejected状态的回调函数。 返回的是一个新的Promise实例（注意，不是原来那个Promise实例）。因此可以采用链式写法，即then方法后面再调用另一个then方法。
+
+catch方法 用于指定发生错误时的回调函数
+
+finally方法用于指定不管 Promise 对象最后状态如何，都会执行的操作
+
+
+### Promise.all()
+
+Promise.all()方法用于将多个Promise实例，包装成一个新的Promise实例。
+```
+var p = Promise.all([p1,p2,p3])
+```
+Promise.all()方法接受一个数组作为参数，参数必需都是 Promise 实例，如果不是，就会先调用下面讲到的Promise.resolve方法，将参数转为 Promise 实例，再进一步处理。参数也可以不是数组，但必须具有 Iterator 接口
+
+Promise.all的实例状态由参数Promise实例决定，分成两种情况。
+
+（1）只有参数的状态都变成resolve，状态才会变成resolved，此时参数实例的返回值组成一个数组，传递给实例的回调函数。
+
+（2）只要参数之中有一个被rejected，状态就变成rejected，此时第一个被reject的实例的返回值，会传递给回调函数。
+
+注意，如果作为参数的 Promise 实例，自己定义了catch方法，那么它一旦被rejected，并不会触发Promise.all()的catch方法。
+
+```
+  const p1 = new Promise((resolve, reject) => {
+    resolve('hello');
+  })
+  .then(result => result)
+  .catch(e => e);
+
+  const p2 = new Promise((resolve, reject) => {
+    throw new Error('报错了');
+  })
+  .then(result => result)
+  .catch(e => e);
+
+  Promise.all([p1, p2])
+  .then(result => console.log(result))
+  .catch(e => console.log(e));
+  // ["hello", Error: 报错了]
+```
+
+### Promise.race(iterable)
+
+Promise.race()方法同样是将多个 Promise 实例，包装成一个新的 Promise 实例。
+
+```
+var p = Promise.race([p1, p2, p3]);
+```
+
+虽然该方法与Promise.all()参数相同，但是不同的在于参数实例中有一个实例率先改变状态，状态就会跟着改变。那个率先改变的 Promise 实例的返回值，就传递给回调函数。
+
+### Promise.reject(reason)
+
+返回一个状态为失败的Promise对象，并将给定的失败信息传递给对应的处理方法
+
+### Promise.resolve(value)
+返回一个状态由给定value决定的Promise对象
+
+
+### 模拟实现Promise
+
