@@ -722,3 +722,175 @@ var p = Promise.race([p1, p2, p3]);
 
 ### 模拟实现Promise
 
+#### 第一步
+
+要实现的功能：
+1. 具有3个状态值
+2. 一个then方法挂载在Promise.prototype上
+3. 具有resolve和reject 方法
+
+```
+const PENDING = 'pending'
+const RESOLVED = 'resolved'
+const REJECTED = 'rejected'
+
+function Promise(fn){
+  this.staus = PENDING;
+  this.value = undefined;
+  this.reason = undefiend;
+
+  var that = this;
+  function resolve(){
+
+  }
+
+  function reject(){
+
+  }
+  fn(resolve,resolve)
+}
+
+Promise.prototype.then=function(onResolved,onRejected){
+
+}
+```
+
+#### 第二步
+Promise的状态只能从pending -> resolved 或者 pending -> rejected.添加代码
+
+```
+function resolve(value){
+  if(that.status === PEDNING){
+    that.value = value
+    that.status === RESOLEVD
+  }
+}
+
+function reject(error){
+  if(that.status == PENDING){
+    that.reason = error
+    that.status = REJECTED
+  }
+}
+```
+
+#### 第三步
+then 方法有2个参数，第一个为onResolved 成功时调用，第二个为onRejected 失败时调用。
+
+```
+Promise.prototype.then=function(onResolved,onRejected){
+  if(this.status == RESOLVED){
+    onResolved(this.value)
+  }
+  if(this.status == REJECTED){
+    onRejected(this.value)
+  }
+}
+```
+
+#### 第四步
+
+当Promise的执行遇到错误时，会直接变成rejected状态.添加一段try catch
+
+```
+try{
+  fn(resolve,reject)
+}catch(e){
+  rejected(e)
+}
+```
+
+#### 第五步
+
+目前基本的功能都已经完成，但是不能处理异步的情况。所以我们添加2个数组来保存异步方法。当状态改变时，遍历执行数组中的方法。
+
+所以代码如下：
+```
+const PENDING = 'pending'
+const RESOLVED = 'resolved'
+const REJECTED = 'rejected'
+function Promise(fn){
+  var that = this
+  this.status = PENDING
+  this.value = undefined
+  this.reason = undefined
+  this.onResolvedStack = []
+  this.onRejectedStack = []
+
+  function resolve(value){
+    if(that.status == PENDING){
+      that.status = RESOLVED
+      that.value = value
+      that.onResolvedStack.forEach(function(fn){
+        fn(that.value)
+      })
+    }
+  }
+
+  function reject(error){
+    if(that.status == PENDING){
+      that.status = REJECTED
+      that.reason = error
+      that.onRejectedStack.forEach(function(fn){
+        fn(that.reason)
+      })
+    }
+  }
+
+  try{
+    fn(resovle,reject)
+  }catch(e){
+    reject(e)
+  }
+}
+
+Promise.prototype.then = function(onResolved,onRejected){
+  if(this.status == RESOLVED){
+    onResolved(this.value)
+  }
+  if(this.status == REJECTED){
+    onRejected(this.reason)
+  }
+  if(this.status == PENDING){
+    this.onResolvedStack.push(onResolved)
+    this.onRejectedStack.push(onRejected)
+  }
+}
+```
+ok 这已经算是一个基础的Promise 实现了,但是还需要进行一些完成。比如then方法会返回一个新的promise值等
+
+#### 添加Promise.all方法
+
+```
+Promise.all = function (promiseArrs) { //在Promise类上添加一个all方法，接受一个传进来的promise数组
+    return new Promise((resolve, reject) => { //返回一个新的Promise
+        let arr = []; //定义一个空数组存放结果
+        let i = 0;
+        function handleData(index, data) { //处理数据函数
+            arr[index] = data;
+            i++;
+            if (i === promiseArrs.length) { //当i等于传递的数组的长度时 
+                resolve(arr); //执行resolve,并将结果放入
+            }
+        }
+        for (let i = 0; i < promiseArrs.length; i++) { //循环遍历数组
+            promiseArrs[i].then((data) => {
+                handleData(i, data); //将结果和索引传入handleData函数
+            }, reject)
+        }
+    })
+}
+
+```
+
+#### 添加Promise.race方法
+
+```
+Promise.race = function (promises) {
+    return new Promise((resolve, reject) => {
+        for (let i = 0; i < promises.length; i++) {
+            promises[i].then(resolve, reject);
+        }
+    })
+}
+```
