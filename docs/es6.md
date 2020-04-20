@@ -863,20 +863,20 @@ ok 这已经算是一个基础的Promise 实现了,但是还需要进行一些�
 
 ```
 Promise.all = function (promiseArrs) { //在Promise类上添加一个all方法，接受一个传进来的promise数组
-    return new Promise((resolve, reject) => { //返回一个新的Promise
-        let arr = []; //定义一个空数组存放结果
-        let i = 0;
-        function handleData(index, data) { //处理数据函数
-            arr[index] = data;
-            i++;
-            if (i === promiseArrs.length) { //当i等于传递的数组的长度时 
-                resolve(arr); //执行resolve,并将结果放入
-            }
-        }
-        for (let i = 0; i < promiseArrs.length; i++) { //循环遍历数组
-            promiseArrs[i].then((data) => {
-                handleData(i, data); //将结果和索引传入handleData函数
-            }, reject)
+    return new Promise((resolve,reject) => {
+        let values = [];
+        let count = 0;
+        let len = promiseArrs.length; 
+        for(let i=0; i<len； i++){
+            this.resolve(promiseArrs[i]).then(res => {
+                values[i] = res;
+                count++;
+                 // 所有状态都变成fulfilled时返回的MyPromise状态就变成fulfilled
+                if (count === len) resolve(values)
+            },err => {
+            	// 有一个被rejected时返回的MyPromise状态就变成rejected
+                reject(err)
+            })
         }
     })
 }
@@ -894,3 +894,178 @@ Promise.race = function (promises) {
     })
 }
 ```
+
+## Iterator 和 for...of 循环
+
+遍历器（Iterator）是一种接口，为各种不同的数据结构提供统一的访问机制。任何数据结构只要部署 Iterator 接口，就可以完成遍历操作（即依次处理该数据结构的所有成员）。
+
+Iterator 的作用有三个：
+一是为各种数据结构，提供一个统一的、简便的访问接口；
+
+二是使得数据结构的成员能够按某种次序排列；
+
+三是 ES6 创造了一种新的遍历命令for...of循环，Iterator 接口主要供for...of消费。
+
+其实本质就是一个具有 next() 方法的对象，每次调用 next() 都会返回一个结果对象，该结果对象有两个属性，value 表示当前的值，done 表示遍历是否结束。
+
+用ES5语法模拟一个iterator:
+```
+function makeIterator(items){
+  var index = 0;
+  return{
+    next:function(){
+      var done = index >= items.length;
+      var value = done ? undefined:items[index++]
+      return{
+        done:done,
+        value:value
+      }
+    }
+  }
+
+}
+
+var i = makeIterator([1,2,3])
+console.log(i.next()); // { done: false, value: 1 }
+console.log(i.next()); // { done: false, value: 2 }
+console.log(i.next()); // { done: false, value: 3 }
+console.log(i.next()); // { done: true, value: undefined }
+```
+### for ... of
+
+ES6引入了for...of循环，作为遍历所有数据结构的统一的方法。
+
+那使用for...of 遍历我们模拟生成的iterator对象是什么结果
+```
+var i = makeIterator([1,2,3])
+
+for(var n of i){
+  console.log(n) // Uncaught TypeError: i is not iterable
+}
+
+```
+结果是报错了，那怎么才能使用for ... of遍历呢。
+
+一个数据结构只要部署了Symbol.iterator属性，就被视为具有 iterator 接口，就可以用for...of循环遍历它的成员。也就是说，for...of循环内部调用的是数据结构的Symbol.iterator方法。
+
+举例说明：
+```
+const obj = {
+    value: 1
+};
+
+obj[Symbol.iterator] = function() {
+    return createIterator([1, 2, 3]);
+};
+
+for (value of obj) {
+    console.log(value);
+}
+```
+for...of循环可以使用的范围包括数组、Set 和 Map 结构、某些类似数组的对象（比如arguments对象、DOM NodeList 对象）、后文的 Generator 对象，以及字符串。
+
+
+
+## Generator 函数
+
+Generator 函数也是ES6提供的一种异步编程解决方案。
+
+Generator 函数有多种理解角度。
+
+语法上，首先可以把它理解成，Generator 函数是一个状态机，封装了多个内部状态。执行 Generator 函数会返回一个遍历器对象。
+
+形式上，Generator 函数是一个普通函数，但是有两个特征。一是，function关键字与函数名之间有一个星号；二是，函数体内部使用yield表达式，定义不同的内部状态。
+
+基本用法
+
+```
+function* helloWorldGenerator() {
+  yield 'hello';
+  yield 'world';
+  return 'ending';
+}
+
+var hw = helloWorldGenerator();
+
+hw.next() // { value: 'hello', done: false }
+
+hw.next() // { value: 'world', done: false }
+
+hw.next() // { value: 'ending', done: true }
+
+hw.next() // { value: undefined, done: true }
+```
+
+由于 Generator 函数返回的遍历器对象，只有调用next方法才会遍历下一个内部状态，所以其实提供了一种可以暂停执行的函数。yield表达式就是暂停标志。
+
+遍历器对象的next方法的运行逻辑如下。
+
+（1）遇到yield表达式，就暂停执行后面的操作，并将紧跟在yield后面的那个表达式的值，作为返回的对象的value属性值。
+
+（2）下一次调用next方法时，再继续往下执行，直到遇到下一个yield表达式。
+
+（3）如果没有再遇到新的yield表达式，就一直运行到函数结束，直到return语句为止，并将return语句后面的表达式的值，作为返回的对象的value属性值。
+
+（4）如果该函数没有return语句，则返回的对象的value属性值为undefined。
+
+需要注意的是，yield表达式后面的表达式，只有当调用next方法、内部指针指向该语句时才会执行，因此等于为 JavaScript 提供了手动的“惰性求值”（Lazy Evaluation）的语法功能。
+
+
+Generator 函数返回的遍历器对象，还有有一个throw和return方法，throw可以在函数体外抛出错误，然后在 Generator 函数体内捕获。return可以返回给定的值，并且终结遍历 Generator 函数。
+
+在一个 Generator 函数里面执行另一个 Generator 函数，可以yield*表达式。
+
+```
+function* bar() {
+  yield 'x';
+  yield* foo();
+  yield 'y';
+}
+
+```
+
+Generator 函数也不能跟new命令一起用，会报错。
+
+
+## Async 函数
+
+async 函数其实是 Generator 函数的语法糖。
+
+用法：
+
+```
+async function () {
+  const n = await 1
+  const m = await 2
+};
+```
+比较会发现，async函数就是将 Generator 函数的星号（*）替换成async，将yield替换成await，仅此而已。
+
+但是async函数对 Generator 函数的改进，体现在以下四点
+
+1. 内置执行器。
+Generator 函数的执行必须靠执行器，所以才有了co模块，而async函数自带执行器。
+
+2. 更好的语义。
+async和await，比起星号和yield，语义更清楚了。async表示函数里有异步操作，await表示紧跟在后面的表达式需要等待结果。
+
+3. 更广的适用性。
+
+co模块约定，yield命令后面只能是 Thunk 函数或 Promise 对象，而async函数的await命令后面，可以是 Promise 对象和原始类型的值（数值、字符串和布尔值，但这时会自动转成立即 resolved 的 Promise 对象）。
+
+4. 返回值是 Promise。
+
+async函数的返回值是 Promise 对象，这比 Generator 函数的返回值是 Iterator 对象方便多了
+
+使用注意点：
+
+1. 第一点 把await命令放在try...catch代码块中  因为存在rejected的情况
+
+2. 多个await命令后面的异步操作，如果不存在继发关系，最好让它们同时触发。 使用Promise.all
+
+3. await命令只能用在async函数之中，如果用在普通函数，就会报错。
+
+4. async 函数可以保留运行堆栈。
+
+## ES6 3种异步处理方法的区别
+
