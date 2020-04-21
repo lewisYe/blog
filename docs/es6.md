@@ -1069,3 +1069,249 @@ async函数的返回值是 Promise 对象，这比 Generator 函数的返回值�
 
 ## ES6 3种异步处理方法的区别
 
+用一个例子的使用来比较 async 函数与Promise、Generator 函数的比较
+
+假设有一系列的异步请求，前一个异步请求结束，才能开始下一个异步请求，其中一个异步请求出错，就不会继续向下执行，返回上一次的值。
+
+1.**Promise 写法**
+
+function chainRequestPromise(requests){
+  let res = null // 返回值
+
+  let p = Promise.resolve()
+
+  for(let req of requests){
+    p = p.then(function(val){
+      res = val
+      return req()
+    })
+  }
+
+  return p.catch(functiob(e){
+
+  }).then(function(){
+    return res
+  })
+}
+
+Promise 的写法是解决了回调函数的多层嵌套问题，改用then方法链式调用的形式。但是还是有大量的代码冗余，全是一些then方法。
+
+2. **Generator写法**
+
+```
+var co = require('co');
+function chainRequestGenerator(requests){
+  return co(function* (){
+    let res = null
+    try{
+      for(let req of request){
+        res = yield req()
+      }
+    }catch(e){
+
+    }
+    return res
+  })
+}
+```
+
+这种写法的问题在于必须有一个任务运行器，自动执行Generator 函数;co函数就是自动执行器，它返回一个 Promise 对象，而且必须保证yield语句后面的表达式，必须返回一个 Promise。
+
+3. **async函数**
+
+```
+async function chainRequestAsync(requests){
+  let res = null
+  try{
+    for(let req of requests){
+      res = await req()
+    }catch(e){
+
+    }
+  }
+  return res
+}
+```
+
+async 函数的实现最简洁，最符合语义，而且将Generator 写法中的自动执行器内部实现啦。
+
+## Class
+
+ES6 引入了Class（类）这个概念，通过class 关键字可以定义类。其实 class  只是一个语法糖，可以使用ES5写法实现绝大部分功能。只是说class写法让对象原型的写法更加清晰、更像面向对象编程的语法。让写法更加与传统的面向对面语音差异不大。
+
+class写法举例：
+```
+class Point{
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+  }
+
+  toString(){
+    return `(${this.x},${this.y})`
+  }
+}
+```
+
+如果改成ES5写法：
+```
+function Ponit(x,y){
+  this.x = x;
+  this.y = y
+}
+
+Ponint.prototype.toString = function(){
+  return '('+this.x+','+this.y+')'
+}
+```
+
+### constructor 方法
+
+constructor 方法是类的默认方法，通过new命令生成对象实例时，自动调用该方法。 
+
+一个类必须有constructor方法，如果没有显式定义，一个空的constructor方法会被默认添加，constructor方法默认返回实例对象（即this）
+
+### 类的实例
+
+1. 通过 new 命令生成实例，而且类必须使用 new 调用生成实例，否则会报错。
+```
+class Point {
+  // ...
+}
+
+// 报错
+var point = Point(2, 3);
+
+// 正确
+var point = new Point(2, 3);
+```
+
+2. 实例的属性除非显式定义在其本身（即定义在this对象上），否则都是定义在原型上（即定义在class上）。
+
+```
+//定义类
+class Point {
+
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  toString() {
+    return '(' + this.x + ', ' + this.y + ')';
+  }
+
+}
+
+var point = new Point(2, 3);
+
+point.toString() // (2, 3)
+
+point.hasOwnProperty('x') // true
+point.hasOwnProperty('y') // true
+point.hasOwnProperty('toString') // false
+point.__proto__.hasOwnProperty('toString') // true
+```
+
+3. 类的所有实例共享一个原型对象。
+
+```
+var p1 = new Point(2,3);
+var p2 = new Point(3,2);
+
+p1.__proto__ === p2.__proto__
+//true
+```
+
+### 静态方法
+
+如果在一个方法前，加上static关键字，就表示该方法不会被实例继承，而是直接通过类来调用，这就称为“静态方法”。
+
+```
+class Foo {
+  static classMethod() {
+    return 'hello';
+  }
+}
+
+Foo.classMethod() // 'hello'
+
+var foo = new Foo();
+foo.classMethod()
+// TypeError: foo.classMethod is not a function
+```
+
+注意，如果静态方法包含this关键字，这个this指的是类，而不是实例。
+
+父类的静态方法，可以被子类继承。
+
+### 静态属性
+
+静态属性指的是 Class 本身的属性，即Class.propName，而不是定义在实例对象（this）上的属性。
+
+```
+// 老写法
+class Foo {
+  // ...
+}
+Foo.prop = 1;
+
+// 新写法
+class Foo {
+  static prop = 1;
+}
+```
+
+### 使用注意点
+
+1. 严格模式
+
+类和模块的内部，默认就是严格模式，所以不需要使用use strict指定运行模式。
+
+2. 不存在提升
+
+类不存在变量提升（hoist），这一点与 ES5 完全不同。
+
+```
+new Foo(); // ReferenceError
+class Foo {}
+```
+
+3. this 的指向
+
+类的方法内部如果含有this，它默认指向类的实例。但是，必须非常小心，一旦单独使用该方法，很可能报错。
+
+```
+class Logger {
+  printName(name = 'there') {
+    this.print(`Hello ${name}`);
+  }
+
+  print(text) {
+    console.log(text);
+  }
+}
+
+const logger = new Logger();
+const { printName } = logger;
+printName(); // TypeError: Cannot read property 'print' of undefined
+```
+
+4. 类的内部所有定义的方法，都是不可枚举的
+
+```
+class Point {
+  constructor(x, y) {
+    // ...
+  }
+
+  toString() {
+    // ...
+  }
+}
+
+Object.keys(Point.prototype)
+// []
+Object.getOwnPropertyNames(Point.prototype)
+// ["constructor","toString"]
+```
