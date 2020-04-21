@@ -1425,3 +1425,141 @@ console.log(A.__proto__ === Function.prototype); // true
 console.log(A.prototype.__proto__ === undefined); // true
 ```
 
+## Module 
+
+模块功能主要由两个命令构成：export和import。export命令用于规定模块的对外接口，import命令用于输入其他模块提供的功能。
+
+### export
+
+export命令除了输出变量，还可以输出函数或类（class）。通常情况下，export输出的变量就是本来的名字，但是可以使用as关键字重命名。
+
+export命令可以出现在模块的任何位置，只要处于模块顶层就可以。
+
+使用语法
+```
+// 写法一
+export var m = 1;
+
+// 写法二
+var m = 1;
+export {m};
+
+// 写法三
+var n = 1;
+export {n as m};
+
+export function f() {};
+
+function f() {}
+export {f};
+```
+
+### import 
+
+import命令接受一对大括号，里面指定要从其他模块导入的变量名。大括号里面的变量名，必须与被导入模块（profile.js）对外接口的名称相同。
+
+如果想为输入的变量重新取一个名字，import命令要使用as关键字，将输入的变量重命名。
+
+import命令输入的变量都是只读的，因为它的本质是输入接口。
+
+import命令具有提升效果，会提升到整个模块的头部，首先执行。
+
+如果多次重复执行同一句import语句，那么只会执行一次，而不会执行多次。
+
+使用语法
+
+```
+import {a as b} from './xxx.js'
+
+```
+
+除了指定加载某个输出值，还可以使用整体加载，即用星号（*）指定一个对象，所有输出值都加载在这个对象上面。
+
+模块整体加载所在的那个对象（就是例子中的a），应该是可以静态分析的，所以不允许运行时改变
+
+```
+import * as a from './xxx.js';
+
+// 下面两行都是不允许的
+circle.foo = 'hello';
+circle.area = function () {};
+```
+### export default
+
+使用export default命令，为模块指定默认输出。一个文件中 export default命令只能使用一次 而且 引用的时候import命令后面不用加大括号
+
+```
+export default function foo() {
+  console.log('foo');
+}
+
+// 或者写成
+
+function foo() {
+  console.log('foo');
+}
+
+export default foo;
+```
+
+### import()
+
+import命令会被 JavaScript 引擎静态分析，先于模块内的其他语句执行。不支持无法在运行时加载模块。ES2020提案 引入import()函数，支持动态加载模块。
+
+```
+import(specifier)
+```
+
+import函数的参数specifier，指定所要加载的模块的位置。import命令能够接受什么参数，import()函数就能接受什么参数，两者区别主要是后者为动态加载。
+
+import()返回一个 Promise 对象
+
+
+## Deorator 装饰器
+
+装饰器是一种函数，写成@ + 函数名。它可以放在类和类方法的定义前面。
+
+**装饰类**
+
+```
+@test
+class MyClass { }
+
+function log(target) {
+   target.test = true;
+}
+```
+
+**装饰方法**
+```
+class MyClass {
+  @readonly
+  method() { }
+}
+
+function readonly(target, name, descriptor) {
+  descriptor.writable = false;
+  return descriptor;
+}
+```
+
+装饰器的原理基本是这样。
+```
+@decorator
+class A {}
+
+// 等同于
+
+class A {}
+A = decorator(A) || A;
+```
+装饰器是一个对类进行处理的函数。装饰器函数的第一个参数，就是所要装饰的目标类。
+
+注意，装饰器对类的行为的改变，是代码编译时发生的，而不是在运行时。这意味着，装饰器能在编译阶段运行代码。也就是说，装饰器本质就是编译时执行的函数。
+
+实际开发中，React 与 Redux 库结合使用时，常常需要写成下面这样。
+
+```
+@connect(mapStateToProps, mapDispatchToProps)
+export default class MyReactComponent extends React.Component {}
+```
