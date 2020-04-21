@@ -1067,7 +1067,7 @@ async函数的返回值是 Promise 对象，这比 Generator 函数的返回值�
 
 4. async 函数可以保留运行堆栈。
 
-## ES6 3种异步处理方法的区别
+## ES6 3种异步处理方法的比较
 
 用一个例子的使用来比较 async 函数与Promise、Generator 函数的比较
 
@@ -1135,7 +1135,9 @@ async function chainRequestAsync(requests){
 
 async 函数的实现最简洁，最符合语义，而且将Generator 写法中的自动执行器内部实现啦。
 
-## Class
+## Class 类
+
+### 基本语法
 
 ES6 引入了Class（类）这个概念，通过class 关键字可以定义类。其实 class  只是一个语法糖，可以使用ES5写法实现绝大部分功能。只是说class写法让对象原型的写法更加清晰、更像面向对象编程的语法。让写法更加与传统的面向对面语音差异不大。
 
@@ -1165,7 +1167,7 @@ Ponint.prototype.toString = function(){
 }
 ```
 
-### constructor 方法
+### constructor 
 
 constructor 方法是类的默认方法，通过new命令生成对象实例时，自动调用该方法。 
 
@@ -1262,7 +1264,7 @@ class Foo {
 }
 ```
 
-### 使用注意点
+#### 使用注意点
 
 1. 严格模式
 
@@ -1315,3 +1317,111 @@ Object.keys(Point.prototype)
 Object.getOwnPropertyNames(Point.prototype)
 // ["constructor","toString"]
 ```
+
+### extends 继承
+
+Class 可以通过 extends 关键字实现继承。
+
+```
+class ColorPoint extends Point {
+  constructor(x, y, color) {
+    super(x, y); // 调用父类的constructor(x, y)
+    this.color = color;
+  }
+
+  toString() {
+    return this.color + ' ' + super.toString(); // 调用父类的toString()
+  }
+}
+```
+子类必须在constructor方法中调用super方法，否则新建实例时会报错。
+
+在子类的构造函数中，只有调用super之后，才可以使用this关键字，否则会报错。
+
+父类的静态方法，也会被子类继承。
+
+### super 关键字
+
+super 关键字 即可以当作函数使用，也可以当作对象使用。
+
+**作为函数时**
+
+super作为函数调用时，代表父类的构造函数。ES6 要求，子类的构造函数必须执行一次super函数，否则会报错。
+```
+class A {}
+
+class B extends A {
+  constructor() {
+    super();
+  }
+}
+```
+
+注意
+1. super虽然代表了父类A的构造函数，但是返回的是子类B的实例，即super内部的this指的是B的实例，因此super()在这里相当于A.prototype.constructor.call(this)。
+2. 作为函数调用时，只能在子类的构造函数中使用，在其他地方会报错。
+
+**作为对象时**
+
+super作为对象时，在普通方法中，指向父类的原型对象；在静态方法中，指向父类。
+
+在子类普通方法中通过super调用父类的方法时，方法内部的this指向当前的子类实例。
+在子类的静态方法中通过super调用父类的方法时，方法内部的this指向当前的子类，而不是子类的实例。
+
+### 类的 prototype 属性和__proto__属性
+
+Class 作为构造函数的语法糖，同时有prototype属性和__proto__属性，因此同时存在两条继承链。
+
+1. 子类的__proto__属性，表示构造函数的继承，总是指向父类。
+2. 子类prototype属性的__proto__属性，表示方法的继承，总是指向父类的prototype属性。
+
+```
+class Parent {
+}
+
+class Child extends Parent {
+}
+
+Child.__proto__ === Parent // true
+Child.prototype.__proto__ === Parent.prototype // true
+```
+这样的结果是因为，类的继承是按照下面的模式实现的。
+
+```
+class Parent {
+}
+
+class Child {
+}
+
+// Child 的实例继承 Parent 的实例
+Object.setPrototypeOf(Child.prototype, Parent.prototype);
+
+// Child 继承 Parent 的静态属性
+Object.setPrototypeOf(Child, Parent);
+
+const child = new Child();
+```
+ES6 的原型链示意图为：
+![An image](./images/class-prototype.png)
+
+我们会发现，相比寄生组合式继承，ES6 的 class 多了一个 Object.setPrototypeOf(Child, Parent) 的步骤。
+
+#### 继承目标
+
+extends关键字后面可以跟多种类型的值。
+
+```
+class B extends A {
+}
+```
+上面代码的 A，只要是一个有 prototype 属性的函数，就能被 B 继承。由于函数都有 prototype 属性（除了 Function.prototype 函数），因此 A 可以是任意函数。
+
+不存在任何继承：
+```
+class A {
+}
+console.log(A.__proto__ === Function.prototype); // true
+console.log(A.prototype.__proto__ === undefined); // true
+```
+
