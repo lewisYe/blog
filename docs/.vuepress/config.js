@@ -17,7 +17,8 @@ module.exports = {
       '/react',
       '/webpack',
       '/algorithm',
-      '/design'
+      '/design',
+      '/other'
     ],
     sidebarDepth: 2
   }
