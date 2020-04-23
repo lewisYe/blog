@@ -2016,3 +2016,126 @@ function isArrayLike(o) {
 }
 ```
 代码来自《JavaScript权威指南》
+
+
+## JS运行机制
+
+### JS 单线程
+
+JavaScript 语音的一大特点就是单线程，也就是说，同一个时间只能做一件事。作为浏览器脚本语言，JavaScript的主要用途是与用户互动，以及操作DOM。这决定了它只能是单线程，否则会带来很复杂的同步问题。比如，假定JavaScript同时有两个线程，一个线程在某个DOM节点上添加内容，另一个线程删除了这个节点，这时浏览器应该以哪个线程为准？
+
+为了利用多核CPU的计算能力，HTML5提出Web Worker标准，允许JavaScript脚本创建多个线程，但是子线程完全受主线程控制，且不得操作DOM。所以，这个新标准并没有改变JavaScript单线程的本质。
+
+### 任务队列
+
+任务可以分为两种：同步任务（synchronous） 和 异步任务（asynchronous）。
+
+同步任务指的是在主线程上排队执行的任务，只有前一个任务执行完毕，才能执行后一个任务
+
+异步任务指的是不进入主线程、而进入任务队列（task queue）的任务。只有"任务队列"通知主线程，某个异步任务可以执行了，该任务才会进入主线程执行。
+
+异步执行的运行机制如下：
+
+1. 所有同步任务都在主线程上执行，形成一个执行栈
+
+2. 主线程之外，在存在一个任务队列。只要异步任务有了运行结果，就在任务队列之中放置一个事件
+
+3. 一旦执行栈中的所有同步任务执行完毕，系统就会读取任务队列，那么异步任务就会进入执行栈 执行
+
+4. 主线程不断重复上面的3个步骤
+
+![](./images/eventloop.jpg)
+
+只要主线程空了，就会去读取"任务队列"，这就是JavaScript的运行机制。这个过程会不断重复。
+
+### Event Loop
+
+主线程从"任务队列"中读取事件，这个过程是循环不断的，所以整个的这种运行机制又称为Event Loop（事件循环）
+
+为了更好地理解Event Loop，请看下图:
+![](./images/eventloop1.png)
+
+以下几种情况会放入异步任务队列中：
+1. setTimeout和setlnterval
+2. DOM事件
+3. ES6中的Promise
+4. Ajax异步请求
+5. 异步任务
+
+#### 定时器注意点
+
+定时器功能主要由setTimeout()和setInterval()这两个函数来完成，它们的内部运行机制完全一样，区别在于前者指定的代码是一次性执行，后者则为反复执行。
+
+setTimeout()接受两个参数，第一个是回调函数，第二个是推迟执行的毫秒数。
+
+当第二个参数缺省时，默认为 0；当指定的值小于 4 毫秒，则增加到 4ms(4ms 是 HTML5 标准指定的，对于 2010 年及之前的浏览器则是 10ms);也就是说至少需要4毫秒，该setTimeout()拿到任务队列中。
+
+需要注意的是，setTimeout()只是将事件插入了"任务队列"，必须等到当前代码（执行栈）执行完，主线程才会去执行它指定的回调函数。要是当前代码耗时很长，有可能要等很久，所以并没有办法保证，回调函数一定会在setTimeout()指定的时间执行。
+
+### 微任务和宏任务
+
+异步任务可以分为微任务（Microtak） 和 宏任务（Macrotask）
+
+宏任务包括：
+* script(全局任务)
+* setTimeout/setInterval
+* setImmediate
+* I/O
+* UI rendering
+
+微任务包括：
+* new Promise().then(回调)
+* process.nextTick
+* MutationObserver(html5新特性)
+
+那有个问题哪个先执行呢？
+
+如下图所示：
+
+![](./images/eventloop2.png)
+
+从图中得出：
+1. 存在微任务的话，那么就执行所有的微任务
+2. 微任务都执行完之后，执行第一个宏任务，
+3. 循环以上的步骤
+
+举个例子：
+```
+Promise.resolve().then(()=>{
+  console.log('Promise1')  
+  setTimeout(()=>{
+    console.log('setTimeout2')
+  },0)
+})
+setTimeout(()=>{
+  console.log('setTimeout1')
+  Promise.resolve().then(()=>{
+    console.log('Promise2')    
+  })
+},0)
+```
+最后输出结果是Promise1，setTimeout1，Promise2，setTimeout2
+
+### Node.js的Event Loop
+
+Node.js也是单线程的Event Loop，但是它的运行机制不同于浏览器环境。
+
+请看下面的示意图
+![5](https://user-images.githubusercontent.com/29204799/53956078-96b3df80-4115-11e9-9d66-ab461fb99ba0.png)
+
+
+根据上图，Node.js的运行机制如下。
+
+> （1）V8引擎解析JavaScript脚本。
+>
+> （2）解析后的代码，调用Node API。
+>
+> （3）[libuv库](https://github.com/joyent/libuv)负责Node API的执行。它将不同的任务分配给不同的线程，形成一个Event Loop（事件循环），以异步的方式将任务的执行结果返回给V8引擎。
+>
+> （4）V8引擎再将结果返回给用户。
+
+除了setTimeout和setInterval这两个方法，Node.js还提供了另外两个与"任务队列"有关的方法：[process.nextTick](http://nodejs.org/docs/latest/api/process.html#process_process_nexttick_callback)和[setImmediate](http://nodejs.org/docs/latest/api/timers.html#timers_setimmediate_callback_arg)。它们可以帮助我们加深对"任务队列"的理解。
+
+process.nextTick方法可以在当前"执行栈"的尾部----下一次Event Loop（主线程读取"任务队列"）之前----触发回调函数。也就是说，它指定的任务总是发生在所有异步任务之前。如果有多个process.nextTick语句（不管它们是否嵌套），将全部在当前"执行栈"执行。
+
+setImmediate方法则是在当前"任务队列"的尾部添加事件，也就是说，它指定的任务总是在下一次Event Loop时执行，这与setTimeout(fn, 0)很像。
