@@ -117,3 +117,97 @@ class Queue(){
 最小优先队列，是把优先级的值较小的元素被放置在队列最前面
 
 最大优先队列，是把优先级的值较大的元素被放置在队列最前面
+
+
+## 链表
+
+### 概念
+
+链表是一个线性结构，同时也是一个天然的递归结构。链表结构可以充分利用计算机内存空间，实现灵活的内存动态管理。但是链表失去了数组随机读取的优点，同时链表由于增加了结点的指针域，空间开销比较大。
+
+js 实现
+```
+class Node{
+  constructor(value,next){
+    this.value = value;
+    this.next = next
+  }
+}
+
+class LinkedList{
+  constructor(){
+    this.length = 0
+    this.header = null
+  }
+  
+  checkIndex(index) { // 判断是否越界
+    if (index < 0 || index > this.length) throw Error('Index error')
+  }
+  find(node = this.header,index,currentIndex = 0 ){ // 查找对应位置的节点
+    if(index == cunrrentIndex ) return node
+    return this.find(node.next,index,currentIndex + 1)
+  }
+  addNode(element,index){ 
+    this.checkIndex(index)
+    if(index == 0){
+      this.header = new Node(element,null);
+      return 
+    }
+    let currentNode = this.find(index)
+    currentNode.next = new Node(v,currentNode.next) // 变更点前位置node.next的值 并将新node的next 变更为之前的值
+    this.length ++
+  }
+  remove(index){ // 从列表中移除一项。
+    this.check(index)
+    let currentNode = this.find(index)
+    let node = currentNode.next
+    currentNode.next = node.next
+    node.next = null
+    this.length --;
+  }
+}
+```
+
+### 双向链表
+
+双向链表和普通链表的区别在于，在链表中， 一个节点只有链向下一个节点的链接，而在双向链表中，链接是双向的:一个链向下一个元素， 另一个链向前一个元素
+![](./images/doublyLinkedList.png)
+
+```
+class DoublyNode extends Node {
+   constructor(value,perv,next){
+     super(value,next)
+     this.next = next
+   }
+}
+class DoublyLinkedList{
+  constructor(){
+    this.length = 0;
+    this.header = null
+    this.tail = null // 尾指针
+  }
+  checkIndex(index) { // 判断是否越界
+    if (index < 0 || index > this.length) throw Error('Index error')
+  }
+  find(node = this.header,index,currentIndex = 0 ){ // 查找对应位置的节点
+    if(index == cunrrentIndex ) return node
+    return this.find(node.next,index,currentIndex + 1)
+  }
+  addNode(element,index){ 
+    this.checkIndex(index)
+    let currentNode = this.find(index)
+    let newNode = new DoublyNode(v,currentNode,currentNode.next)
+    currentNode.next.perv = newNode
+    currentNode.next = newNode 
+    this.length ++
+  }
+  remove(index){ // 从列表中移除一项。
+    this.check(index)
+    let currentNode = this.find(index)
+    currentNode.next.perv = currentNode.perv
+    currentNode.perv.next = currentNode.next
+    this.length --;
+  }
+}
+```
+
