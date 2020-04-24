@@ -630,3 +630,4 @@ transition 和 animation 区别 transition需要触发事件。
 }
 
 ```
+## 移动端适配1px的问题
