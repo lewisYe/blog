@@ -176,4 +176,124 @@ CORS 需要浏览器和后端同时支持。服务端设置 Access-Control-Allow
 
 ## 浏览器缓存
 
-## 浏览器兼容问题
+缓存按缓存策略来分可以分为**强制缓存**和**协商缓存**
+
+### 强制缓存
+
+强制缓存直接减少请求数，是提升最大的缓存策略。 如果考虑使用缓存来优化网页性能的话，强制缓存应该是首先被考虑的。可以造成强制缓存的字段是 Cache-control 和 Expires。
+
+#### Expires
+
+Expires 是 HTTP 1.0 的字段，表示缓存到期时间。 在Response Headers中，在响应http请求时告诉浏览器在过期时间前浏览器可以直接从浏览器缓存取数据，而无需再次请求。例如 Expires: Thu, 10 Nov 2019 08:45:11 GMT
+
+但是该字段具有以下缺点：
+
+* 由于服务器返回的时间是绝对时间，用户如果对本地时间进行修改，从而导致浏览器判断缓存失效，重新请求该资源。或者不考虑修改，客户端与服务器端时间可能存在时差或者误差。
+
+
+#### Cache-control
+
+在HTTP/1.1中，Cache-Control是**最重要**的规则，主要用于控制网页缓存。例如：Cache-control: max-age=60*5。
+
+Cache-control 常用字段：[完整属性列表](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Cache-Control)
+
+* max-age 设置缓存存储的最大周期，超过这个时间缓存被认为过期(单位秒)。与Expires相比，时间使用的是相对于请求发起的时间。
+* no-cache 在发布缓存副本之前，强制要求缓存把请求提交给原始服务器进行验证(协商缓存验证)。
+* no-store 缓存不应存储有关客户端请求或服务器响应的任何内容，即不使用任何缓存。
+* public 表明响应可以被任何对象（包括：发送请求的客户端，代理服务器，等等）缓存，即使是通常不可缓存的内容。
+* private 表明响应只能被单个用户缓存，不能作为共享缓存（即代理服务器不能缓存它）。私有缓存可以缓存响应内容，比如：对应用户的本地浏览器。
+* must-revalidate 一旦资源过期（比如已经超过max-
+
+这些值可以混合使用。在混合使用时，它们的优先级如下图:
+
+![](https://camo.githubusercontent.com/6d856deffa6c56e887a610ae81e99b50a36172c1/68747470733a2f2f757365722d676f6c642d63646e2e786974752e696f2f323031382f31322f32362f313637653837333962633732346663623f696d61676556696577322f302f772f313238302f682f3936302f666f726d61742f776562702f69676e6f72652d6572726f722f31)
+
+注意 在 HTTP/1.1 之前，如果想使用 no-cache，通常是使用 Pragma 字段，如 Pragma: no-cache(这也是 Pragma 字段唯一的取值)。
+
+自从 HTTP/1.1 开始，Expires 逐渐被 Cache-control 取代。Cache-control 是一个相对时间，即使客户端时间发生改变，相对时间也不会随之改变，这样可以保持服务器和客户端的时间一致性。而且 Cache-control 的可配置性比较强大。
+
+Cache-control 的优先级高于 Expires，为了兼容 HTTP/1.0 和 HTTP/1.1，实际项目中两个字段都会设置。
+
+### 协商缓存
+
+当强制缓存失效(超过规定时间)时，就需要使用协商缓存，由服务器决定缓存内容是否失效。
+
+协商缓存在请求数上和没有缓存是一致的，但如果是 304 的话，返回的仅仅是一个状态码而已，并没有实际的文件内容，因此 在响应体体积上的节省是它的优化点。
+
+协商缓存主要通过两组Http Header 值实现 `Last-Modified & If-Modified-Since` 和 `ETag & If-None-Match`
+
+#### Last-Modified & If-Modified-Since
+
+1. 服务器端在Response Header 中 `Last-Modified`字段告知客户端，资源最后一次被修改的时间，例如 `Last-Modified: Mon, 10 Nov 2018 09:10:11 GMT`
+
+2. 下一次请求相同资源时时，浏览器从自己的缓存中找出“不确定是否过期的”缓存。因此在请求头中将上次的 `Last-Modified` 的值写入到Request Header的 `If-Modified-Since` 字段
+
+3. 服务器会将 `If-Modified-Since` 的值与 `Last-Modified` 字段进行对比。如果相等，则表示未修改，响应 304；反之，则表示修改了，响应 200 状态码，并返回数据。
+
+**缺点：**
+* 如果资源更新的速度是秒以下单位，那么该缓存是不能被使用的，因为它的时间单位最低是秒。
+* 如果文件是通过服务器动态生成的，那么该方法的更新时间永远是生成的时间，尽管文件可能没有变化，所以起不到缓存的作用。
+
+#### ETag & If-None-Match
+
+Etag是服务器响应请求时，返回当前资源文件的一个唯一标识(由服务器生成)，只要资源有变化，Etag就会重新生成。
+
+1. 服务器端在Response Header 中 `ETag`字段告知客户端，代表当前资源的唯一标识。
+
+2. 下一次请求相同资源时时，浏览器从自己的缓存中找出“不确定是否过期的”缓存。因此将上次的 `ETag` 的值写入到Request Header的 `If-None-Match` 字段
+
+3. 服务器会将 `If-None-Match` 的值与 `ETag` 字段进行对比。如果相等，则表示未修改，响应 304；反之，则表示修改了，响应 200 状态码，并返回数据。
+
+#### Last-Modified 与 Etag 比较
+
+1. 首先在精确度上，Etag要优于Last-Modified。
+
+Last-Modified的时间单位是秒，如果某个文件在1秒内改变了多次，那么他们的Last-Modified其实并没有体现出来修改，但是Etag每次都会改变确保了精度；如果是负载均衡的服务器，各个服务器生成的Last-Modified也有可能不一致。
+
+2. 第二在性能上，Etag要逊于Last-Modified，毕竟Last-Modified只需要记录时间，而Etag需要服务器通过算法来计算出一个hash值。 
+
+3. 第三在优先级上，服务器校验优先考虑Etag
+
+### 缓存总结
+
+缓存流程图：
+
+![](./images/cache.png)
+
+#### 用户行为对缓存的影响
+
+| 用户操作 | Expries/Cache-Control | Last-Modied/Etag |
+| :-: | :-: |:-: |
+| 地址栏回车 | 有效 | 有效 |
+| 页面链接跳转 | 有效 | 有效 |
+| 新开窗口 | 有效 | 有效 |
+| 浏览器前进后退 | 有效 | 有效 |
+| F5刷新 | 无效 | 有效 |
+| ctrl + F5 强制刷新 | 无效 | 无效 |
+
+### 实际项目中的缓存问题
+
+#### 微信浏览器H5页面缓存问题
+
+问题描述：在微信公众号中添加h5跳转链接，当项目更新发布之后，在微信公众号中点击入口进入，页面出现白屏。
+
+问题定位：跟过调试和分析发现是微信浏览器缓存问题，更新发布现代码之后，调用的还是上一次的js 资源
+
+h5页面技术实现：react
+
+问题解决：
+1. app.js 添加 时间戳后缀 
+2. index.html 文件中添加
+```
+ <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+```
+3. nginx 配置中添加
+```
+location / {
+    root   html;
+    index  index.html;
+    add_header Cache-Control no-cache; // 主要是这一行 忽略缓存
+}
+```
