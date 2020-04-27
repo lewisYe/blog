@@ -223,7 +223,12 @@ class DoublyLinkedList{
 
 二叉搜索树(BST)是二叉树的一种，但是它只允许你在左侧节点存储(比父节点)小的值， 在右侧节点存储(比父节点)大(或者等于)的值。
 
-js来表示二叉搜索树：
+js来实现二叉搜索树一些基本功能：
+1. insertNode(key):向树中插入一个新的键。
+2. search(key):在树中查找一个键，如果节点存在，则返回true;如果不存在，则返回false。
+3. min:返回树中最小的值/键。
+4. max:返回树中最大的值/键。
+5. remove(key):从树中移除某个键。
 
 ```
 class TreeNode{
@@ -263,3 +268,48 @@ class BinarySearchTree{
 ```
 
 ### 树的遍历
+
+树的遍历具有3种方式。
+
+1. 先序遍历 表示先访问根节点，然后访问左节点，最后访问右节点。
+
+2. 中序遍历 表示先访问左节点，然后访问根节点，最后访问右节点。
+
+3. 后序遍历 后序遍历表示先访问左节点，然后访问右节点，最后访问根节点。
+
+三者的差别就是在于根节点在第一个访问。
+
+**先序遍历**
+```
+preOrderTraverse(node,callback){
+  if(node){
+    callback(node.key)
+    preOrderTraverse(this.left,callback)
+    preOrderTraverse(this.right,callback)
+  }
+}
+```
+
+**中序遍历**
+
+```
+inOrderTraverse(node){
+  if(node){
+    inOrderTraverse(this.left)
+    callback(node.key)
+    inOrderTraversse(this.right)
+  }
+}
+```
+
+**后序遍历**
+
+```
+postOrderTraverse(node){
+  if(node){
+    postOrderTraverse(this.left)
+    postOrderTraverse(this.right)
+    callback(node.key)
+  }
+}
+```
