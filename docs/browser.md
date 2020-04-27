@@ -174,6 +174,186 @@ CORS 需要浏览器和后端同时支持。服务端设置 Access-Control-Allow
 
 ## 本地存储
 
+### cookies
+
+cookie 是指存储在用户本地终端上的数据，同时它是与具体的web页面或者站点相关。cookie数据会自动在web浏览器和web服务器之间传输。
+
+#### 特性
+
+* 不同的浏览器存放的cookie位置不一样
+* cookie的存储是以域名形式区分的，不同的域下存储的cookie是独立
+* 可以设置cookie生效的域，也就是说我们能操作的cookie是当前域以及当前域下的子域
+* 一个域名下存储的cookie个数是有限的
+* 每个cookie存放的内容大小也是有限制的，不同的浏览器存放大小不一样，一般为4KB。
+* cookie也可以设置过期的时间，默认是会话结束的时候，当时间到期自动销毁
+
+
+#### cookie的增删改
+
+**设置**
+
+cookie的设置可以分为服务端设置和客户端设置
+
+1. **服务端设置**
+
+服务器端响应的response header 中 set-cookie,是服务端专门用来设置cookie的。
+
+语法：`Set-Cookie: value[; expires=date][; domain=domain][; path=path][; secure]`
+
+注意： 
+  * 一个set-Cookie字段只能设置一个cookie，当你要想设置多个 cookie，需要添加同样多的set-Cookie字段。
+  * 服务端可以设置cookie 的所有选项：expires、domain、path、secure、HttpOnly 
+  * 通过 Set-Cookie 指定的这些可选项只会在浏览器端使用，而不会被发送至服务器端。
+
+2. **客户端设置**
+
+语法：`document.cookie = "key=value[;expires=date][;domain=domain][;path=path][;secure]" `
+
+注意：客户端可以设置cookie 的下列选项：expires、domain、path、secure（有条件：只有在https协议的网页中，客户端设置secure类型的 cookie 才能成功），但无法设置HttpOnly选项。
+
+**读取**
+
+通过document.cookie来获取当前网站下的cookie的时候，得到的字符串形式的值，它包含了当前网站下所有的cookie（为避免跨域脚本(xss)攻击，这个方法只能获取非 HttpOnly 类型的cookie）。它会把所有的cookie通过一个分号+空格的形式串联起来 例如username=xx; age=xxx
+
+**修改**
+
+要想修改一个cookie，只需要重新赋值就行，旧的值会被新的值覆盖。但要注意一点，在设置新cookie时，path/domain这几个选项一定要旧cookie 保持一样。否则不会修改旧值，而是添加了一个新的 cookie。
+
+**删除**
+
+把要删除的cookie的过期时间设置成已过去的时间,path/domain/这几个选项一定要旧cookie 保持一样。
+
+#### 属性
+
+1. expires
+
+用来设置cookie的有效时间，默认为浏览器会话(Session)。
+
+时间必须是 GMT 格式的时间；可以通过 new Date().toGMTString()或者new Date().toUTCString() 来获得 。
+
+例如`expires=Thu, 25 Feb 2020 14:18:00 GMT`表示cookie讲在2020年2月25日14:18分之后失效，对于失效的cookie浏览器会清空。
+
+注意:
+
+expires 是 http/1.0协议中的选项，在新的http/1.1协议中expires已经由 max-age 选项代替，两者的作用都是限制cookie 的有效时间。
+
+expires的值是一个时间点（cookie失效时刻= expires），而max-age 的值是一个以秒为单位时间段（cookie失效时刻= 创建时刻+ max-age）。
+
+max-age 的默认值是 -1(即有效期为 session )；若max-age有三种可能值：负数、0、正数。负数：有效期session；0：删除cookie；正数：有效期为创建时刻+ max-age
+
+假如 Expires 和 Max-Age 都存在，Max-Age 优先级更高。
+
+2. Domain
+
+Domain 指定了 Cookie 可以送达的主机名。假如没有指定，那么默认值为当前文档访问地址中的主机部分（但是不包含子域名）。
+
+但是很多网址不止有一个域名比如：a.example.com和b.example.com如果他们想要共享cookie那么cookie的domain需要设置为domain=.example.com
+
+注意的是不能跨域设置 Cookie
+
+3. Path
+
+Path 指定了一个 URL 路径，这个路径必须出现在要请求的资源的路径中才可以发送 Cookie 首部。比如设置 Path=/docs，/docs/Web/ 下的资源会带 Cookie 首部，/test 则不会携带 Cookie 首部。
+
+Domain 和 Path 标识共同定义了 Cookie 的作用域：即 Cookie 应该发送给哪些 URL。
+
+4. Secure
+
+标记为 Secure 的 Cookie 只应通过被HTTPS协议加密过的请求发送给服务端。使用 HTTPS 安全协议，可以保护 Cookie 在浏览器和 Web 服务器间的传输过程中不被窃取和篡改。
+
+5. HTTPOnly
+
+设置 HTTPOnly 属性可以防止客户端脚本通过 document.cookie 等方式访问 Cookie，有助于避免 XSS 攻击。
+
+6. SameSite
+
+SameSite 是最近非常值得一提的内容，因为 2020年 2 月份发布的 Chrome80 版本中默认屏蔽了第三方的 Cookie。
+
+SameSite 属性可以让 Cookie 在跨站请求时不会被发送，从而可以阻止跨站请求伪造攻击（CSRF）。
+
+SameSite 可以有下面三种值：
+1. **Strict** 仅允许一方请求携带Cookie，即浏览器将只发送相同站点请求的Cookie，即当前网页URL与请求目标URL完全一致
+2. **Lax** 允许部分第三方请求携带Cookie
+3. **None** 无论是否跨站都会发送Cookie
+
+之前默认是None，Chrome80版本后默认是Lax
+
+什么是跨站
+
+Cookie中的「同站」判断就比较宽松：只要两个 URL 的 eTLD+1 相同即可，不需要考虑协议和端口。
+
+其中，eTLD 表示有效顶级域名，注册于 Mozilla 维护的公共后缀列表（Public Suffix List）中，例如，.com、.co.uk、.github.io 等。eTLD+1 则表示，有效顶级域名+二级域名，例如 taobao.com 等。
+
+举几个例子，www.taobao.com 和 www.baidu.com 是跨站，www.a.taobao.com 和 www.b.taobao.com 是同站，a.github.io 和 b.github.io 是跨站(注意是跨站)。
+
+SameSite 的值从None 变为 Lax 所带来的影响有哪些
+
+|请求类型|实例|Strict|Lax|None|
+|:-:|:-:|:-:|:-:|:-:|
+|链接|`<a href="..."></a>`|不发送|发送cookie|发送cookie|
+|get表单|`<form method="GET" action="">`|不发送|发送cookie|发送cookie|
+|post表单|`<form method="POST" action="">`|不发送|不发送|发送cookie|
+|iframe|`<iframe src=".."></iframe>`|不发送|不发送|发送cookie|
+|AJAX|`$.get()`|不发送|不发送|发送cookie|
+|Image|`<img src="...">`|不发送|不发送|发送cookie|
+
+从表格中可以看出，对大部分 web 应用而言，Post 表单，iframe，AJAX，Image 这四种情况从以前的跨站会发送三方 Cookie，变成了不发送。
+
+Post表单：应该的，学 CSRF 总会举表单的例子。
+
+iframe：iframe 嵌入的 web 应用有很多是跨站的，都会受到影响。
+
+AJAX：可能会影响部分前端取值的行为和结果。
+
+Image：图片一般放 CDN，大部分情况不需要 Cookie，故影响有限。但如果引用了需要鉴权的图片，可能会受到影响
+
+
+不过也会有两点要注意的地方：
+
+1. HTTP 接口不支持 SameSite=none
+
+如果你想加 SameSite=none 属性，那么该 Cookie 就必须同时加上 Secure 属性，表示只有在 HTTPS 协议下该 Cookie 才会被发送。
+
+2. 需要 UA 检测，部分浏览器不能加 SameSite=none
+IOS 12 的 Safari 以及老版本的一些 Chrome 会把 SameSite=none 识别成 SameSite=Strict，所以服务端必须在下发 Set-Cookie 响应头时进行 User-Agent 检测，对这些浏览器不下发 SameSite=none 属性
+
+#### Cookie 的作用与缺点
+
+Cookie 主要用于以下三个方面：
+
+会话状态管理（如用户登录状态、购物车、游戏分数或其它需要记录的信息）
+个性化设置（如用户自定义设置、主题等）
+浏览器行为跟踪（如跟踪分析用户行为等）
+
+缺点 可以从大小、安全、增加请求大小等方面回答。
+
+### localStorage、sessionStorage
+
+localStorage和sessionStorage都继承于Storage，提供了统一的api来访问和设置数据。API列表:
+
+* Storage.length 返回一个整数，表示存储在 Storage 对象中的数据项数量。
+* Storage.key() 该方法接受一个数值 n 作为参数，并返回存储中的第 n 个键名。
+* Storage.getItem() 该方法接受一个键名作为参数，返回键名对应的值。
+* Storage.setItem() 该方法接受一个键名和值作为参数，将会把键值对添加到存储中，如果键名存在，则更新其对应的值
+* Storage.removeItem() 该方法接受一个键名作为参数，并把该键名从存储中删除。
+* Storage.clear() 调用该方法会清空存储中的所有键名。
+
+localStorage和sessionStorage不同之处在于 localStorage 里面存储的数据没有过期时间设置，而存储在 sessionStorage 里面的数据在页面会话结束时会被清除。页面会话在浏览器打开期间一直保持，并且重新加载或恢复页面仍会保持原来的页面会话.
+
+### cookie,localStorage,sessionStorage区别
+
+相同：在本地（浏览器端）存储数据。
+
+不同：
+
+* localStorage只要在相同的协议、相同的主机名、相同的端口下，就能读取/修改到同一份localStorage数据。
+* sessionStorage比localStorage更严苛一点，除了协议、主机名、端口外，还要求在同一窗口（也就是浏览器的标签页）下。
+* localStorage是永久存储，除非手动删除。
+* sessionStorage当会话结束（当前页面关闭的时候，自动销毁）
+* cookie的数据会在每一次发送http请求的时候，同时发送给服务器而localStorage、sessionStorage不会。
+
+### Service Worker
+
 ## 浏览器缓存
 
 缓存按缓存策略来分可以分为**强制缓存**和**协商缓存**
