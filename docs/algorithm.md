@@ -211,3 +211,55 @@ class DoublyLinkedList{
 }
 ```
 
+## 树
+
+一个树结构包含一系列存在父子关系的节点。每个节点都有一个父节点(除了顶部的第一个节点)以及零个或多个子节点。位于树顶部的节点叫作根节点，它没有父节点。
+
+节点的一个属性是深度，节点的深度取决于它的祖先节点的数量；树的高度取决于所有节点深度的最大值。
+
+### 二叉树和二叉搜索树
+
+二叉树中的节点最多只能有两个子节点:一个是左侧子节点，另一个是右侧子节点。
+
+二叉搜索树(BST)是二叉树的一种，但是它只允许你在左侧节点存储(比父节点)小的值， 在右侧节点存储(比父节点)大(或者等于)的值。
+
+js来表示二叉搜索树：
+
+```
+class TreeNode{
+  constructor(key){
+    this.key = key;
+    this.left = null;
+    this.right = null;
+  }
+}
+
+class BinarySearchTree{
+  constructor(){
+    this.root = null
+  }
+
+  insertNode(key,partenNode){
+    let node = new TreeNode(key)
+    if(!this.root){
+      this.root = node
+    }else{
+      if(partenNode.key > key){
+        if(!partenNode.left){
+            partenNode.left = node
+        }else{
+          insertNode(key, partenNode.left)
+        }
+      }else{
+        if(!partenNode.right){
+            partenNode.right = node
+        }else{
+          insertNode(key, partenNode.right)
+        }
+      }
+    }
+  }
+}
+```
+
+### 树的遍历
