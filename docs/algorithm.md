@@ -226,9 +226,8 @@ class DoublyLinkedList{
 js来实现二叉搜索树一些基本功能：
 1. insertNode(key):向树中插入一个新的键。
 2. search(key):在树中查找一个键，如果节点存在，则返回true;如果不存在，则返回false。
-3. min:返回树中最小的值/键。
-4. max:返回树中最大的值/键。
-5. remove(key):从树中移除某个键。
+3. remove(key):从树中移除某个键。
+4. deep() 树的深度
 
 ```
 class TreeNode{
@@ -244,6 +243,7 @@ class BinarySearchTree{
     this.root = null
   }
 
+  // 插入节点
   insertNode(key,partenNode){
     let node = new TreeNode(key)
     if(!this.root){
@@ -263,6 +263,59 @@ class BinarySearchTree{
         }
       }
     }
+  }
+
+  search(key,node){
+    let res = false
+    if(!node){
+      return false
+    }
+    if(node.key > key && node.left){
+      res = this.search(key,node.left)
+    }
+    if(node.key < key && node.right){
+      res = this.search(key,node.right)
+    }
+    if( node.key === key){
+      res = true
+    }
+    return res
+  }
+
+  removeNode(key,node){
+    if(!node){
+      return
+    }
+    if(key < node.key){
+       removeNode(key,node.left)
+    }else if(key> node.key){
+      removeNode(key,node.right)
+    }else{
+      if(node.left == null && node.right==null){
+        node = null
+        return node
+      }
+      if(node.left === null){
+        node = node.right
+        return node
+      }
+      if(node.right === null){
+        node = node.left
+        return node
+      }
+      var _node = findMinNode(node.right) // 查找最小的子节点
+      node.key = _node.key
+      node.right = removeNode(_node.key,node.right)
+      return node
+    }
+  }
+
+  // 树的深度
+  deep(){
+    if(!this.root){
+      return 0
+    }
+    return Math.max(deep(this.root.left),deep(this.root.right)) + 1
   }
 }
 ```
