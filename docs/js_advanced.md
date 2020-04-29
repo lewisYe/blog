@@ -498,3 +498,28 @@ var curry = fn =>
 
 
 
+## instanceof 的实现
+
+instanceof 运算符用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上。
+
+语法：`object instanceof constructor`
+
+object 代表实例 constructor 代表构造函数
+
+```
+function instanceof(left,right){
+  let leftValue = left.__proto__
+  let rightValue = right.prototype
+  while(1){
+    if(!leftValue){ // 最顶层null
+      return false
+    }
+    if(leftValue === rightValue){
+      return true
+    }
+    leftValue = leftValue.__proto__
+  }
+}
+```
+
+## Object.create() 的实现

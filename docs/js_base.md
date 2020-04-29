@@ -2053,7 +2053,7 @@ JavaScript 语音的一大特点就是单线程，也就是说，同一个时间
 主线程从"任务队列"中读取事件，这个过程是循环不断的，所以整个的这种运行机制又称为Event Loop（事件循环）
 
 为了更好地理解Event Loop，请看下图:
-![](./images/eventloop1.png)
+![](./images/eventloop.png)
 
 以下几种情况会放入异步任务队列中：
 1. setTimeout和setlnterval
@@ -2139,3 +2139,227 @@ Node.js也是单线程的Event Loop，但是它的运行机制不同于浏览器
 process.nextTick方法可以在当前"执行栈"的尾部----下一次Event Loop（主线程读取"任务队列"）之前----触发回调函数。也就是说，它指定的任务总是发生在所有异步任务之前。如果有多个process.nextTick语句（不管它们是否嵌套），将全部在当前"执行栈"执行。
 
 setImmediate方法则是在当前"任务队列"的尾部添加事件，也就是说，它指定的任务总是在下一次Event Loop时执行，这与setTimeout(fn, 0)很像。
+
+### 知识点实践运用解题
+
+1. 如果我们在浏览器控制台中运行下列的'foo'函数，是否会导致堆栈溢出错误？
+```
+function foo() {
+  setTimeout(foo, 0); // 是否存在堆栈溢出错误?
+}; 
+```
+
+答案是不会那是为什么呢
+
+因为setTimeout 是个异步流 宏任务。
+
+JS调用栈是后进先出(LIFO)的。引擎每次从堆栈中取出一个函数，然后从上到下依次运行代码。每当它遇到一些异步代码，如setTimeout，它就把它交给Web API。因此，每当事件被触发时，callback 都会被发送到任务队列
+
+事件循环(Event loop)不断地监视任务队列(Task Queue)，并按它们排队的顺序一次处理一个回调。每当调用堆栈(call stack)为空时，Event loop获取回调并将其放入堆栈(stack )中进行处理。请记住，如果调用堆栈不是空的，则事件循环不会将任何回调推入堆栈。
+
+运行过程如下图：
+![](./images/runtime.gif)
+
+2. 如果在控制台中运行以下函数，当前页面(选项卡)的 UI 是否仍然响应
+
+```
+function foo() {
+  return Promise.resolve().then(foo);
+};  
+```
+
+答案是不响应 
+
+setTimeout回调是宏任务，而Promise回调是微任务。
+
+宏任务在单个循环周期中一次一个地推入堆栈，但是微任务队列总是在执行后返回到事件循环之前清空。因此，如果你以处理条目的速度向这个队列添加条目，那么你就永远在处理微任务。只有当微任务队列为空时，事件循环才会重新渲染页面、
+
+## Object 常用方法
+
+1. Object.assgin()
+
+用于将所有**可枚举**属性的值从一个或多个源对象复制到目标对象。它将返回目标对象。Object.assign()拷贝的是属性值。假如源对象的属性值是一个对象的引用，那么它也只指向那个引用。
+
+```
+const o1 = { a: 1 };
+const o2 = { b: 2 };
+const o3 = { c: 3 };
+
+const obj = Object.assign(o1, o2, o3);
+console.log(obj); // { a: 1, b: 2, c: 3 }
+console.log(o1);  // { a: 1, b: 2, c: 3 }, 注意目标对象自身也会改变。
+```
+
+2. Object.create()
+
+Object.create()方法创建一个新对象，使用现有的对象来提供新创建的对象的__proto__。
+
+语法：`Object.create(proto[, propertiesObject])`
+
+参数 
+* proto 新创建对象的原型对象。
+* propertiesObject 可选。如果没有指定为 undefined，则是要添加到新创建对象的不可枚举（默认）属性对象的属性描述符以及相应的属性名称。这些属性对应Object.defineProperties()的第二个参数。
+
+返回值  一个新对象，带着指定的原型对象和属性。
+
+3. Object.defineProperties()
+
+Object.defineProperties() 方法直接在一个对象上定义新的属性或修改现有属性，并返回该对象。
+
+语法：`Object.defineProperties(obj, props)`
+
+参数:
+
+* obj 在其上定义或修改属性的对象。
+* props 要定义其可枚举属性或修改的属性描述符的对象。
+
+对象中存在的属性描述符主要有两种：数据描述符和访问器描述符。
+
+描述符具有以下键：
+
+configurable
+
+true 当且仅当该属性描述符的类型可以被改变并且该属性可以从对应对象中删除。默认为 false
+
+enumerable
+
+true 当且仅当在枚举相应对象上的属性时该属性显现。默认为 false
+
+value
+
+与属性关联的值。可以是任何有效的JavaScript值（数字，对象，函数等）。默认为 undefined.
+
+writable
+
+true当且仅当与该属性相关联的值可以用assignment operator改变时。默认为 false
+
+get
+
+作为该属性的 getter 函数，如果没有 getter 则为undefined。函数返回值将被用作属性的值。默认为 undefined
+
+set
+
+作为属性的 setter 函数，如果没有 setter 则为undefined。函数将仅接受参数赋值给该属性的新值。默认为 undefined
+
+```
+var obj = {};
+Object.defineProperties(obj, {
+  'property1': {
+    value: true,
+    writable: true
+  },
+  'property2': {
+    value: 'Hello',
+    writable: false
+  }
+  // etc. etc.
+});
+```
+
+Object.defineProperty() 与 Object.defineProperties()的区别在于一次只能定义一个属性
+
+4. Object.getOwnPropertyDesriptor()
+
+Object.getOwnPropertyDescriptor() 方法返回指定对象上一个自有属性对应的属性描述符。（自有属性指的是直接赋予该对象的属性，不需要从原型链上进行查找的属性）
+
+语法 `Object.getOwnPropertyDescriptor(obj, prop)`
+
+参数 obj 需要查找的目标对象 prop目标对象内属性名称
+
+返回值 如果指定的属性存在于对象上，则返回其属性描述符对象（property descriptor），否则返回 undefined。
+
+```
+var o, d;
+
+o = { get foo() { return 17; } };
+d = Object.getOwnPropertyDescriptor(o, "foo");
+// d {
+//   configurable: true,
+//   enumerable: true,
+//   get: /*the getter function*/,
+//   set: undefined
+// }
+
+o = { bar: 42 };
+d = Object.getOwnPropertyDescriptor(o, "bar");
+// d {
+//   configurable: true,
+//   enumerable: true,
+//   value: 42,
+//   writable: true
+// }
+```
+
+5. Object.getOwnPropertyDesriptors()
+
+Object.getOwnPropertyDescriptors() 方法用来获取一个对象的所有自身属性的描述符。
+
+语法：`Object.getOwnPropertyDescriptors(obj)`
+
+参数 obj 任意对象
+
+返回值 所指定对象的所有自身属性的描述符，如果没有任何自身属性，则返回空对象。
+
+
+6. Object.getOwnPropertyNames()
+
+Object.getOwnPropertyNames()方法返回一个由指定对象的所有自身属性的属性名（包括不可枚举属性但不包括Symbol值作为名称的属性）组成的数组。
+
+```
+// 类数组对象
+var obj = { 0: "a", 1: "b", 2: "c"};
+console.log(Object.getOwnPropertyNames(obj)); // ["0", "1", "2"]
+```
+7. Object.getPropertyOf()
+
+Object.getPrototypeOf() 方法返回指定对象的原型（内部[[Prototype]]属性的值）
+
+语法:`Object.getPrototypeOf(obj)`
+
+参数 obj 要返回其原型的对象。
+
+返回值 给定对象的原型。如果没有继承属性，则返回 null 。
+
+```
+var proto = {};
+var obj = Object.create(proto);
+Object.getPrototypeOf(obj) === proto; // true
+
+Object.getPrototypeOf( Object ) === Function.prototype;        // true
+```
+
+8. Object.prototype.hasOwnProperty()
+
+hasOwnProperty() 方法会返回一个布尔值，指示对象**自身属性**中是否具有指定的属性（也就是，是否有指定的键）。
+
+```
+const object1 = new Object();
+object1.property1 = 42;
+
+console.log(object1.hasOwnProperty('property1'));
+// expected output: true
+```
+9. Object.setPrototypeOf()
+
+Object.setPrototypeOf() 方法设置一个指定的对象的原型 ( 即, 内部[[Prototype]]属性）到另一个对象或  null。
+
+语法：`Object.setPrototypeOf(obj, prototype)`
+
+参数 obj 要设置其原型的对象。prototype 该对象的新原型(一个对象 或 null).
+
+Object.setPrototypeOf()是ECMAScript 6最新草案中的方法，相对于 Object.prototype.__proto__ ，它被认为是修改对象原型更合适的方法
+
+10. Object.prototype.isPrototypeOf()
+
+isPrototypeOf() 方法用于测试一个对象是否存在于另一个对象的原型链上。
+
+语法：`prototypeObj.isPrototypeOf(object)`
+
+参数：object 在该对象的原型链上搜寻 
+
+返回值 Boolean，表示调用对象是否在另一个对象的原型链上。
+
+如果 prototypeObj 为 undefined 或 null，会抛出 TypeError。
+
+
+
