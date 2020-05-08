@@ -308,3 +308,152 @@ UDP 不止支持一对一的传输方式，同样支持一对多，多对多，�
 
 6、TCP的逻辑通信信道是全双工的可靠信道，UDP则是不可靠信道
 
+
+## HTTP
+
+HTTP 协议是 Hyper Text Transfer Protocol (超文本传输协议)的缩写，是用于从万维网服务器传输超文本到本来浏览器的传送协议。基于TCP/IP通信协议来传递数据。它是一个**无状态的请求/响应协议**
+
+HTTP 使用统一资源标识符（Uniform Resource Identifiers, URI） 来传输数据和建立连接。URL是一种特殊类型的URI。
+
+### Request
+
+客户端发送一个HTTP请求到服务器的请求消息包括以下格式：请求行（request line）、请求头部（header）、空行和请求数据四个部分组成，下图给出了请求报文的一般格式。
+
+![](./images/httprequest.png)
+
+1. 第一部分： 请求行，用来说明请求类型，要访问的资源以及使用的HTTP的版本
+
+2. 第二部分：请求头部，紧接着请求行（即第一行）之后的部分，用来说明服务器要使用的附加信息
+
+3. 第三部分：空行，请求头部后面的空行是必须的
+
+4. 第四部分：请求数据也叫主体，可以添加任意的其他数据。
+
+### Response
+
+HTTP响应也由四个部分组成，分别是：状态行、消息报头、空行和响应正文。
+
+![](./images/httpresponse.jpg)
+
+1. 第一部分： 状态行，由HTTP协议版本号，状态码，状态消息 三部分组成
+
+2. 第二部分：消息报头，用来说明客户端要使用的一些附加信息
+
+3. 第三部分：空行，消息报头后面的空行是必须的
+
+4. 第四部分：响应正文，服务器返回客户端的文本信息
+
+### 请求方式
+
+HTTP1.0定义了三种请求方法： GET, POST 和 HEAD方法。
+
+HTTP1.1新增了五种请求方法：OPTIONS, PUT, DELETE, TRACE 和 CONNECT 方法。
+
+1. GET      请求指定的页面信息，并返回实体主体。
+2. HEAD     类似于get请求，只不过返回的响应中没有具体的内容，用于获取报头
+3. POST     向指定资源提交数据进行处理请求（例如提交表单或者上传文件）。数据被包含在请求体中。POST请求可能会导致      新的资源的建立和/或已有资源的修改。
+4. PUT      从客户端向服务器传送的数据取代指定的文档的内容。
+5. DELETE   请求服务器删除指定的页面。
+6. CONNECT  HTTP/1.1协议中预留给能够将连接改为管道方式的代理服务器。
+7. OPTIONS  允许客户端查看服务器的性能。
+8. TRACE    回显服务器收到的请求，主要用于测试或诊断。
+
+### POST 和 GET 的区别
+
+先引入副作用和幂等的概念。
+
+副作用指对服务器上的资源做改变，搜索是无副作用的，注册是副作用的。
+
+幂等指发送 M 和 N 次请求（两者不相同且都大于 1），服务器上资源的状态一致，比如注册 10 个和 11 个帐号是不幂等的，对文章进行更改 10 次和 11 次是幂等的。
+
+在规范的应用场景上说，Get 多用于无副作用，幂等的场景，例如搜索关键字。Post 多用于副作用，不幂等的场景，例如注册。
+
+1. 从缓存的角度，GET 请求会被浏览器主动缓存下来，留下历史记录，而 POST 默认不会。
+2. 从编码的角度，GET 只能进行 URL 编码，只能接收 ASCII 字符，而 POST 没有限制。
+3. 从参数的角度，GET 一般放在 URL 中，因此不安全，POST 放在请求体中，更适合传输敏感信息。
+4. 从幂等性的角度，GET是幂等的，而POST不是。(幂等表示执行相同的操作，结果也是相同的)
+5. 从TCP的角度，GET 请求会把请求报文一次性发出去，而 POST 会分为两个 TCP 数据包，首先发 header 部分，如果服务器响应 100(continue)， 然后发 body 部分。(火狐浏览器除外，它的 POST 请求只发一个 TCP 包)
+
+
+### 状态码
+
+状态代码有三位数字组成，第一个数字定义了响应的类别，共分五种类别：
+
+1xx: 指示信息 -- 表示请求已接收，继续处理
+
+2xx: 成功 -- 表示请求已被成功接收、理解、接受
+
+3xx: 重定向 -- 表示要完成请求必须进行更进一步的操作
+
+4xx: 客户端错误 —- 表示请求有语法错误或请求无法实现
+
+5xx: 服务器端错误 -- 表示服务器未能实现合法的请求
+
+常见状态码：
+
+2xx:
+
+* 200 OK 表示从客户端发来的请求在服务器端被正确处理
+* 204 No content 表示请求成功，但响应报文不含实体的主体部分
+* 205 Reset Content 表示请求成功，但响应报文不含实体的主体部分，但是与204响应不同在于要求请求方重置内容
+* 206 Partial Content 进行范围请求
+
+3xx
+
+* 301 Moved Permanently,永久性重定向，表示资源已被分配了新的URL
+* 302 Found 临时性重定向，表示资源临时被分配了新的URL
+* 303 See Other 表示资源存在着另一个URL，应使用GET方法获取资源
+* 304 Not Modified 表示服务器允许访问资源，但因发生请求未满足条件的情况
+* 307 Temporary Redirect 临时重定向 和302含义类似，但是期望客户端保持请求方法不变向新的地址发出请求
+
+4xx 
+
+* 400 Bad Request 请求报文存在语法错误
+* 401 Unauthorized 表示发送的请求需要通过HTTP认证的认证信息
+* 403 Forbidden 表示对请求资源的访问被服务器拒绝
+* 404 Not Found 表示在服务器上没有找到请求的资源
+
+5xx
+
+* 500 Internal Server Error 表示服务器端在执行请求时发生了错误
+* 501 Not Implemented 表示服务器不支持当前请求所需要的某个功能
+* 502 Bad Gateway 服务器自身是正常的，但访问的时候出错了，啥错误咱也不知道。
+* 503 Service Unavailable 表示服务器暂时处于超负载或正在停机维护，无法处理请求
+
+### 请求头
+
+协议头 | 说明 | 实例 | 状态
+-- | -- | -- | --
+Accept | 可接受的响应内容类型 | Accept:text/plain | 固定
+Accept-Charset | 可接受的字符集 | Accept-Charset:utf-8 | 固定
+Accept-Encoding | 可接受的响应式的编码方式 | Accept-Encoding：gzip，deflate | 固定
+Authorization | 用于表示HTTP协议中需要认证资源的认证信息 | Authorization: Basic OSdjJGRpbjpvcGVuIANlc2SdDE== | 固定
+Cache-Control | 用来指定当前的请求/回复中的，是否使用缓存机制。 | Cache-Control: no-cache | 固定
+Connection | 客户端想要优先使用的连接类型 | Connection：keep-alive | 固定
+Cookie | 由之前服务器通过Set-Cookie（见下文）设置的一个HTTP协议Cookie | Cookie: $Version=1; Skin=new; | 固定
+Content-Length | 以8进制表示的请求体的长度 | Content-Length: 348 | 固定
+Content-Type | 请求体的MIME类型 （用于POST和PUT请求中） | Content-Type: application/json | 固定
+Date | 发送该消息的日期和时间（以RFC 7231中定义的"HTTP日期"格式来发送） | Date: Dec, 26 Dec 2015 17:30:00 GMT | 固定
+Expect | 表示客户端要求服务器做出特定的行为 | Expect: 100-continue | 固定
+From | 发起此请求的用户的邮件地址 | From: user@example.com | 固定
+Host | 表示服务器的域名以及服务器所监听的端口号。如果所请求的端口是对应的服务的标准端口（80），则端口号可以省略。 | Host: 127.0.0.1:8002 | 固定
+If-Match | 仅当客户端提供的实体与服务器上对应的实体相匹配时，才进行对应的操作。主要用于像 PUT 这样的方法中，仅当从用户上次更新某个资源后，该资源未被修改的情况下，才更新该资源。 | If-Match: "9jd00cdj34pss9ejqiw39d82f20d0ikd" | 固定
+If-Modified-Since | 允许在对应的资源未被修改的情况下返回304未修改 | If-Modified-Since: Dec, 26 Dec 2015 17:30:00 GMT | 固定
+If-None-Match | 允许在对应的内容未被修改的情况下返回304未修改（ 304 Not Modified ），参考 超文本传输协议 的实体标记 | If-None-Match: "9jd00cdj34pss9ejqiw39d82f20d0ikd" | 固定
+Origin | 发起一个针对跨域资源共享的请求（该请求要求服务器在响应中加入一个Access-Control-Allow-Origin的消息头，表示访问控制所允许的来源）。 | Origin: http://www.baidu.com | 固定
+Referer | 表示浏览器所访问的前一个页面，可以认为是之前访问页面的链接将浏览器带到了当前页面。 | Referer: http://www.baidu.com | 固定
+User-Agent | 浏览器的身份标识字符串 | User-Agent: Mozilla/…… | 固定
+Range | 表示请求某个实体的一部分，字节偏移以0开始。 | Range: bytes=500-999 | 固定
+
+### 响应头
+
+响应头 | 说明 | 示例 | 状态
+-- | -- | -- | --
+Access-Control-Allow-Origin | 指定那些网可以跨域资源共享 | Access-Control-Allow-Origin: * | 临时
+Cache-Control | 通知从服务器到客户端内的所有缓存机制，表示它们是否可以缓存这个对象及缓存有效时间。其单位为秒 | Cache-Control: max-age=3600 | 固定
+Connection | 针对该连接所预期的选项 | Connection: close | 固定
+Content-Type | 当前内容的MIME类型 | Content-Type: text/html; charset=utf-8 | 固定
+ETag | 对于某个资源的某个特定版本的一个标识符，通常是一个 消息散列 | ETag: "737060cd8c284d8af7ad3082f209582d" | 固定
+Last-Modified | 所请求的对象的最后修改日期(按照 RFC 7231 中定义的“超文本传输协议日期”格式来表示) | Last-Modified: Dec, 26 Dec 2015 17:30:00 GMT | 固定
+Set-Cookie | 设置HTTP cookie | Set-Cookie: UserID=itbilu; Max-Age=3600; Version=1 | 固定
+Status | 通用网关接口的响应头字段，用来说明当前HTTP连接的响应状态。 | Status: 200 OK | 
