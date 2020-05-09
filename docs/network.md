@@ -420,40 +420,127 @@ HTTP1.1新增了五种请求方法：OPTIONS, PUT, DELETE, TRACE 和 CONNECT 方
 * 502 Bad Gateway 服务器自身是正常的，但访问的时候出错了，啥错误咱也不知道。
 * 503 Service Unavailable 表示服务器暂时处于超负载或正在停机维护，无法处理请求
 
-### 请求头
+### 首部字段
 
-协议头 | 说明 | 实例 | 状态
--- | -- | -- | --
-Accept | 可接受的响应内容类型 | Accept:text/plain | 固定
-Accept-Charset | 可接受的字符集 | Accept-Charset:utf-8 | 固定
-Accept-Encoding | 可接受的响应式的编码方式 | Accept-Encoding：gzip，deflate | 固定
-Authorization | 用于表示HTTP协议中需要认证资源的认证信息 | Authorization: Basic OSdjJGRpbjpvcGVuIANlc2SdDE== | 固定
-Cache-Control | 用来指定当前的请求/回复中的，是否使用缓存机制。 | Cache-Control: no-cache | 固定
-Connection | 客户端想要优先使用的连接类型 | Connection：keep-alive | 固定
-Cookie | 由之前服务器通过Set-Cookie（见下文）设置的一个HTTP协议Cookie | Cookie: $Version=1; Skin=new; | 固定
-Content-Length | 以8进制表示的请求体的长度 | Content-Length: 348 | 固定
-Content-Type | 请求体的MIME类型 （用于POST和PUT请求中） | Content-Type: application/json | 固定
-Date | 发送该消息的日期和时间（以RFC 7231中定义的"HTTP日期"格式来发送） | Date: Dec, 26 Dec 2015 17:30:00 GMT | 固定
-Expect | 表示客户端要求服务器做出特定的行为 | Expect: 100-continue | 固定
-From | 发起此请求的用户的邮件地址 | From: user@example.com | 固定
-Host | 表示服务器的域名以及服务器所监听的端口号。如果所请求的端口是对应的服务的标准端口（80），则端口号可以省略。 | Host: 127.0.0.1:8002 | 固定
-If-Match | 仅当客户端提供的实体与服务器上对应的实体相匹配时，才进行对应的操作。主要用于像 PUT 这样的方法中，仅当从用户上次更新某个资源后，该资源未被修改的情况下，才更新该资源。 | If-Match: "9jd00cdj34pss9ejqiw39d82f20d0ikd" | 固定
-If-Modified-Since | 允许在对应的资源未被修改的情况下返回304未修改 | If-Modified-Since: Dec, 26 Dec 2015 17:30:00 GMT | 固定
-If-None-Match | 允许在对应的内容未被修改的情况下返回304未修改（ 304 Not Modified ），参考 超文本传输协议 的实体标记 | If-None-Match: "9jd00cdj34pss9ejqiw39d82f20d0ikd" | 固定
-Origin | 发起一个针对跨域资源共享的请求（该请求要求服务器在响应中加入一个Access-Control-Allow-Origin的消息头，表示访问控制所允许的来源）。 | Origin: http://www.baidu.com | 固定
-Referer | 表示浏览器所访问的前一个页面，可以认为是之前访问页面的链接将浏览器带到了当前页面。 | Referer: http://www.baidu.com | 固定
-User-Agent | 浏览器的身份标识字符串 | User-Agent: Mozilla/…… | 固定
-Range | 表示请求某个实体的一部分，字节偏移以0开始。 | Range: bytes=500-999 | 固定
+HTTP首部字段根据实际用途被分为以下4中类型
 
-### 响应头
+* 通用首部字段（General Header Fields） 请求报文和响应报文都会使用的首部
+* 请求首部字段 (Request Header Fields) 客服端向服务器端发送请求报文时使用的首部
+* 响应首部字段 (Response Header Fields) 服务器端向客户端返回响应报文时使用的首部。
+* 实体首部字段 (Entity Header Fields) 针对请求报文和响应报文的实体部分使用的首部
 
-响应头 | 说明 | 示例 | 状态
--- | -- | -- | --
-Access-Control-Allow-Origin | 指定那些网可以跨域资源共享 | Access-Control-Allow-Origin: * | 临时
-Cache-Control | 通知从服务器到客户端内的所有缓存机制，表示它们是否可以缓存这个对象及缓存有效时间。其单位为秒 | Cache-Control: max-age=3600 | 固定
-Connection | 针对该连接所预期的选项 | Connection: close | 固定
-Content-Type | 当前内容的MIME类型 | Content-Type: text/html; charset=utf-8 | 固定
-ETag | 对于某个资源的某个特定版本的一个标识符，通常是一个 消息散列 | ETag: "737060cd8c284d8af7ad3082f209582d" | 固定
-Last-Modified | 所请求的对象的最后修改日期(按照 RFC 7231 中定义的“超文本传输协议日期”格式来表示) | Last-Modified: Dec, 26 Dec 2015 17:30:00 GMT | 固定
-Set-Cookie | 设置HTTP cookie | Set-Cookie: UserID=itbilu; Max-Age=3600; Version=1 | 固定
-Status | 通用网关接口的响应头字段，用来说明当前HTTP连接的响应状态。 | Status: 200 OK | 
+
+#### 通用首部字段
+
+首部字段名 |  说明 
+:- | :- 
+Cache-Control | 用来指定当前的请求/回复中的，是否使用缓存机制。
+Connection | 客户端想要优先使用的连接类型 
+Date | 发送该消息的日期和时间（以RFC 7231中定义的"HTTP日期"格式来发送）
+Pragma | 报文指令
+Trailer | 报文末端的首部一览
+Transfer-Encoding | 指定报文主体的传输编码方式
+Upgrade |  升级为其他协议
+Via | 代理服务器的相关信息
+Warning | 错误通知
+
+#### 请求首部字段
+
+首部字段名 |  说明 
+:- | :- 
+Accept	|用户代理可以处理的媒体类型
+Accept-Charset	|优先的字符集
+Accept-Encoding	|优先的内容编码
+Authorization	|Web认证信息
+Except|	期待服务器的特定行为
+Host	|请求资源所在的服务器
+if-Match	|比较实体标记（ETag）
+if-Modified-Since	|比较资源的更新时间
+Range	|实体的字节范围请求
+Refer	|实体的字节范围请求
+TE	|传输编码的优先级
+User-Agent|	HTTP客户端程序的信息
+
+
+#### 响应首部字段
+
+响应头 | 说明
+-- | -- 
+Accept-Ranges	| 是否接受字节范围请求
+Age	| 推算资源创建经过的时间
+ETag |	资源的匹配信息
+Location	| 令客户端重定向至指定UPI
+Proxy-Authenticate | 	代理服务器对客户端的认证信息
+WWW-Authenticate |	服务器对客户端的认证信息
+Server |	HTTP服务器的安装信息
+Vary |	代理服务器的管理信息
+
+####  实体首部字段
+
+响应头 | 说明 
+-- | -- 
+Allow	| 资源可支持的HTTP方法
+Content-Encoding |	实体主体适用的编码方式
+Content-Language |	实体主体的自然语言
+Content-Length |	实体主体的大小
+Content-Location |	替代对应资源的URI
+Content-MD5	| 实体主体的报文摘要
+Content-Range |	实体主体的位置范围
+Content-Type	| 实体主体的媒体类型
+EXpires	| 实体主体过期的日期时间
+Last-Modified	| 资源的最后修改日期时间
+
+
+
+### 缺点
+
+HTTP缺点
+
+* 通信使用明文，可能被窃听
+* 不验证通信方的身份，可能遭遇伪装
+* 无法证明报文的完整性，有可能遭遇篡改
+
+
+## HTTPS
+
+HTTPS （全称：Hyper Text Transfer Protocol over SecureSocket Layer），是以安全为目标的 HTTP 通道，在HTTP的基础上通过传输加密和身份认证保证了传输过程的安全性。HTTPS 在HTTP 的基础下加入SSL 层，HTTPS 的安全基础是 SSL，因此加密的详细内容就需要 SSL。
+
+HTTP +  加密 + 认证 +  完整性保护 = HTTPS
+
+### SSL/TLS 
+
+SSL 即安全套接层（Secure Sockets Layer），在 OSI 七层模型中处于会话层(第 5 层)。之前 SSL 出过三个大版本，当它发展到第三个大版本的时候才被标准化，成为 TLS（传输层安全，Transport Layer Security），并被当做 TLS1.0 的版本，准确地说，TLS1.0 = SSL3.1。
+
+在怼SSL进行理解之前，我们先来了解一下加密方法。SSL采用一种叫做**公开密钥加密（Public-key cryptography）**的加密处理方式
+
+#### 共享密钥加密（对称加密)
+
+加密和解密同用一个密钥的方式称为共享密钥加密（Common key crypto system）也被叫做对称密钥加密
+
+以共享密钥方式加密时必须将密钥也发给对方。这就存在一个问题，如何安全的转交密钥呢。如果被监听那么加密也就失效了。
+
+#### 公开密钥加密（非对称加密）
+
+公开密钥加密方式很好的解决了共享密钥的困境
+
+公开密钥加密使用一对非对称的密钥。一把叫做私有密钥（private key） 另一把叫做公开密钥（public key）.顾名思义，私有密钥是别人不知道的，而公有密钥则是可以发送任何人都可以知道的。
+
+使用公开密钥加密方式。发送密文的一方使用**对方的公钥**进行加密，对方收到加密信息之后，使用自己的私钥进行解密。这种方式不需要发送私钥给给人，那就避免了解密的可能。而且根据加密的信息和公约反向破加密文是相当难的，现阶段是不可能实现的。
+
+#### 混合加密机制
+
+混合加密机制是指共享密钥加密和公开密钥加密两者并用。
+
+HTTPS 就是采用的这种方式。你可能会有疑问 公开密钥加密 不是可以做到信息不会被获取了吗 为什么不被采用。其实理论上是可以的，但是现实很骨感。因为公开密钥加密需要的计算量非常大，对于稍微大一点的数据即使用最快的处理器也非常耗时，速度慢。所以要充分发挥两者的优势。
+
+具体的操作就是 使用公开密钥加密（非对称加密）交换密钥，之后的建立通信交换报文阶段则使用共享密钥加密（对称加密)。
+
+
+#### 证书
+
+其实公开密钥加密（非对称加密）并不是完美的，那就是无法证明公开密钥本身就是真的密钥。（真假美猴王知道吗，都说自己是真的）为了解决这个问题可以使用数字证书机构（CA）和其相关机关颁发的公开密钥证书。
+
+数字证书认证机构处于客户端和服务器双方都可以信赖的第三方机构的立场上。
+
+### HTTPS的安全通信机制
+
