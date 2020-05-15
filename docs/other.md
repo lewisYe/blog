@@ -88,3 +88,114 @@
 * 考虑产品面向用户群体-.-
 
 
+## GIT
+
+### Pull 和 Fetch
+
+git fetch 是将远程主机的所有分支最新内容拉到本地，用户在检查了以后决定是否合并到工作本机分支中。
+
+git pull 则是将远程主机的最新内容拉下来后直接合并，即：git pull = git fetch + git merge，这样可能会产生冲突，需要手动解决。
+
+### Rebase
+
+在git中整合来自不同分支的修改主要有两种方法：merge 以及 rebase。
+
+用图例说明两者的区别:
+
+1. 原始分支情况
+
+![](./images/gitBasic.png)
+
+基于C2切的分支experiment
+
+2. 使用merge 合并分支
+
+![](./images/gitMerge.png)
+
+使用merge方法会把两个分支的最新快照（C3 和 C4）以及二者最近的共同祖先（C2）进行三方合并，合并的结果是生成一个新的快照（并提交）。
+
+3. 使用rebase 变基
+
+用 rebase 命令可以将提交到某一分支上的所有修改都移至另一分支上，就好像“重新播放”一样。
+
+在这个例子中，你可以检出 experiment 分支，然后将它变基到 master 分支上：
+```
+git checkout experiment
+git rebase master
+```
+它的原理是首先找到这两个分支（即当前分支 experiment、变基操作的目标基底分支 master） 的最近共同祖先 C2，然后对比当前分支相对于该祖先的历次提交，提取相应的修改并存为临时文件， 然后将当前分支指向目标基底 C3, 最后以此将之前另存为临时文件的修改依序应用。 （译注：写明了 commit id，以便理解，下同）
+
+![](./images/gitRebase.png)
+
+现在回到 master 分支，进行一次快进合并。
+```
+git checkout master
+git merge experiment
+```
+![](./images/gitRebase2.png)
+
+这两种整合方法的最终结果没有任何区别，但是变基使得提交历史更加整洁。 你在查看一个经过变基的分支的历史记录时会发现，尽管实际的开发工作是并行的， 但它们看上去就像是串行的一样，提交历史是一条直线没有分叉。
+
+但是奇妙的变基也并非完美无缺，要用它得遵守一条准则：如果提交存在于你的仓库之外，而别人可能基于这些提交进行开发，那么不要执行变基。但是别担心还是有解决方法的。[具体查看](https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA)
+
+
+### stash
+
+stash 用于临时保存工作目录的改动。开发中可能会遇到代码写一半需要切分支打包的问题，如果这时候你不想 commit 的话，就可以使用该命令。
+
+```
+git stash
+```
+使用该命令可以暂存你的工作目录，后面想恢复工作目录，只需要使用
+```
+git stash pop
+```
+### Reset
+如果你想删除刚写的 commit，就可以通过以下命令实现
+```
+git reset --hard HEAD^
+```
+但是 reset 的本质并不是删除了 commit，而是重新设置了 HEAD 和它指向的 branch。
+
+###  clone 项目过大时
+
+是否遇到过clone项目 失败，由于项目commit历史过多，在git clone时加上--depth=1即可解决
+
+```
+git clone --depth=1 地址 
+```
+这种方法克隆的项目只包含最近的一次commit的一个分支，体积很小，即可解决项目过大导致Timeout的问题，但会产生另外一个问题，他只会把默认分支clone下来，其他远程分支并不在本地
+
+
+使用该命令可以clone具体分支
+```
+git clone -b 分支 --depth=1 地址
+```
+
+### 本地仓库更换远程仓库
+```
+	1. rm -r -f .git
+ 	2. git init 
+	3. git remote add origin url 
+```
+
+### 版本回退  
+```
+	git log
+	git reset --hard   版本号
+	git push -f 强制远程仓库回退
+```
+
+### git commit 规范
+
+* feat：新增功能；
+* fix：修复bug；
+* docs：修改文档；
+* refactor：代码重构，未新增任何功能和修复任何bug；
+* build：改变构建流程，新增依赖库、工具等（例如webpack修改）；
+* style：仅仅修改了空格、缩进等，不改变代码逻辑；
+* perf：改善性能和体现的修改；
+* chore：非src和test的修改；
+* test：测试用例的修改；
+* revert：回滚到上一个版本；
+
