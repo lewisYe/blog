@@ -477,3 +477,13 @@ location / {
     add_header Cache-Control no-cache; // 主要是这一行 忽略缓存
 }
 ```
+
+
+## Chrome DevTools
+
+Chrome DevTools是前端开发最主要的调试工具,但普遍许多同学只使用了其中一部分功能。常用的为下图红框内。 目前Chrome最新版本 V81。
+
+![](./images/chrome.png)
+
+
+
