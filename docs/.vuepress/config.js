@@ -16,6 +16,7 @@ module.exports = {
       '/network',
       '/react',
       '/webpack',
+      '/performance',
       '/algorithm',
       '/design',
       '/other'
