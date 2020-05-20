@@ -485,5 +485,91 @@ Chrome DevTools是前端开发最主要的调试工具,但普遍许多同学只�
 
 ![](./images/chrome.png)
 
+那么接下来我们详细的了解下Chrome DevTools的各个功能。
+
+### Elements
+
+使用Chrome DevTools Elements(元素)面板，检查并实时编辑页面中的HTML和CSS。
+
+1. 在Elements(元素)面板中随时检查并编辑 DOM 树中的任何元素。
+
+2. 在Styles(样式)窗格中查看和更改应用于任何选定元素的CSS规则。
+
+3. 在Computed(计算)窗格中查看和编辑所选元素的盒模型。
+
+### Console
+
+想必很了解 就不阐述了
+
+### Sources
+
+可以查看加载的js 代码  进行断点调试
 
 
+### Netwrok
+
+Network(网络)面板记录在页面上有关每个网络操作的信息，包括详细的时序数据，HTTP请求和响应头，Cookie等。
+
+Network(网络)面板可分为5个窗格：
+
+![](./images/network.png)
+
+1. Controls(控件): 使用这些选项可以控制 Network(网络)面板的外观和功能。
+2. Filters(过滤器): 使用这些选项可以控制在请求列表中显示哪些资源。提示：按住Cmd（Mac）或Ctrl（Window / Linux），然后点击过滤器可以同时选择多个过滤器。
+3. Overview(概览): 这个图表显示检索资源的时间轴。如果您看到多个垂直堆叠的栏，这意味着这些资源被同时检索。
+4. Requests Table(请求列表): 此列表列出了检索的每个资源。默认情况下，此表按时间顺序排序，也就是最早的资源在顶部。单击资源名称可以获得更多信息。提示：右键单击列表的任何标题栏可以以添加或删除信息列。
+5. Summary(概要): 概要窗格告诉您请求的总数，传输的数据量，和加载时间。
+
+
+**请求列表**
+
+* Name(名称) : 资源的名称。
+* Status(状态) :  HTTP状态代码。
+* Type(类型) : 请求的资源的MIME类型。
+  * Initiator(发起人) : 发起请求的对象或进程。它可能有以下几种值：
+  * Parser(解析器) :  Chrome的HTML解析器发起了请求。
+  * Redirect(重定向) :  HTTP重定向启动了请求。
+  * Script(脚本) : 脚本启动了请求。
+  * Other(其他) : 一些其他进程或动作发起请求，例如用户点击链接跳转到页面，或在地址栏中输入网址。
+* Size(尺寸) : 响应头的大小（通常是几百字节）加上响应数据，由服务器提供。
+* Time(时间) : 总持续时间，从请求的开始到接收响应中的最后一个字节。
+* Timeline(时间轴) :  Timeline列显示所有网络请求的视觉瀑布。点击此列的标题栏会显示其他排序字段的菜单。
+
+**查看DOMContentLoaded和load事件信息**
+
+当页面的初始的标记被解析完时，会触发DOMContentLoaded。 它在Network(网络)面板上的两个位置显示：
+
+1. 在Overview(概览)窗格中的蓝色垂直线表示这个事件。
+2. 在Summary(概要)窗格中，您可以查看事件的确切时间。
+
+当页面完全加载时触发load事件。 它显示在：
+
+1. 在Overview(概览)窗格的红色垂直线表示这个事件。
+2. 在Summary(概要)中，您可以查看改事件的确切时间。
+
+![](./images/load.png)
+
+**查看单个资源的详细信息**
+
+点击资源名称（在Requests Table(请求列表)的Name(名称)列中）可以查看该资源的更多信息。
+
+可用的标签页取决于您选择的资源类型，但以下四个标签页是最常见的：
+
+* Headers(标头) : 与资源相关的HTTP头。
+* Preview(预览) : 预览JSON，图片和文字资源。
+* Response(响应) : HTTP响应数据（如果有）。
+* Timing(时序) : 资源的请求生命周期的明细分类。
+
+点击Timing(时序)选项卡可查看单个资源的请求生命周期的明细分类。
+
+生命周期显示在以下类别中花费的时间：
+
+* Queuing(排队)
+* Stalled(停滞) 如果适用：DNS lookup(DNS查找)， initial connection(初始连接)， SSL handshake(SSL握手)
+* Request sent(请求发送)
+* Waiting(等待)（到开始下载第一个字节的时间（TTFB））
+* Content Download(内容下载)
+
+### Performance
+
+![](./images/performance.jpg)
