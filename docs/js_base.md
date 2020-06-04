@@ -2544,6 +2544,8 @@ isPrototypeOf() 方法用于测试一个对象是否存在于另一个对象的�
 
 如果 prototypeObj 为 undefined 或 null，会抛出 TypeError。
 
+## Array的常用方法
+
 ## DOM事件
 
 ### 事件级别
@@ -2679,7 +2681,8 @@ window.dispatchEvent(resizeEvent);
 ```
 
 
-      
+
+
      
 
 
