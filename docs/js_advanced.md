@@ -523,3 +523,7 @@ function instanceof(left,right){
 ```
 
 ## Object.create() 的实现
+
+## Async函数实现
+
+[参考链接](https://mp.weixin.qq.com/s/ykrZZxCoC8O8D__Qimrtrg)
