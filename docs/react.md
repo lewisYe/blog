@@ -175,3 +175,24 @@ componentWillUnmount()在卸载和销毁组件之前立即调用。在此方法�
 * UNSAFE_componentWillUpdate()
 * UNSAFE_componentWillMount()
 
+
+
+## Redux
+
+### 引言
+
+Redux 是一个数据管理中心，可以理解为全局数据存储的地方。它与React无关，并不是一定要与React绑定使用的，可以独立运行于JS环境。
+
+### 核心概念
+
+#### 单一数据源
+
+整个应用只有唯一的状态树，也就是所有的state维护在一个store中。
+
+#### 状态只读
+
+store 中的状态无法直接修改，只能通过store.dispatch触发action在reducer中修改，而且reducer是一个纯函数。
+
+#### 基本的数据流向
+
+![](./images/redux.png)

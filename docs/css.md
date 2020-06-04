@@ -598,7 +598,7 @@ transition 和 animation 区别 transition需要触发事件。
   height:0;
   border-width:100px;
   border-style:solid;
-  botder-color:#000000 transparent transparent transparent;
+  border-color:#000000 transparent transparent transparent;
 }
 ```
 
