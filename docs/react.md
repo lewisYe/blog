@@ -175,6 +175,141 @@ componentWillUnmount()在卸载和销毁组件之前立即调用。在此方法�
 * UNSAFE_componentWillUpdate()
 * UNSAFE_componentWillMount()
 
+## createElement
+
+写React我们用的是JSX语法，那它如何被解析呢。通过Babel转义之后，调用React.createElement.
+例子说明：
+```
+<div className="box" style={{pading:16}}>1</div>
+// 转义之后
+React.createElement("div", {
+  className: "box",
+  style: {
+    pading: 16
+  }
+}, "1");
+
+```
+你可以自己尝试查看转义之后的代码 [转义地址](https://www.babeljs.cn/repl)
+
+那接下来看看它的内部实现。
+
+### 源码解读
+
+首先定位到 [ReactElement.js](https://github.com/facebook/react/blob/master/packages/react/src/ReactElement.js)文件，找到createElement方法。可以分为以下几部分解读。
+
+#### 函数参数
+```
+export function createElement(type, config, children) {}
+```
+发现createElement接收3个参数。对比上述的示例代码明白：
+* type 代表节点类型 上述的div
+* config 代表节点配置的属性，className等
+* children 代表子节点
+
+#### config处理
+
+```
+if (config != null) {
+
+    // 验证 ref 和 key，只在开发环境下
+    if (hasValidRef(config)) {
+      ref = config.ref;
+    }
+    if (hasValidKey(config)) {
+      key = '' + config.key;
+    }
+
+    // 赋值操作
+    // self 呢就是为了以后正确获取 this
+    // source 基本来说没啥用，内部有一些 filename, line number 这种
+    self = config.__self === undefined ? null : config.__self;
+    source = config.__source === undefined ? null : config.__source;
+
+
+    // Remaining properties are added to a new props object
+    // 遍历配置，把内建的几个属性剔除后丢到 props 中
+    for (propName in config) {
+      if (
+        hasOwnProperty.call(config, propName) &&
+        !RESERVED_PROPS.hasOwnProperty(propName) // RESERVED_PROPS 保留属性 就是ref、key等
+      ) {
+        props[propName] = config[propName];
+      }
+    }
+  }
+```
+
+验证config 是否为空，当不为空时，当传入ref、key值时 采用传入的值。然后遍历 config 并把内建的几个属性（比如 ref 和 key）剔除后丢到 props 对象中。
+
+#### children的处理
+
+```
+ const childrenLength = arguments.length - 2;
+  if (childrenLength === 1) {
+    props.children = children;
+  } else if (childrenLength > 1) {
+    const childArray = Array(childrenLength);
+    for (let i = 0; i < childrenLength; i++) {
+      childArray[i] = arguments[i + 2];
+    }
+    props.children = childArray;
+  }
+```
+
+首先获取子节点的长度,利用类数组剔除2个参数就是type和config，剩下的就是子节点长度。根据长度的不同进行不同的处理，长度为1时，直接赋值，当长度大于1时，就会有多个children，props.children处理成数组
+
+#### 默认值处理
+
+```
+ if (type && type.defaultProps) {
+    const defaultProps = type.defaultProps;
+    for (propName in defaultProps) {
+      if (props[propName] === undefined) {
+        props[propName] = defaultProps[propName];
+      }
+    }
+  }
+```
+当组件有设置defaultProps默认属性时，有的话判断是否有给 props 赋值，只有当值为undefined 时，才会设置默认值
+
+#### 返回值
+```
+return ReactElement(
+  type,
+  key,
+  ref,
+  self,
+  source,
+  ReactCurrentOwner.current,
+  props,
+);
+```
+返回一个ReactElement对象。
+
+### ReactElement
+
+```
+const ReactElement = function(type, key, ref, self, source, owner, props) {
+  const element = {
+    $$typeof: REACT_ELEMENT_TYPE,
+    type: type,
+    key: key,
+    ref: ref,
+    props: props,
+    _owner: owner,
+  };
+  return element;
+};
+```
+定义一个对象来表示，核心通过 $$typeof 来帮助我们识别这是一个 ReactElement，$$typeof 是一个Symbol的值。
+
+
+该小节流程图
+
+![](./images/createElement.png)
+
+
 ## Component
 
 ## Fiber
