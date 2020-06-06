@@ -6,7 +6,7 @@
 
 语法
 
-```
+```javascript
 fn.call(thisArg,arg1,arg2,...)
 ```
 
@@ -19,7 +19,7 @@ thisArg 取值有以下四种情况：
 * 传递一个对象时，this指向这个对象
 
 示例使用：
-```
+```javascript
 var foo = {
   value:1
 }
@@ -40,7 +40,7 @@ bar.call(foo) // 1
 #### 第一版: 实现改变this指向
 
 在上述例子中，试想当调用call方法时，把bar理解为foo内部一个函数时，this是不是就指向为foo，输出的值就为1啦。
-```
+```javascript
 var foo = {
   value:1,
   bar:function(){
@@ -56,7 +56,7 @@ foo.bar() //1
 
 根据这个思路，尝试实现如下代码：
 
-```
+```javascript
 Function.prototype.myCall = function(obj){
   obj.fn = this;  //这里的this就是调用mycall的函数
   obj.fn();
@@ -66,7 +66,7 @@ Function.prototype.myCall = function(obj){
 #### 第二版：实现传参数
 
 call方法传入的参数是不确定的，那我们可以从argument对象中获取。
-```
+```javascript
 var args = []
 for(var i = 1 ;i < arguments.length; i ++ ){
   args.push('arguments['+ i +']')
@@ -88,7 +88,7 @@ for(var i = 1 ;i < arguments.length; i ++ ){
 
 整合代码之后：
 
-```
+```javascript
 Function.prototype.myCall = function(obj){
   var args = [];
   for(var i = 1;i < arguments.length; i++){
@@ -104,7 +104,7 @@ Function.prototype.myCall = function(obj){
 
 call方法第一个参数可以为null、函数调用具有返回值
 
-```
+```javascript
 Function.prototype.myCall = function(obj){
   var args = [];
   for(var i = 1; i < argumens.length; i++){
@@ -124,14 +124,14 @@ apply和call 很相似，区别在于第二个参数。apply 是需要参数数�
 
 语法
 
-```
+```javascript
 func.apply(thisArg, argsArray)
 ```
 
 该方法有2个参数，第一个参数为需要指定的this值，第二个参数为一个数组。
 
 由于apply和call区别在于第二个参数是否为数组，所以直接给出代码：
-```
+```javascript
 Function.prototype.myApply = function(obj,arr){
  obj.fn = this || window;
  var result;
@@ -155,7 +155,7 @@ Function.prototype.myApply = function(obj,arr){
 bind() 方法会创建一个新函数。当这个新函数被调用时，bind() 的第一个参数将作为它运行时的 this，之后的一序列参数将会在传递的实参前传入作为它的参数。(来自于 MDN )
 
 语法
-```
+```javascript
 function.bind(thisArg[, arg1[, arg2[, ...]]])
 ```
 
@@ -164,7 +164,7 @@ function.bind(thisArg[, arg1[, arg2[, ...]]])
 
 
 使用示例：
-```
+```javascript
 var foo = {
   value:1
 }
@@ -179,7 +179,7 @@ bindFoo() // 1
 
 ### bind模拟实现
 
-```
+```javascript
 Function.prototype.myBind = function(obj){
   var that = this // this为调用myBind的函数
   var args = Array.prototype.slice.call(arguments,1) // 获取myBind函数从第二个参数到最后一个参数
@@ -197,7 +197,7 @@ Function.prototype.myBind = function(obj){
 
 示例说明new操作的作用
 
-```
+```javascript
 function Foo(name){
   this.name = name;
 }
@@ -217,7 +217,7 @@ f.sayName() //ye
 
 构造函数一般是没有显示的返回值的，默认返回是undefined,那么当设置了返回值对于new 操作符会有什么影响呢。看下面的例子：
 
-```
+```javascript
 1. function Foo(name){
   this.name = name
   return 1
@@ -245,7 +245,7 @@ console.log(f.name) // undefined
 4. 返回原始值需要忽略，返回对象需要正常处理
 
 实现代码
-```
+```javascript
 function myNew(){
   var obj = new Object()
   var fn = [].shift.call(arguments) //取出第一个参数，就是我们要传入的构造函数
@@ -259,7 +259,7 @@ function myNew(){
 
 先用简单的例子来说明深浅拷贝的作用。
 
-```
+```javascript
 let Tom = {
   age:18
 }
@@ -275,7 +275,7 @@ console.log(Jack.age) //20
 
 针对对象的情况可以使用Object.assgin 和 展开运算符（...）;针对数组的可以使用slice、concat等方法。
 
-```
+```javascript
 let Tom = {
   age:18
 }
@@ -285,7 +285,7 @@ console.log(Jack.age) // 10
 ```
 浅拷贝基本上可以解决大部分问题，但是如果是下面的情况，还是需要深拷贝。
 
-```
+```javascript
 let Tom = {
     age: 18;
     hair:{
@@ -311,7 +311,7 @@ console.log(Jack.hair.color) // red
 
 ### 浅拷贝实现
 
-```
+```javascript
 function shallowCopy(obj){
    // 只拷贝对象
   if(typeof obj !== 'object') return;
@@ -333,7 +333,7 @@ function shallowCopy(obj){
 
 ### 深拷贝实现
 
-```
+```javascript
 function deepCopy(obj){
   if(typeof(obj) !== 'object') return;
   var newObj = Array.isArray(obj) ? [] : {}
@@ -376,7 +376,7 @@ function deepCopy(obj){
 
 ### 函数防抖实现
 
-```
+```javascript
 function debounce(fn,time){
   var timer = null;
   return function(){
@@ -390,7 +390,7 @@ function debounce(fn,time){
 
 ### 函数节流实现
 
-```
+```javascript
 function throttle(fn,time){
   var timer = null;
   var stratTime = + new Date()
@@ -419,7 +419,7 @@ function throttle(fn,time){
 函数柯里化（Currying）是把接受多个参数的函数变成接受一个单一参数的函数切返回结果的新函数的技术。
 
 举个例子：
-```
+```javascript
 function add(a,b){
   returun a + b
 }
@@ -434,7 +434,7 @@ addCurry(1)(2) // 3
 ### 函数实现
 
 #### 第一版
-```
+```javascript
 var curry = function(fn){
   var params = [].slice.call(arguments,1)
   return function(){
@@ -444,7 +444,7 @@ var curry = function(fn){
 }
 ```
 测试用例：
-```
+```javascript
 function add(a,b){
   return a + b
 }
@@ -463,7 +463,7 @@ console.log(addCurry3(1)(2)) // Uncaught TypeError: addCurry3(...) is not a func
 
 #### 第二版
 
-```
+```javascript
 function subCurry(fn){
   var params = [].slice.call(arguments,1)
   return function(){
@@ -488,7 +488,7 @@ function curry(fn,length){
 
 #### ES6写法
 
-```
+```javascript
 var curry = fn =>
     judge = (...args) =>
         args.length === fn.length
@@ -506,7 +506,7 @@ instanceof 运算符用于检测构造函数的 prototype 属性是否出现在�
 
 object 代表实例 constructor 代表构造函数
 
-```
+```javascript
 function instanceof(left,right){
   let leftValue = left.__proto__
   let rightValue = right.prototype

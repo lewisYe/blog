@@ -73,7 +73,7 @@ JS 数据类型的判断主要有以下几种方法：typeof、instanceof 、Obj
 
 返回一个表示数据类型的字符串，返回结果包含：number、boolean、string、symbol、object、undefined、function、bigint等 缺点不能判断null和array
 
-```
+```javascript
 typeof ''                 // string    有效
 typeof 1                  // number    有效
 typeof NaN                // number    有效
@@ -91,7 +91,7 @@ typeof new RegExp()       // object    无效
 
 instanceof 是用来判断 A 是否为 B 的实例，表达式为 A instanceof B；如果 A 是 B 的实例，则返回 true，否则返回 false。
 
-```
+```javascript
 [] instanceof  Array            // true
 {} instanceof  Objeact          // true
 new Date() instanceof Date      // true
@@ -109,7 +109,7 @@ null instanceof Objeact         // false
 
 ##### 简易实现
 
-```
+```javascript
 function newInstanceof(l,r){
   var o = r.prototype;
   l = l.__proto__;
@@ -132,7 +132,7 @@ toString() 是 Object 的原型方法，调用该方法，默认返回当前对�
 
 对于 Object 对象，直接调用 toString() 就能返回 [object Object] 。而对于其他对象，则需要通过 call / apply 来调用才能返回正确的类型信息。
 
-```
+```javascript
 Object.prototype.toString.call('') ;               // [object String]
 Object.prototype.toString.call(1) ;                // [object Number]
 Object.prototype.toString.call(true) ;             // [object Boolean]
@@ -150,7 +150,7 @@ Object.prototype.toString.call(window) ;           // [object global] window 是
 
 #### constructor 属性
 constructor 属性返回所有 JavaScript 变量的构造函数。
-```
+```javascript
 "John".constructor                 // 返回函数 String()  { [native code] }
 (3.14).constructor                 // 返回函数 Number()  { [native code] }
 false.constructor                  // 返回函数 Boolean() { [native code] }
@@ -168,7 +168,7 @@ function () {}.constructor         // 返回函数 Function(){ [native code] }
 
 可以使用 Boolean 函数将类型转换成布尔类型，在js中，只有6种值可以被转换为false，其他都为true
 
-```
+```javascript
 console.log(Boolean())          //false
 console.log(Boolean(false))     //false
 console.log(Boolean(undefined)) //false
@@ -206,7 +206,7 @@ console.log(Boolean(""))        //false
 
 这又涉及了 ToPrimitive 方法 在后面做介绍。
 
-```
+```javascript
 console.log(Number())                  // +0
 
 console.log(Number(undefined))         // NaN
@@ -247,7 +247,7 @@ console.log(Number("12a"))             // NaN
 |String|返回与之相等的值|
 |Object|1. 先使用 ToPrimitive(input argument, hint String) 得到 primValue 2. 返回 ToString(primValue). |
 
-```
+```javascript
 console.log(String())                    //""
 
 console.log(String(undefined))           //"undefined"
@@ -269,7 +269,7 @@ console.log(String(1))                    //"1"
 
 原始值到对象的转换非常简单，原始值通过调用 String()、Number() 或者 Boolean() 构造函数，转换为它们各自的包装对象。
 
-```
+```javascript
 var a = 1;
 console.log(typeof a); // number
 var b = new Number(a);
@@ -299,7 +299,7 @@ null 和 undefined 属于例外，当将它们用在期望是一个对象的地�
 3. 日期的 toString 方法返回一个可读的日期和时间字符串。
 4. RegExp 的 toString 方法返回一个表示正则表达式直接量的字符串。
 
-```
+```javascript
 console.log(({}).toString()) // [object Object]
 
 console.log([].toString()) // ""
@@ -316,7 +316,7 @@ valueOf 表示对象的原始值。默认的 valueOf 方法返回这个对象本
 ### ToPrimitive
 
 语法：
-```
+```javascript
 ToPrimitive(input[, PreferredType])
 ```
 
@@ -368,7 +368,7 @@ ToPrimitive(input[, PreferredType])
 执行后置递增和递减操作是在包含它们的语句被求 值之后才执行的
 
 区别示例
-```
+```javascript
 var num1  = 2;
 var num2  = 20;
 var _num1 = 2;
@@ -383,7 +383,7 @@ var num6  = _num1    + num2   // 21
 一元加操作符以一个加号 `+` 表示，放在数值前面，对数值不会产生任何影响。但是对于非数值应用一元操作符，该操作符会像Number()转型函数一样，对这个值执行转换
 
 示例
-```
+```javascript
 var s1 = "01" 
 var s2 = "1.1"
 var s3 = "z"
@@ -458,7 +458,7 @@ var o = {
 
 逻辑与操作属于短路操作，如果第一个操作数能够决定结果，则不会对第二个操作数**求值**。这一点很重要。示例说明
 
-```
+```javascript
 var a = true;
 var res = (a || b)
 console.log(res) // 报错
@@ -496,7 +496,7 @@ console.log(res) // 报错
 
 只要`+`号两边有一边是字符串 作为字符串连接理解，反之作为算术运算符理解。
 
-```
+```javascript
 1. console.log(1 + "true")        // 1true
 2. console.log(1 + true )         // 2
 3. console.log(1 + undefined )    // NaN
@@ -521,7 +521,7 @@ console.log(res) // 报错
 * 如果一个为布尔值时，则转换为数值,进行比较
 * 如果一个是对象，则调用这个对象的valueOf(),用得到的结果按照前面的规则执行比较，如果没有valueOf方法，则调用toString().
 
-```
+```javascript
 1. console.log('2' > 10)              // false
 2. console.log('2' > '10')            // true
 3. console.log('abc' > 'b')           // false
@@ -552,7 +552,7 @@ console.log(res) // 报错
 * NaN == NaN // false ;NaN != NaN // true
 * 如果两个操作数都是对象，则比较它们是不是同一个对象，指向同一个对象返回true
 
-```
+```javascript
 null == undefined  // true
 5    == NaN        // flase
 true == 1          // true
@@ -565,7 +565,7 @@ true == 2          // false
 
 使用全等符号时，不会自动转换数据类型，所有该符号也对数据类型进行了比较。
 
-```
+```javascript
 null === undefined      // false
 null === null           // true
 undefined === undefined // true
@@ -588,7 +588,7 @@ undefined === undefined // true
 
 #### 字符串连接符与算术运算符
 
-```
+```javascript
 1. console.log(1 + "true")        // 1true
 2. console.log(1 + true )         // 2
 3. console.log(1 + undefined )    // NaN
@@ -601,7 +601,7 @@ undefined === undefined // true
 2. 作为算法运算符时，会将其他数据调用Number()方法转为数字然后加法运算
 
 问题对应转换理解
-```
+```javascript
 1. String(1) + 'true' = '1true'
 2. 1 + Number(true) = 1 + 1 = 2
 3. 1 + Number(undefined) = 1 + NaN = NaN
@@ -610,7 +610,7 @@ undefined === undefined // true
 
 #### 关系运算符
 
-```
+```javascript
 1. console.log('2' > 10)              // false
 2. console.log('2' == 2)              // false
 3. console.log('2' > '10')            // true
@@ -623,7 +623,7 @@ undefined === undefined // true
 **解析**
 
 1. 当关系运算符两边有一边是字符串时，会将其他数据类型使用Number()转换后比较。
-```
+```javascript
 1. console.log('2' > 10) -> Number('2') > 10 
 2. console.log('2' == 2) -> Number('2') == 2
 ```
@@ -632,7 +632,7 @@ undefined === undefined // true
 
 charCodeAt 方法可以查看字符的unicode编码
 
-```
+```javascript
 1. console.log('2' > '10')  -> '2'.charCodeAt() > '10'.charCodeAt() = 59 > 49
 2. console.log('abc' > 'b') -> 'abc'.charCodeAt() > 'b'.charCodeAt() = 97 > 98
 // 将2个数都是多位字符串时从左往右依次对位比较
@@ -641,7 +641,7 @@ charCodeAt 方法可以查看字符的unicode编码
 
 3. 特殊情况 如果数据类型是 Undefined 和 Null 得出固定结果；NaN与任何数据类型比较都是NaN 
 
-```
+```javascript
 1. console.log(undefined == null)                 // true
 2. console.log(undefined == undefined)            // true
 3. console.log(nul == null)                       // true
@@ -653,7 +653,7 @@ charCodeAt 方法可以查看字符的unicode编码
 复杂数据类型在隐式转换时会先使用valueOf()方法获取原始值如果原始值不是Number类型，则使用toString()转成String，然后再将String转成Number运算
 
 例如：
-```
+```javascript
 console.log([1,2]=='1,2');
 
 [1,2].valueOf() -> [1,2] -> [1,2].toString() -> '1,2'
@@ -667,7 +667,7 @@ a.valueOf() -> {} -> a.valueOf().toString() -> "[object Object]"
 **经典试题**
 
 如何完善a，使得能正确输出
-```
+```javascript
 var a = ? 
 if(a == 1 && a == 2 && a == 3){
   console.log(1)
@@ -675,7 +675,7 @@ if(a == 1 && a == 2 && a == 3){
 ```
 分析题目得出要有输出结果 那么需要满足a等于1且等于2且等于3，在数学逻辑上一个简单类型的常量是不能实现的，那么转变思维，那是一个复杂数据类型呢。当a是一个对象时是不是可以满足。这就满足了上面讲述的复杂数据类型隐式转换.
 
-```
+```javascript
 var a = {
   i:0,
   valueOf:()=>{
@@ -689,7 +689,7 @@ var a = {
 
 #### 逻辑非隐式转换 与 关系运算符结合
 
-```
+```javascript
 [].toString() -> ''
 {}.toSrring() -> '[object Object]'
 ```
@@ -697,7 +697,7 @@ var a = {
 
 **例题**
 
-```
+```javascript
 1. console.log([]  == 0)              //true
 2. console.log(![] == 0)              //true
 3. console.log([]  == ![])            //true
@@ -749,7 +749,7 @@ js的变量的存储方式--栈（stack）和堆（heap）
 
 对于引用类型的值，可以添加属性和方法，也可以改变和删除其属性和方法,基本类型不行。
 
-```
+```javascript
 var o = new Objeact()
 o.name = 'name'
 console.log(0.name) // 'name'
@@ -762,7 +762,7 @@ console.log(name.age) // undefined
 
 基本类型复制的是值，引用类型复制的是地址。
 
-```
+```javascript
 var num1 = 5
 var num2 = num1;
 
@@ -784,7 +784,7 @@ obj1、obj2 指向的是同一片内存
 
 函数的参数都是按值传递的。
 
-```
+```javascript
 1.
 function addTen(num){
   return num += 10;
@@ -832,7 +832,7 @@ JS 采用的是词法作用域，也就是静态作用域。
 静态作用域，函数的作用域在函数定义的时候就决定了；动态作用域，函数的作用域在函数调用的时候才决定。
 
 示例分析：
-```
+```javascript
 var value = 1;
 
 function foo(){
@@ -870,13 +870,13 @@ bar() // 输出结果是什么
 
 我们用一个数组来模拟执行上下文栈：
 
-```
+```javascript
 ECStack = []
 ```
 
 试想当 JavaScript 开始要解释执行代码的时候，最先遇到的就是全局代码，所以初始化的时候首先就会向执行上下文栈压入一个全局执行上下文，我们用 globalContext 表示它，并且只有当整个应用程序结束的时候，ECStack 才会被清空，所以程序结束之前， ECStack 最底部永远有个 globalContext：
 
-```
+```javascript
 ECStack = [
   globalContext
 ]
@@ -884,7 +884,7 @@ ECStack = [
 
 现在 JavaScript 遇到下面的这段代码了：
 
-```
+```javascript
 function fun3() {
     console.log('fun3')
 }
@@ -900,7 +900,7 @@ function fun1() {
 fun1();
 ```
 转变理解之后的伪代码：
-```
+```javascript
 // fun1()执行
 ECStack.push(<fun1> funContext)
 // fun1()中包含fun2()执行
@@ -959,7 +959,7 @@ ECStack.pop(<fun1> funContext)//<fun2> funContext 弹出
 
 示例:
 
-```
+```javascript
 function foo(a){
   var b = 2;
   function c(){}
@@ -971,7 +971,7 @@ foo(1)
 ```
 在进入执行上下文后，这时候的活动对象(activation object,简称AO)是:
 
-```
+```javascript
 AO = {
   arguments:{
     0:1,
@@ -988,7 +988,7 @@ AO = {
 
 在代码执行阶段，会顺序执行代码，根据代码，修改变量对象的值，接着上文的示例转换之后。
 
-```
+```javascript
 AO = {
   arguments:{
     0:1,
@@ -1014,7 +1014,7 @@ AO = {
 JS采用的是词法作用域，所以函数的作用域在函数定义的时候就决定了。这是因为函数有一个内部属性[[scope]],当函数创建的时候，就会保存所有父变量对象到其中，你可以理解[[scope]]就是所有父变量对象的层级链，但注意[[scope]]并不代表完整的作用域链
 
 实例:
-```
+```javascript
 function foo(){
   function bar(){
     ...
@@ -1023,7 +1023,7 @@ function foo(){
 ```
 函数创建时，各自的[[scope]]为:
 
-```
+```javascript
 foo.[[scope]] = [
   globalContext.VO
 ]
@@ -1036,7 +1036,7 @@ bar.[[scope]] = [
 
 **函数激活**
 当函数激活时，进入函数上下文，创建VO/AO后，就会将活动对象添加到作用域链的前端。这时候执行上下文的作用域链，我们命名为Scope：
-```
+```javascript
 Scope = [AO].concat([[Scope]])
 ```
 至此，作用域链创建完毕
@@ -1045,7 +1045,7 @@ Scope = [AO].concat([[Scope]])
 
 想必看完上面的执行上下文栈、变量对象、作用域链会很混乱，那就结合知识点和例题一起解析。
 
-```
+```javascript
 var scope = "global scope";
 function checkscope(){
     var scope = "local scope";
@@ -1059,13 +1059,13 @@ checkscope();
 
 执行过程如下：
 1. 执行全局代码，创建全局执行上下文，全局上下文被压入执行上下文栈
-```
+```javascript
 ECStack = [
   globalContext
 ]
 ```
 2.全局上下文初始化
-```
+```javascript
 globalContext = {
   VO:[global],
   Scope:[globalContext.VO],
@@ -1073,14 +1073,14 @@ globalContext = {
 }
 ```
 初始化的同时，checkscope函数被创建，保存作用域链到函数内部属性[[scope]]
-```
+```javascript
 checkscope.[[scope]] = [
   globalContext.VO
 ]
 ```
 
 3.执行checkscope函数，创建checkscope函数执行上下文，checkscope函数执行上下文被压入执行上下文栈
-```
+```javascript
 ECStack = [
   globalContext,
   checkscopeContext
@@ -1094,7 +1094,7 @@ ECStack = [
 
 同时f函数被创建，保存作用域链到f函数的内部属性[[scope]]
 
-```
+```javascript
 checkscopeContext = {
   AO:{
     arguments:{
@@ -1108,7 +1108,7 @@ checkscopeContext = {
 }
 ```
 5. 执行f函数，创建f函数执行上下文，f函数执行上下文被压入执行上下文栈
-```
+```javascript
 ECStack = [
   globalContext
   checkscopeContext,
@@ -1121,7 +1121,7 @@ ECStack = [
   3. 初始化活动对象，即加入形参、函数声明、变量声明
   4. 将活动对象压入f作用域链顶端
 
-```
+```javascript
 fContext = {
         AO: {
             arguments: {
@@ -1136,14 +1136,14 @@ fContext = {
 
 8. f函数执行完毕，f函数上下文从执行上下文栈中弹出
 
-```
+```javascript
 ECStack = [
   globalContext
   checkscopeContext,
 ]
 ```
 9.checkscope函数执行完毕，checkscope执行上下文弹出
-```
+```javascript
 ECStack = [
   globalContext
 ]
@@ -1152,7 +1152,7 @@ ECStack = [
 ## This
 
 想必this指向问题是一个让很多同学都头疼的问题，当一些常用场景还是明确的。如下：
-```
+```javascript
 var obj = {a: 1, b: function(){console.log(this);}}
 1、作为对象调用时，指向该对象 obj.b(); // 指向obj
 2、作为函数调用, var b = obj.b; b(); // 指向全局window
@@ -1160,7 +1160,7 @@ var obj = {a: 1, b: function(){console.log(this);}}
 4、作为call与apply调用 obj.b.apply(object, []); // this指向当前的object 
 ```
 但是如果遇到更复杂的情况呢 例如：
-```
+```javascript
 var foo = {
   bar: function () {
     alert(this);
@@ -1197,7 +1197,7 @@ Reference 由三部分组成
 base value 就是**属性所在的对象**或者就是 **EnvironmentRecord**，它的值只可能是 undefined, an Object, a Boolean, a String, a Number, or an environment record 其中的一种。
 
 示例说明：
-```
+```javascript
 var foo = 1;
 
 // 对应的reference
@@ -1294,7 +1294,7 @@ new MemberExpression Arguments // 对象创建表达式
 
 示例说明
 
-```
+```javascript
 function foo() {
     console.log(this)
 }
@@ -1325,7 +1325,7 @@ foo.bar(); // MemberExpression 是 foo.bar
 
 
 规范11.2.1
-```
+```javascript
 // MemberExpression [ Expression ] 可以理解为 foo[bar] MemberExpression == foo ,Expression == bar
 The production MemberExpression : MemberExpression [ Expression ] is evaluated as follows:
 
@@ -1351,7 +1351,7 @@ The production MemberExpression : MemberExpression [ Expression ] is evaluated a
 ### 示例解析
 
 现在所有的涉及知识点都已经讲述清楚，那么用最开始的示例来结合知识点具体分析
-```
+```javascript
 var foo = {
   bar: function () {
     alert(this);
@@ -1366,7 +1366,7 @@ var foo = {
 ```
 
 1. MemberExpression 的值是foo.bar  返回的值是 
-```
+```javascript
 Reference = {
   base:foo,
   name:bar,
@@ -1396,7 +1396,7 @@ ref = Reference,
 上述的this 判断规则是基于规范中的描述来判断的，可能有很多同学一遍看不懂，其实作者本人也是读了好几遍 [冴羽](https://github.com/mqyqingfeng/Blog/issues/7)和[汤姆大叔](https://www.cnblogs.com/TomXu/archive/2012/01/17/2310479.html)的this文章，并结合读规范才逐渐理解的
 
 如果你可能目前阶段不想理解这些，那么你可以记住this的几种调用运用场景
-```
+```javascript
 var obj = {a: 1, b: function(){console.log(this);}}
 1、作为对象调用时，指向该对象 obj.b(); // 指向obj
 2、作为函数调用, var b = obj.b; b(); // 指向全局window
@@ -1441,7 +1441,7 @@ Object.prototype的原型其实是null。null表示程序级的、正常的或�
 
 函数也是一种对象，那么它也有原型，那它的原型是什么呢。
 
-```
+```javascript
 function foo(x,y){
   return x + y
 }
@@ -1487,7 +1487,7 @@ console.log(foo1(1,2))
 实现继承的多种方式,以及其的优缺点。
 
 首先我们先创建一个父类
-```
+```javascript
 function Animal(name){
   this.name = name || 'Tom'
   this.colors = ['red','bule']
@@ -1502,7 +1502,7 @@ Animal.prototype.sayName = function(food){
 
 核心：父类的实例作为子类的原型
 
-```
+```javascript
 function Cat(){}
 
 Cat.prototype = new Animal();

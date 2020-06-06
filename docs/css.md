@@ -43,7 +43,7 @@
   ### 清除浮动
 
    一、万能清除法
-  ```
+```javascript
   <div class="clearfloat">
     <div class="left">left</div>
     <div class="right">right</div>
@@ -64,7 +64,7 @@
   该方法支持大部分浏览器，缺点代码量过长，不好记忆。还是比较推荐使用。
 
 二、在结尾处添加空div标签clear:both
-```
+```javascript
 <div>
 	<div class="left">left</div>
 	<div class="right">right</div>
@@ -80,7 +80,7 @@
 
 三、父级div定义overflow:hidden
 
-```
+```javascript
 <div class="clearfloat">
 	<div class="left">left</div>
 	<div class="right">right</div>
@@ -178,7 +178,7 @@ id选择符 | 100
 
 使用 `calc` 属性进行四则运算
 
-```
+```javascript
 div {
   width: calc(100% - 10px + 2rem)
 }
@@ -208,7 +208,7 @@ div {
 
 相对于根文档对象内文本的字体尺寸的字体尺寸而言，若未指定字体大小则继承为浏览器默认字体大小
 
-```
+```javascript
 1 html{font-size:62.5%;} 
 2 body{font-size:12px;font-size:1.2rem ;} 
 3 p{font-size:14px;font-size:1.4rem;}
@@ -375,7 +375,7 @@ flex 布局具有浏览器兼容问题 需要加上前缀；设为 Flex 布局�
 
 html 结构
 
-```
+```javascript
 <div class="box">
  <span>垂直水平居中</span>
 </div>
@@ -383,7 +383,7 @@ html 结构
 
 1. flex布局
 
-```
+```javascript
 .box{
   display:flex;
   flex-derition:row;
@@ -395,7 +395,7 @@ html 结构
 2. 定位 
 
 未知子元素宽高情况
-```
+```javascript
 .box{
   position:relative;
 }
@@ -409,7 +409,7 @@ html 结构
 
 已知子元素宽高情况
 
-```
+```javascript
 .box{
   position:relative;
 }
@@ -424,7 +424,7 @@ html 结构
 
 3. table-cell
 
-```
+```javascript
 .box{
   display:table-cell;
   vertical-aligin:middle;
@@ -438,14 +438,14 @@ html 结构
 
 html 结构
 
-```
+```javascript
 <div class="box">
 	<div class="left">left</div>
 	<div class="right">right</div>
 </div>
 ```
 1. 定位
-```
+```javascript
 .left{
     position:absolute;
     top:0;
@@ -464,7 +464,7 @@ html 结构
 ```
 2. flex
 
-```
+```javascript
 .box{
     display:flex;
 }
@@ -476,7 +476,7 @@ html 结构
 }
 ```
 3. 浮动
-```
+```javascript
 .left{
     float:left;
     width:200px;
@@ -560,7 +560,7 @@ ransform: translate(45px) 或者 transform: translate(45px, 150px);
 * animation-iteration-count 规定动画应该播放的次数
 * animation-direction 规定是否应该轮流反向播放动画
 
-```
+```javascript
 @-webkit-keyframes anim1 {
 	0% {
 	opacity: 0;
@@ -588,7 +588,7 @@ transition 和 animation 区别 transition需要触发事件。
 
 三角形是利用border 来实现的。例如
 
-```
+```javascript
 // html
 <div class="example"></div>
 
@@ -606,7 +606,7 @@ transition 和 animation 区别 transition需要触发事件。
 
 1.实现箭头 
 变换思维你会发现箭头可以使用2个三角形叠加在一起颜色不同产生偏移量就可以了。
-```
+```javascript
 // html
 <i class="left" ></div>
 //css

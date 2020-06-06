@@ -3,70 +3,81 @@
 ## V16 版本生命周期
 
 ### 生命周期图
+
 ![](./images/reactlifecycle.png)
 
 ### 用法建议 
-```
+
+``` javascript
 class ExampleComponent extends React.Component {
-  // 用于初始化 state
-  constructor() {}
-  // 用于替换 `componentWillReceiveProps` ，该函数会在初始化和 `update` 时被调用
-  // 因为该函数是静态函数，所以取不到 `this`
-  // 如果需要对比 `prevProps` 需要单独在 `state` 中维护
-  static getDerivedStateFromProps(nextProps, prevState) {}
-  // 判断是否需要更新组件，多用于组件性能优化
-  shouldComponentUpdate(nextProps, nextState) {}
-  // 组件挂载后调用
-  // 可以在该函数中进行请求或者订阅
-  componentDidMount() {}
-  // 用于获得最新的 DOM 数据
-  getSnapshotBeforeUpdate() {}
-  // 组件即将销毁
-  // 可以在此处移除订阅，定时器等等
-  componentWillUnmount() {}
-  // 组件销毁后调用
-  componentDidUnMount() {}
-  // 组件更新后调用
-  componentDidUpdate() {}
-  // 渲染组件函数
-  render() {}
-  // 以下函数不建议使用
-  UNSAFE_componentWillMount() {}
-  UNSAFE_componentWillUpdate(nextProps, nextState) {}
-  UNSAFE_componentWillReceiveProps(nextProps) {}
+    // 用于初始化 state
+    constructor() {}
+    // 用于替换 `componentWillReceiveProps` ，该函数会在初始化和 `update` 时被调用
+    // 因为该函数是静态函数，所以取不到 `this` 
+    // 如果需要对比 `prevProps` 需要单独在 `state` 中维护
+    static getDerivedStateFromProps(nextProps, prevState) {}
+    // 判断是否需要更新组件，多用于组件性能优化
+    shouldComponentUpdate(nextProps, nextState) {}
+    // 组件挂载后调用
+    // 可以在该函数中进行请求或者订阅
+    componentDidMount() {}
+    // 用于获得最新的 DOM 数据
+    getSnapshotBeforeUpdate() {}
+    // 组件即将销毁
+    // 可以在此处移除订阅，定时器等等
+    componentWillUnmount() {}
+    // 组件销毁后调用
+    componentDidUnMount() {}
+    // 组件更新后调用
+    componentDidUpdate() {}
+    // 渲染组件函数
+    render() {}
+    // 以下函数不建议使用
+    UNSAFE_componentWillMount() {}
+    UNSAFE_componentWillUpdate(nextProps, nextState) {}
+    UNSAFE_componentWillReceiveProps(nextProps) {}
 }
 ```
 
 ### Mounting
+
 在该阶段包含生命周期函数
+
 * constructor()
 * static getDerivedStateFromProps()
 * render()
 * componentDidMount()
 
 #### constructor()
+
 构造函数的作用有两个
 一个通过分配对象来初始化本地状态this.state，另一个是将事件处理程序方法绑定到实例。
 在构造函数中不用使用this.setState
-```
+
+``` javascript
 constructor(props) {
-  super(props);
-  // Don't call this.setState() here!
-  this.state = { counter: 0 };
-  this.handleClick = this.handleClick.bind(this);
+    super(props);
+    // Don't call this.setState() here!
+    this.state = {
+        counter: 0
+    };
+    this.handleClick = this.handleClick.bind(this);
 }
 ```
+
 #### static getDerivedStateFromProps()
 
-`static getDerivedStateFromProps(props, state)`
+`static getDerivedStateFromProps(props, state)` 
 
 getDerivedStateFromProps在调用render方法之前调用，无论是在初始安装还是后续更新。它会返回一个对象去更新状态，或者返回null不更新任何东西
 
 该生命周期是在16.3版本中新增的，当props或者state改变都会触发改生命周期，与这个相似的UNSAFE_componentWillReceiveProps()生命周期在之后的版本将会逐渐被替代，避免使用
 
 #### render()
+
 render()方法是类组件中唯一必需的方法。并且它是一个纯函数，意味着不会修改组件状态，每次调用时都返回相同的结果，并且它不直接与浏览器交互。
-调用时它会校验this.state和this.props,然后返回下列的几种类型的返回值
+调用时它会校验this.state和this.props, 然后返回下列的几种类型的返回值
+
 * React elements
 * Arrays and fragments
 * Portals
@@ -80,6 +91,7 @@ render()方法是类组件中唯一必需的方法。并且它是一个纯函数
 在该生命周期中可以进行dom的操作和数据的网络请求
 
 ### Updating
+
 * static getDerivedStateFromProps()
 * shouldComponentUpdate()
 * render()
@@ -90,7 +102,7 @@ render()方法是类组件中唯一必需的方法。并且它是一个纯函数
 
 #### shouldComponentUpdate()
 
-`shouldComponentUpdate(nextProps, nextState)`
+`shouldComponentUpdate(nextProps, nextState)` 
 
 shouldComponentUpdate 在接受到新的props和新的state的 在渲染之前会调用 默认的是返回true。该方法不会在初始的时候和使用forceUpdate()方法的时候调用。
 
@@ -98,13 +110,13 @@ shouldComponentUpdate 在接受到新的props和新的state的 在渲染之前�
 
 ### getSnapshotBeforeUpdate()
 
-`getSnapshotBeforeUpdate(prevProps, prevState)`
+`getSnapshotBeforeUpdate(prevProps, prevState)` 
 
 在该生命周期中 state 已经更新，可以进行一些dom 操作，在render更新之前
 
 ### componentDidUpdate()
 
-`componentDidUpdate(prevProps, prevState, snapshot)`
+`componentDidUpdate(prevProps, prevState, snapshot)` 
 
 componentDidUpdate()更新发生后立即调用。初始渲染不会调用此方法。
 该生命周期你也可以去操作dom，或者进行网络请求，当你发现props改变时。但是不能使用直接setState那样会导致无限循环，你可以再某种判断条件下使用。
@@ -112,42 +124,45 @@ componentDidUpdate()更新发生后立即调用。初始渲染不会调用此方
 
 ###  UNSAFE_componentWillUpdate()
 
-`UNSAFE_componentWillUpdate(nextProps, nextState)`
+`UNSAFE_componentWillUpdate(nextProps, nextState)` 
 
-此生命周期之前已命名componentWillUpdate。该名称将继续有效，直到版本17.使用rename-unsafe-lifecyclescodemod自动更新组件。
+此生命周期之前已命名componentWillUpdate。该名称将继续有效，直到版本17. 使用rename-unsafe-lifecyclescodemod自动更新组件。
 UNSAFE_componentWillUpdate()在收到新的props或state时，在渲染之前调用。使用此作为在更新发生之前执行准备的机会。初始渲染不会调用此方法
 不能再此使用this.setState
 
 ### UNSAFE_componentWillReceiveProps()
 
-`UNSAFE_componentWillReceiveProps(nextProps)`
+`UNSAFE_componentWillReceiveProps(nextProps)` 
 
-此生命周期之前已命名componentWillReceiveProps。该名称将继续有效，直到版本17.使用rename-unsafe-lifecyclescodemod自动更新组件。
+此生命周期之前已命名componentWillReceiveProps。该名称将继续有效，直到版本17. 使用rename-unsafe-lifecyclescodemod自动更新组件。
 
-该生命周期在初始化的时候不会被调用，只有当props被改变的时候会被调用,this.setState不会触发它
+该生命周期在初始化的时候不会被调用，只有当props被改变的时候会被调用, this.setState不会触发它
 
 ### Unmounting
+
 * componentWillUnmount()
 
 #### componentWillUnmount()
+
 componentWillUnmount()在卸载和销毁组件之前立即调用。在此方法中执行任何必要的清理，例如使计时器无效，取消网络请求或清除在componentDidMount()其中创建的任何订阅。
 
 不能调用setState()，componentWillUnmount()因为组件永远不会被重新呈现。卸载组件实例后，将永远不会再次mount它。
 
 ### Error Handling
+
 * static getDerivedStateFromError()
 * componentDidCatch()
 
 #### static getDerivedStateFromError()
 
-`static getDerivedStateFromError(error)`
+`static getDerivedStateFromError(error)` 
 
 在子组件抛出错误后会调用此生命周期。它接收作为参数抛出的错误，并返回值以更新状态。
 在组件 “render” 阶段的时候就会被调用，不允许副作用
 
 #### componentDidCatch()
 
-`componentDidCatch(error, info)`
+`componentDidCatch(error, info)` 
 
 在子组件抛出错误的时候回调用此生命周期，它有2个参数，一个是错误，还有一个是对象，key对应的是错误来自哪个子组件。
 该生命周期在 “ commit” 阶段调用所以可以有副作用
@@ -179,17 +194,23 @@ componentWillUnmount()在卸载和销毁组件之前立即调用。在此方法�
 
 写React我们用的是JSX语法，那它如何被解析呢。通过Babel转义之后，调用React.createElement.
 例子说明：
-```
-<div className="box" style={{pading:16}}>1</div>
+
+``` javascript
+< div className = "box"
+style = {
+    {
+        pading: 16
+    }
+} > 1 < /div>
 // 转义之后
 React.createElement("div", {
-  className: "box",
-  style: {
-    pading: 16
-  }
+    className: "box",
+    style: {
+        pading: 16
+    }
 }, "1");
-
 ```
+
 你可以自己尝试查看转义之后的代码 [转义地址](https://www.babeljs.cn/repl)
 
 那接下来看看它的内部实现。
@@ -199,25 +220,28 @@ React.createElement("div", {
 首先定位到 [ReactElement.js](https://github.com/facebook/react/blob/master/packages/react/src/ReactElement.js)文件，找到createElement方法。可以分为以下几部分解读。
 
 #### 函数参数
-```
+
+``` javascript
 export function createElement(type, config, children) {}
 ```
+
 发现createElement接收3个参数。对比上述的示例代码明白：
+
 * type 代表节点类型 上述的div
 * config 代表节点配置的属性，className等
 * children 代表子节点
 
 #### config处理
 
-```
+``` javascript
 if (config != null) {
 
     // 验证 ref 和 key，只在开发环境下
     if (hasValidRef(config)) {
-      ref = config.ref;
+        ref = config.ref;
     }
     if (hasValidKey(config)) {
-      key = '' + config.key;
+        key = '' + config.key;
     }
 
     // 赋值操作
@@ -226,91 +250,358 @@ if (config != null) {
     self = config.__self === undefined ? null : config.__self;
     source = config.__source === undefined ? null : config.__source;
 
-
     // Remaining properties are added to a new props object
     // 遍历配置，把内建的几个属性剔除后丢到 props 中
     for (propName in config) {
-      if (
-        hasOwnProperty.call(config, propName) &&
-        !RESERVED_PROPS.hasOwnProperty(propName) // RESERVED_PROPS 保留属性 就是ref、key等
-      ) {
-        props[propName] = config[propName];
-      }
+        if (
+            hasOwnProperty.call(config, propName) &&
+            !RESERVED_PROPS.hasOwnProperty(propName) // RESERVED_PROPS 保留属性 就是ref、key等
+        ) {
+            props[propName] = config[propName];
+        }
     }
-  }
+}
 ```
 
 验证config 是否为空，当不为空时，当传入ref、key值时 采用传入的值。然后遍历 config 并把内建的几个属性（比如 ref 和 key）剔除后丢到 props 对象中。
 
 #### children的处理
 
-```
+``` javascript
  const childrenLength = arguments.length - 2;
-  if (childrenLength === 1) {
-    props.children = children;
-  } else if (childrenLength > 1) {
-    const childArray = Array(childrenLength);
-    for (let i = 0; i < childrenLength; i++) {
-      childArray[i] = arguments[i + 2];
-    }
-    props.children = childArray;
-  }
+ if (childrenLength === 1) {
+     props.children = children;
+ } else if (childrenLength > 1) {
+     const childArray = Array(childrenLength);
+     for (let i = 0; i < childrenLength; i++) {
+         childArray[i] = arguments[i + 2];
+     }
+     props.children = childArray;
+ }
 ```
 
-首先获取子节点的长度,利用类数组剔除2个参数就是type和config，剩下的就是子节点长度。根据长度的不同进行不同的处理，长度为1时，直接赋值，当长度大于1时，就会有多个children，props.children处理成数组
+首先获取子节点的长度, 利用类数组剔除2个参数就是type和config，剩下的就是子节点长度。根据长度的不同进行不同的处理，长度为1时，直接赋值，当长度大于1时，就会有多个children，props.children处理成数组
 
 #### 默认值处理
 
-```
+``` javascript
  if (type && type.defaultProps) {
-    const defaultProps = type.defaultProps;
-    for (propName in defaultProps) {
-      if (props[propName] === undefined) {
-        props[propName] = defaultProps[propName];
-      }
-    }
-  }
+     const defaultProps = type.defaultProps;
+     for (propName in defaultProps) {
+         if (props[propName] === undefined) {
+             props[propName] = defaultProps[propName];
+         }
+     }
+ }
 ```
+
 当组件有设置defaultProps默认属性时，有的话判断是否有给 props 赋值，只有当值为undefined 时，才会设置默认值
 
 #### 返回值
-```
+
+``` javascript
 return ReactElement(
-  type,
-  key,
-  ref,
-  self,
-  source,
-  ReactCurrentOwner.current,
-  props,
+    type,
+    key,
+    ref,
+    self,
+    source,
+    ReactCurrentOwner.current,
+    props,
 );
 ```
+
 返回一个ReactElement对象。
 
 ### ReactElement
 
-```
+``` javascript
 const ReactElement = function(type, key, ref, self, source, owner, props) {
-  const element = {
-    $$typeof: REACT_ELEMENT_TYPE,
-    type: type,
-    key: key,
-    ref: ref,
-    props: props,
-    _owner: owner,
-  };
-  return element;
+    const element = {
+        $$typeof: REACT_ELEMENT_TYPE,
+        type: type,
+        key: key,
+        ref: ref,
+        props: props,
+        _owner: owner,
+    };
+    return element;
 };
 ```
-定义一个对象来表示，核心通过 $$typeof 来帮助我们识别这是一个 ReactElement，$$typeof 是一个Symbol的值。
 
+定义一个对象来表示，核心通过 $$typeof 来帮助我们识别这是一个 ReactElement，$$typeof 是一个Symbol的值。
 
 该小节流程图
 
 ![](./images/createElement.png)
 
-
 ## Component
+
+React 中有组件类有两种Component 和 PureComponent. [源码地址](https://github.com/facebook/react/blob/master/packages/react/src/ReactBaseClasses.js)
+
+1. Component
+
+``` javascript
+function Component(props, context, updater) {
+    this.props = props;
+    this.context = context;
+    this.refs = emptyObject;
+    this.updater = updater || ReactNoopUpdateQueue;
+}
+
+Component.prototype.isReactComponent = {};
+
+Component.prototype.setState = function(partialState, callback) {
+    this.updater.enqueueSetState(this, partialState, callback, 'setState');
+};
+
+Component.prototype.forceUpdate = function(callback) {
+    this.updater.enqueueForceUpdate(this, callback, 'forceUpdate');
+};
+```
+
+构造函数 Component 中需要主要的是 refs 和 updater, updater 在setState和forceUpdate中都有被调用。 ReactNoopUpdateQueue 该文件是一个报警错误处理。
+
+2. PureComponent
+
+``` javascript
+function ComponentDummy() {}
+ComponentDummy.prototype = Component.prototype;
+
+function PureComponent(props, context, updater) {
+    this.props = props;
+    this.context = context;
+    this.refs = emptyObject;
+    this.updater = updater || ReactNoopUpdateQueue;
+}
+
+const pureComponentPrototype = (PureComponent.prototype = new ComponentDummy());
+pureComponentPrototype.constructor = PureComponent;
+Object.assign(pureComponentPrototype, Component.prototype);
+pureComponentPrototype.isPureReactComponent = true;
+```
+
+PureComponent 继承自 Component，继承方法使用了很典型的寄生组合式。所以基本代码是一致的。
+
+## ReactChildren
+
+主要来看下mapChildren方法的实现。其对应日常接触的API就是React.children.map [文档](https://reactjs.org/docs/react-api.html#reactchildren)
+
+### mapChildren
+代码如下
+
+``` javascript
+function mapChildren(children, func, context) {
+    if (children == null) {
+        return children;
+    }
+    const result = [];
+    mapIntoWithKeyPrefixInternal(children, result, null, func, context);
+    return result;
+}
+```
+
+定义了一个result数组，将他传入 `mapIntoWithKeyPrefixInternal` ，得到处理之后的结果。
+
+接着看函数 `mapIntoWithKeyPrefixInternal` 代码
+
+### mapIntoWithKeyPrefixInternal
+
+``` javascript
+function mapIntoWithKeyPrefixInternal(children, array, prefix, func, context) {
+    let escapedPrefix = '';
+    // 当前缀不为空时，对key值进行一些处理
+    if (prefix != null) {
+        escapedPrefix = escapeUserProvidedKey(prefix) + '/';
+    }
+    const traverseContext = getPooledTraverseContext(
+        array, // 结果数组
+        escapedPrefix,
+        func,
+        context,
+    );
+    traverseAllChildren(children, mapSingleChildIntoContext, traverseContext);
+    releaseTraverseContext(traverseContext);
+}
+```
+### getPooledTraverseContext、releaseTraverseContext
+`getPooledTraverseContext` 和 `releaseTraverseContext` 是配套使用的。这是一种对象重用池的设计模式。当然它的用处其实很简单，就是维护一个大小固定的对象重用池，每次从这个池子里取一个对象去赋值，用完了就将对象上的属性置空然后丢回池子。维护这个池子的用意就是提高性能。
+
+``` javascript
+const POOL_SIZE = 10;
+const traverseContextPool = [];
+
+function getPooledTraverseContext(mapResult, keyPrefix, mapFunction, mapContext) {
+    if (traverseContextPool.length) {
+        const traverseContext = traverseContextPool.pop();
+        traverseContext.result = mapResult;
+        traverseContext.keyPrefix = keyPrefix;
+        traverseContext.func = mapFunction;
+        traverseContext.context = mapContext;
+        traverseContext.count = 0;
+        return traverseContext;
+    } else {
+        return {
+            result: mapResult,
+            keyPrefix: keyPrefix,
+            func: mapFunction,
+            context: mapContext,
+            count: 0,
+        };
+    }
+}
+
+function releaseTraverseContext(traverseContext) {
+    traverseContext.result = null;
+    traverseContext.keyPrefix = null;
+    traverseContext.func = null;
+    traverseContext.context = null;
+    traverseContext.count = 0;
+    if (traverseContextPool.length < POOL_SIZE) {
+        traverseContextPool.push(traverseContext);
+    }
+}
+```
+
+继续看 `traverseAllChildren` 函数
+
+### traverseAllChildren
+``` javascript
+function traverseAllChildren(children, callback, traverseContext) {
+    if (children == null) {
+        return 0;
+    }
+
+    return traverseAllChildrenImpl(children, '', callback, traverseContext);
+}
+```
+
+这么代码很简单就是显而易懂，children为null返回0, 否则调用traverseAllChildrenImpl函数。
+
+### traverseAllChildrenImpl
+`traverseAllChildrenImpl` 函数代码如下
+
+```javascript
+function traverseAllChildrenImpl(children, nameSoFar, callback, traverseContext ) {
+    const type = typeof children;
+
+    if (type === 'undefined' || type === 'boolean') {
+        children = null;
+    }
+
+    let invokeCallback = false; // 调用函数标识
+
+    if (children === null) {
+        invokeCallback = true;
+    } else {
+        switch (type) {
+            case 'string':
+            case 'number':
+                invokeCallback = true;
+                break;
+            case 'object':
+                switch (children.$$typeof) {
+                    case REACT_ELEMENT_TYPE:
+                    case REACT_PORTAL_TYPE:
+                        invokeCallback = true;
+                }
+        }
+    }
+    if (invokeCallback) {
+        callback(
+            traverseContext,
+            children,
+            nameSoFar === '' ? SEPARATOR + getComponentKey(children, 0) : nameSoFar,
+        );
+        return 1;
+    }
+    let child;
+    let nextName;
+    let subtreeCount = 0; // Count of children found in the current subtree.
+    const nextNamePrefix = nameSoFar === '' ? SEPARATOR : nameSoFar + SUBSEPARATOR;
+    if (Array.isArray(children)) {
+        for (let i = 0; i < children.length; i++) {
+            child = children[i];
+            nextName = nextNamePrefix + getComponentKey(child, i);
+            subtreeCount += traverseAllChildrenImpl(
+                child,
+                nextName,
+                callback,
+                traverseContext,
+            );
+        }
+    } else {
+        const iteratorFn = getIteratorFn(children);
+        if (typeof iteratorFn === 'function') {
+            const iterator = iteratorFn.call(children);
+            let step;
+            let ii = 0;
+            while (!(step = iterator.next()).done) {
+                child = step.value;
+                nextName = nextNamePrefix + getComponentKey(child, ii++);
+                subtreeCount += traverseAllChildrenImpl(
+                    child,
+                    nextName,
+                    callback,
+                    traverseContext,
+                );
+            }
+        } else if (type === 'object') {
+            let addendum = '';
+        }
+
+        return subtreeCount;
+    }
+```
+该函数主要是对children类型进行判断，不同的类型进行不同的处理。当children为undefined和布尔值时等同于null，当null、stirng、number时立即调用回调函数。另外你还可以发现在判断的过程中，代码中有使用到 $$typeof 去判断的流程。
+
+当children类型不满足上述情况，不立即调用回调时。首先会判断children是否为数组，如果为数组的话，就遍历数组并把其中的每个元素都递归调用 traverseAllChildrenImpl，也就是说必须是单个可渲染节点才可以执行上半部分代码中的 callback。
+
+如果不是数组的话，就看看 children 是否可以支持迭代，原理就是通过 obj[Symbol.iterator] 的方式去取迭代器，返回值如果是个函数的话就代表支持迭代，然后逻辑就和之前的一样了。
+
+其实这个函数核心作用就是通过把传入的 children 数组通过遍历变成一维的单个节点。上述的callback指的是`mapSingleChildIntoContext`函数。
+
+这里引出一个小思考题，如下的JSX结构在页面的展示结果是什么
+```javascript
+<div>{true}</div>或者<div>{undefined}</div>
+```
+聪明的同学肯定已经知道答案是什么了，如果还不知道的同学动动手看看结果再回来理解下。
+
+### mapSingleChildIntoContext
+`mapSingleChildIntoContext` 函数代码如下：
+
+``` javascript
+function mapSingleChildIntoContext(bookKeeping, child, childKey) {
+    const {
+        result,
+        keyPrefix,
+        func,
+        context
+    } = bookKeeping;
+    let mappedChild = func.call(context, child, bookKeeping.count++);
+    if (Array.isArray(mappedChild)) {
+        mapIntoWithKeyPrefixInternal(mappedChild, result, childKey, c => c);
+    } else if (mappedChild != null) {
+        if (isValidElement(mappedChild)) {
+            mappedChild = cloneAndReplaceKey(
+                mappedChild,
+                keyPrefix +
+                (mappedChild.key && (!child || child.key !== mappedChild.key) ?
+                    escapeUserProvidedKey(mappedChild.key) + '/' :
+                    '') +
+                childKey,
+            );
+        }
+        result.push(mappedChild);
+    }
+}
+```
+
+参数bookKeeping就是对象复用池取出的对象。func为mapChildren 函数的第二个参数。func函数调用得到mappedChild结果。如果结果是数组这调用`mapIntoWithKeyPrefixInternal`再走一遍循环。在`mapIntoWithKeyPrefixInternal`有结果且不为null的时候，并判断是否是一个有效的Element,验证通过的话就 clone 一份并且替换掉 key，最后把返回值放入 result 中，result 其实也就是 mapChildren 的返回值。
+
+至此，mapChildren 函数相关的内容已经解析完毕。可以对照流程图再理解
+
+![](./images/mapChildren.png)
 
 ## Fiber
 
@@ -342,15 +633,15 @@ const ReactElement = function(type, key, ref, self, source, owner, props) {
 
 ### 核心API
 
-Redux 的核心是一个`store`，这个`store`由Redux提供的`createStore(reducers[,initialState])`方法生成。
+Redux 的核心是一个 `store` ，这个 `store` 由Redux提供的 `createStore(reducers[,initialState])` 方法生成。
 
-`createStore` 函数具有2个参数，第一个参数为必须传入的`reducers`，第二个参数为可以选的初始化状态 `initialState`
+`createStore` 函数具有2个参数，第一个参数为必须传入的 `reducers` ，第二个参数为可以选的初始化状态 `initialState` 
 
 #### reducer
 
-在Redux里，负责响应action并修改数据的角色就是reducer。reducer本质上是一个函数，其函数签名为`reducer(perviousState,action)=>newState`。可以看出reducer的职责是根据perviousState和action 计算出新的 newState
+在Redux里，负责响应action并修改数据的角色就是reducer。reducer本质上是一个函数，其函数签名为 `reducer(perviousState,action)=>newState` 。可以看出reducer的职责是根据perviousState和action 计算出新的 newState
 
-当reducer第一次执行的时候，并没有任何的perviousState,但是需要返回一个新的newState，但是就会需要一个初始值initialState
+当reducer第一次执行的时候，并没有任何的perviousState, 但是需要返回一个新的newState，但是就会需要一个初始值initialState
 
 #### createStore
 
@@ -360,5 +651,3 @@ createStore是Redux中最核心的API。通过该方法可以生成一个store �
 2. dispatch(action):分发一个action,并返回这个action，这是唯一能改变store中数据的方式
 3. subscribe(listener):注册一个监听者，它在store发生变化时被调用
 4. replaceReducer(nextReducer):更新当前store里的reducer，一般只会在开发模式中调用
-
-

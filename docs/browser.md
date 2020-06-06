@@ -93,7 +93,7 @@ DOM 是以 `Bytes -> Characters -> Tokens -> Nodes -> DOM` 这样的流程生成
 * 使用DocumentFragment
 
 我们可以通过createDocumentFragment创建一个游离于DOM树之外的节点，然后在此节点上批量操作，最后插入DOM树中，因此只触发一次重排
-```
+```javascript
 var fragment = document.createDocumentFragment();
 
 for (let i = 0;i<10;i++){
@@ -149,7 +149,7 @@ DOMContentLoaded 事件触发代表初始的 HTML 被完全加载和解析，不
 
 JSONP 是 JSON with padding的简写. JSONP本质上是一个Hack，它利用`<script>`标签不受同源策略限制的特性进行跨域操作。由两部分组成:回调函数和数据。回调函数是当响应到来时应该在页面中调用的函数。回调 函数的名字一般是在请求中指定的。而数据就是传入回调函数中的 JSON 数据。下面是一个典型的 JSONP 请求。
 
-```
+```javascript
 <script src="http://domain/api?callback=jsonp"></script>
 ```
 优点：
@@ -464,13 +464,13 @@ h5页面技术实现：react
 问题解决：
 1. app.js 添加 时间戳后缀 
 2. index.html 文件中添加
-```
+```javascript
  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 ```
 3. nginx 配置中添加
-```
+```javascript
 location / {
     root   html;
     index  index.html;

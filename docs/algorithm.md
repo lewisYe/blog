@@ -14,7 +14,7 @@
 5. clear():移除栈里的所有元素。
 6. size():返回栈里的元素个数。
 
-```
+```javascript
 function Stack(){
   constructor(){
     this.stack = []
@@ -45,7 +45,7 @@ Leetcode上[有效的括号](https://leetcode-cn.com/problems/valid-parentheses/
 
 该题就是一道可以运用栈的思想来解题
 
-```
+```javascript
 /**
  * @param {string} s
  * @return {boolean}
@@ -89,7 +89,7 @@ var isValid = function(s) {
 4. isEmpty():如果队列中不包含任何元素，返回true，否则返回false。
 5. size():返回队列包含的元素个数
 
-```
+```javascript
 class Queue(){
   constructor(){
     this.queue = []
@@ -126,7 +126,7 @@ class Queue(){
 链表是一个线性结构，同时也是一个天然的递归结构。链表结构可以充分利用计算机内存空间，实现灵活的内存动态管理。但是链表失去了数组随机读取的优点，同时链表由于增加了结点的指针域，空间开销比较大。
 
 js 实现
-```
+```javascript
 class Node{
   constructor(value,next){
     this.value = value;
@@ -173,7 +173,7 @@ class LinkedList{
 双向链表和普通链表的区别在于，在链表中， 一个节点只有链向下一个节点的链接，而在双向链表中，链接是双向的:一个链向下一个元素， 另一个链向前一个元素
 ![](./images/doublyLinkedList.png)
 
-```
+```javascript
 class DoublyNode extends Node {
    constructor(value,perv,next){
      super(value,next)
@@ -229,7 +229,7 @@ js来实现二叉搜索树一些基本功能：
 3. remove(key):从树中移除某个键。
 4. deep() 树的深度
 
-```
+```javascript
 class TreeNode{
   constructor(key){
     this.key = key;
@@ -333,7 +333,7 @@ class BinarySearchTree{
 三者的差别就是在于根节点在第一个访问。
 
 **先序遍历**
-```
+```javascript
 preOrderTraverse(node,callback){
   if(node){
     callback(node.key)
@@ -345,7 +345,7 @@ preOrderTraverse(node,callback){
 
 **中序遍历**
 
-```
+```javascript
 inOrderTraverse(node){
   if(node){
     inOrderTraverse(this.left)
@@ -357,7 +357,7 @@ inOrderTraverse(node){
 
 **后序遍历**
 
-```
+```javascript
 postOrderTraverse(node){
   if(node){
     postOrderTraverse(this.left)

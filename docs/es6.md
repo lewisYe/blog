@@ -7,7 +7,7 @@
 ES5只有全局作用域和函数作用域，没有块级作用域，这带来很多不合理的场景。
 
 1. 内层变量可能会覆盖外层变量
-```
+```javascript
 var tmp = 'global'
 
 function f(){
@@ -23,7 +23,7 @@ f() // undefied
 
 2.用来计数的循环变量泄露为全局变量
 
-```
+```javascript
 var str = 'hello'
 for(var i=0;i<str.length;i++){
   console.log(str[i])
@@ -42,7 +42,7 @@ ES6 新增了 let 和 const 关键字用来声明变量，实际上为JavaScript
 
 #### 1.不存在变量提升
 
-```
+```javascript
 // var 的情况
 console.log(foo); // 输出undefined
 var foo = 2;
@@ -52,7 +52,7 @@ console.log(bar); // 报错ReferenceError
 let bar = 2;
 ```
 #### 2.重复声明报错
-```
+```javascript
 // 报错
 function func() {
   let a = 10;
@@ -68,7 +68,7 @@ function func() {
 
 #### 3.不绑定全局作用域
 
-```
+```javascript
 var a = 1;
 // 如果在 Node 的 REPL 环境，可以写成 global.a
 // 或者采用通用方法，写成 this.a
@@ -79,8 +79,7 @@ window.b // undefined
 ```
 
 #### 4. 暂时性死区
-
-```
+```javascript
 var tmp = 123;
 
 if (true) {
@@ -99,7 +98,7 @@ const 用于声明常量，其值一旦被设定不能再被修改，否则会�
 
 const实际上保证的，并不是变量的值不得改动，而是变量指向的那个内存地址所保存的数据不得改动。对于简单类型的数据（数值、字符串、布尔值），值就保存在变量指向的那个内存地址，因此等同于常量。但对于复合类型的数据（主要是对象和数组），变量指向的内存地址，保存的只是一个指向实际数据的指针。
 
-```
+```javascript
 const data = {
     value: 1
 }
@@ -116,7 +115,7 @@ data = {}; // Uncaught TypeError: Assignment to constant variable.
 
 ### 基本语法
 
-```
+```javascript
 var f = v => v;
 
 // 等同于
@@ -157,7 +156,7 @@ this指向的固定化，并不是因为箭头函数内部有绑定this的机制
 
 这就意味着如果箭头函数被非箭头函数包含，this 绑定的就是最近一层非箭头函数的 this。
 
-```
+```javascript
 function foo() {
   setTimeout(() => {
     console.log('id:', this.id);
@@ -171,7 +170,7 @@ foo.call({ id: 42 });
 ```
 
 上述函数转换为ES5
-```
+```javascript
 function foo(){
   var _this = this;
   setTimeout(function(){
@@ -192,14 +191,14 @@ JavaScript 函数有两个内部方法：[[Call]] 和 [[Construct]]。
 
 箭头函数并没有 [[Construct]] 方法，不能被用作构造函数，如果通过 new 的方式调用，会报错。
 
-```
+```javascript
 var Foo = () => {};
 var foo = new Foo(); // TypeError: Foo is not a constructor
 ```
 
 #### 不可以使用arguments对象
 
-```
+```javascript
 function foo() {
   setTimeout(() => {
     console.log('args:', arguments);
@@ -212,14 +211,14 @@ foo(2, 4, 6, 8)
 上面代码中，箭头函数内部的变量arguments，其实是函数foo的arguments变量。
 
 你可以通过命名参数或者 rest 参数的形式访问参数:
-```
+```javascript
 let nums = (...nums) => nums;
 ```
 ## Symbol
 
 ES6 引入了一种新的原始数据类型 Symbol，表示独一无二的值。
 #### 1. Symbol 值通过 Symbol 函数生成，使用 typeof，结果为 "symbol"
-```
+```javascript
 var s = Symbol();
 console.log(typeof s); // "symbol"
 ```
@@ -227,7 +226,7 @@ console.log(typeof s); // "symbol"
 #### 2. Symbol 函数前不能使用 new 命令，否则会报错。这是因为生成的 Symbol 是一个原始类型的值，不是对象。
 
 #### 3. instanceof 的结果为 false
-```
+```javascript
 var s = Symbol('foo');
 console.log(s instanceof Symbol); // false
 ```
@@ -244,7 +243,7 @@ console.log(s instanceof Symbol); // false
 ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。
 
 Set 本身是一个构造函数，用来生成Set 数据结构
-```
+```javascript
 var s = new Set()
 ```
 
@@ -272,7 +271,7 @@ forEach()：使用回调函数遍历每个成员，无返回值
 #### 作用 
 
 数组去重
-```
+```javascript
 var s = new Set([1,2,3,4,4])
 
 return [...s] // 1,2,3,4
@@ -284,7 +283,7 @@ JavaScript 的对象（Object），本质上是键值对的集合（Hash 结构�
 
 为了解决这个问题，ES6 提供了 Map 数据结构。它类似于对象，也是键值对的集合，但是“键”的范围不限于字符串，各种类型的值（包括对象）都可以当作键。
 
-```
+```javascript
 const map = new Map([
   ['name', '张三'],
   ['title', 'Author']
@@ -335,7 +334,7 @@ Map.prototype.forEach()：遍历 Map 的所有成员。
 ES5 提供了 Object.defineProperty 方法，该方法可以在一个对象上定义一个新属性，或者修改一个对象的现有属性，并返回这个对象
 
 语法：
-```
+```javascript
 Object.defineProperty(obj, prop, descriptor)
 ```
 参数：
@@ -346,7 +345,7 @@ Object.defineProperty(obj, prop, descriptor)
 返回值：被传递给函数的对象
 
 举个例子
-```
+```javascript
 var o = {}; // 创建一个新对象
 
 // 在对象中添加一个属性与数据描述符的示例
@@ -357,7 +356,7 @@ Object.defineProperty(o, "a", {
 
 你可能会觉得给一个对象定义一个新属性需要这么麻烦吗 有必要吗 直接赋值不就行了 那接下来我们做个对比 看看差别：
 
-```
+```javascript
 var obj1 = {}
 obj1.name = 'obj1'
 console.log(Object.keys(obj1)) // ["name"]
@@ -426,7 +425,7 @@ console.log(obj2.name) // obj2
 
 此外，所有的属性描述符都是非必须的，但是 descriptor 这个字段是必须的，如果不进行任何配置，你可以这样：
 
-```
+```javascript
 var obj = Object.defineProperty({}, "num", {});
 console.log(obj.num); // undefined
 ```
@@ -440,7 +439,7 @@ console.log(obj.num); // undefined
 当程序设置一个存取器属性的值时，JavaScript 调用 setter 方法，将赋值表达式右侧的值当做参数传入 setter。从某种意义上讲，这个方法负责“设置”属性值。可以忽略 setter 方法的返回值。
 
 举个例子：
-```
+```javascript
 var obj = {}, value = null;
 Object.defineProperty(obj, "num", {
     get: function(){
@@ -465,13 +464,13 @@ console.log(obj.num); // 执行了 get 操作 // 1
 现在有这么一个场景，页面中有一个按钮，每点击一次按钮数值都加1，数值在页面中显示。这改如何实现呢。
 
 html 伪代码：
-```
+```javascript
 <div id="number">1</div>
 <button id="button">点击+1</button>
 ```
 
 原生js实现：
-```
+```javascript
 var num = document.getElementById('number')
 var btn = document.getElementById('button')
 btn.addEventListener('click',function()=>{
@@ -481,7 +480,7 @@ btn.addEventListener('click',function()=>{
 
 那上面扯了那么多，是不是说明使用defineProperty 也可以实现呢
 
-```
+```javascript
 var num = document.getElementById('number')
 var btn = document.getElementById('button')
 
@@ -509,7 +508,7 @@ btn.addEventListener('click',function(){
 
 #### watch 
 
-```
+```javascript
 function watch(obj,name,fn){
   var value = obj[name]
   Object.defineProperty(obj,name,{
@@ -533,12 +532,12 @@ Proxy 可以理解成，在目标对象之前架设一层“拦截”，外界�
 
 ES6 原生提供 Proxy 构造函数，用来生成 Proxy 实例。
 
-```
+```javascript
 proxy = new Proxy(target,handler)
 ```
 Proxy 对象的所有用法，都是上面这种形式，不同的只是handler参数的写法。其中，new Proxy()表示生成一个Proxy实例，target参数表示所要拦截的目标对象，handler参数也是一个对象，用来定制拦截行为。
 
-```
+```javascript
 var proxy = new Proxy({}, {
   get: function(target, propKey) {
     return 35;
@@ -576,7 +575,7 @@ Proxy支持的拦截操作，共 13 种：
 
 ### Wacth Proxy 实现
 
-```
+```javascript
 function wacth(target,fn){
   var proxy = new Proxy(target,{
     get:function(target,prokey){
@@ -634,7 +633,7 @@ Promise对象 具有3个状态：`pending(进行中)`、`fulfilled(已完成)`�
 ### 基本用法
 
 ES6 规定，Promise对象是一个构造函数，用来生成Promise实例。
-```
+```javascript
 const promise = new Promise(function(resolve,reject){
   if (/* 异步操作成功 */){
     resolve(value);
@@ -683,7 +682,7 @@ Promise.all的实例状态由参数Promise实例决定，分成两种情况。
 
 注意，如果作为参数的 Promise 实例，自己定义了catch方法，那么它一旦被rejected，并不会触发Promise.all()的catch方法。
 
-```
+```javascript
   const p1 = new Promise((resolve, reject) => {
     resolve('hello');
   })
@@ -706,7 +705,7 @@ Promise.all的实例状态由参数Promise实例决定，分成两种情况。
 
 Promise.race()方法同样是将多个 Promise 实例，包装成一个新的 Promise 实例。
 
-```
+```javascript
 var p = Promise.race([p1, p2, p3]);
 ```
 
@@ -729,7 +728,7 @@ var p = Promise.race([p1, p2, p3]);
 2. 一个then方法挂载在Promise.prototype上
 3. 具有resolve和reject 方法
 
-```
+```javascript
 const PENDING = 'pending'
 const RESOLVED = 'resolved'
 const REJECTED = 'rejected'
@@ -758,7 +757,7 @@ Promise.prototype.then=function(onResolved,onRejected){
 #### 第二步
 Promise的状态只能从pending -> resolved 或者 pending -> rejected.添加代码
 
-```
+```javascript
 function resolve(value){
   if(that.status === PEDNING){
     that.value = value
@@ -777,7 +776,7 @@ function reject(error){
 #### 第三步
 then 方法有2个参数，第一个为onResolved 成功时调用，第二个为onRejected 失败时调用。
 
-```
+```javascript
 Promise.prototype.then=function(onResolved,onRejected){
   if(this.status == RESOLVED){
     onResolved(this.value)
@@ -792,7 +791,7 @@ Promise.prototype.then=function(onResolved,onRejected){
 
 当Promise的执行遇到错误时，会直接变成rejected状态.添加一段try catch
 
-```
+```javascript
 try{
   fn(resolve,reject)
 }catch(e){
@@ -805,7 +804,7 @@ try{
 目前基本的功能都已经完成，但是不能处理异步的情况。所以我们添加2个数组来保存异步方法。当状态改变时，遍历执行数组中的方法。
 
 所以代码如下：
-```
+```javascript
 const PENDING = 'pending'
 const RESOLVED = 'resolved'
 const REJECTED = 'rejected'
@@ -861,7 +860,7 @@ ok 这已经算是一个基础的Promise 实现了,但是还需要进行一些�
 
 #### 添加Promise.all方法
 
-```
+```javascript
 Promise.all = function (promiseArrs) { //在Promise类上添加一个all方法，接受一个传进来的promise数组
     return new Promise((resolve,reject) => {
         let values = [];
@@ -885,7 +884,7 @@ Promise.all = function (promiseArrs) { //在Promise类上添加一个all方法�
 
 #### 添加Promise.race方法
 
-```
+```javascript
 Promise.race = function (promises) {
     return new Promise((resolve, reject) => {
         for (let i = 0; i < promises.length; i++) {
@@ -909,7 +908,7 @@ Iterator 的作用有三个：
 其实本质就是一个具有 next() 方法的对象，每次调用 next() 都会返回一个结果对象，该结果对象有两个属性，value 表示当前的值，done 表示遍历是否结束。
 
 用ES5语法模拟一个iterator:
-```
+```javascript
 function makeIterator(items){
   var index = 0;
   return{
@@ -936,7 +935,7 @@ console.log(i.next()); // { done: true, value: undefined }
 ES6引入了for...of循环，作为遍历所有数据结构的统一的方法。
 
 那使用for...of 遍历我们模拟生成的iterator对象是什么结果
-```
+```javascript
 var i = makeIterator([1,2,3])
 
 for(var n of i){
@@ -949,7 +948,7 @@ for(var n of i){
 一个数据结构只要部署了Symbol.iterator属性，就被视为具有 iterator 接口，就可以用for...of循环遍历它的成员。也就是说，for...of循环内部调用的是数据结构的Symbol.iterator方法。
 
 举例说明：
-```
+```javascript
 const obj = {
     value: 1
 };
@@ -978,7 +977,7 @@ Generator 函数有多种理解角度。
 
 基本用法
 
-```
+```javascript
 function* helloWorldGenerator() {
   yield 'hello';
   yield 'world';
@@ -1015,7 +1014,7 @@ Generator 函数返回的遍历器对象，还有有一个throw和return方法�
 
 在一个 Generator 函数里面执行另一个 Generator 函数，可以yield*表达式。
 
-```
+```javascript
 function* bar() {
   yield 'x';
   yield* foo();
@@ -1033,7 +1032,7 @@ async 函数其实是 Generator 函数的语法糖。
 
 用法：
 
-```
+```javascript
 async function () {
   const n = await 1
   const m = await 2
@@ -1075,6 +1074,7 @@ async函数的返回值是 Promise 对象，这比 Generator 函数的返回值�
 
 1.**Promise 写法**
 
+```javascript
 function chainRequestPromise(requests){
   let res = null // 返回值
 
@@ -1093,12 +1093,13 @@ function chainRequestPromise(requests){
     return res
   })
 }
+```
 
 Promise 的写法是解决了回调函数的多层嵌套问题，改用then方法链式调用的形式。但是还是有大量的代码冗余，全是一些then方法。
 
 2. **Generator写法**
 
-```
+```javascript
 var co = require('co');
 function chainRequestGenerator(requests){
   return co(function* (){
@@ -1119,7 +1120,7 @@ function chainRequestGenerator(requests){
 
 3. **async函数**
 
-```
+```javascript
 async function chainRequestAsync(requests){
   let res = null
   try{
@@ -1142,7 +1143,7 @@ async 函数的实现最简洁，最符合语义，而且将Generator 写法中�
 ES6 引入了Class（类）这个概念，通过class 关键字可以定义类。其实 class  只是一个语法糖，可以使用ES5写法实现绝大部分功能。只是说class写法让对象原型的写法更加清晰、更像面向对象编程的语法。让写法更加与传统的面向对面语音差异不大。
 
 class写法举例：
-```
+```javascript
 class Point{
   constructor(x,y){
     this.x = x;
@@ -1156,7 +1157,7 @@ class Point{
 ```
 
 如果改成ES5写法：
-```
+```javascript
 function Ponit(x,y){
   this.x = x;
   this.y = y
@@ -1176,7 +1177,7 @@ constructor 方法是类的默认方法，通过new命令生成对象实例时�
 ### 类的实例
 
 1. 通过 new 命令生成实例，而且类必须使用 new 调用生成实例，否则会报错。
-```
+```javascript
 class Point {
   // ...
 }
@@ -1190,7 +1191,7 @@ var point = new Point(2, 3);
 
 2. 实例的属性除非显式定义在其本身（即定义在this对象上），否则都是定义在原型上（即定义在class上）。
 
-```
+```javascript
 //定义类
 class Point {
 
@@ -1217,7 +1218,7 @@ point.__proto__.hasOwnProperty('toString') // true
 
 3. 类的所有实例共享一个原型对象。
 
-```
+```javascript
 var p1 = new Point(2,3);
 var p2 = new Point(3,2);
 
@@ -1229,7 +1230,7 @@ p1.__proto__ === p2.__proto__
 
 如果在一个方法前，加上static关键字，就表示该方法不会被实例继承，而是直接通过类来调用，这就称为“静态方法”。
 
-```
+```javascript
 class Foo {
   static classMethod() {
     return 'hello';
@@ -1251,7 +1252,7 @@ foo.classMethod()
 
 静态属性指的是 Class 本身的属性，即Class.propName，而不是定义在实例对象（this）上的属性。
 
-```
+```javascript
 // 老写法
 class Foo {
   // ...
@@ -1274,7 +1275,7 @@ class Foo {
 
 类不存在变量提升（hoist），这一点与 ES5 完全不同。
 
-```
+```javascript
 new Foo(); // ReferenceError
 class Foo {}
 ```
@@ -1283,7 +1284,7 @@ class Foo {}
 
 类的方法内部如果含有this，它默认指向类的实例。但是，必须非常小心，一旦单独使用该方法，很可能报错。
 
-```
+```javascript
 class Logger {
   printName(name = 'there') {
     this.print(`Hello ${name}`);
@@ -1301,7 +1302,7 @@ printName(); // TypeError: Cannot read property 'print' of undefined
 
 4. 类的内部所有定义的方法，都是不可枚举的
 
-```
+```javascript
 class Point {
   constructor(x, y) {
     // ...
@@ -1322,7 +1323,7 @@ Object.getOwnPropertyNames(Point.prototype)
 
 Class 可以通过 extends 关键字实现继承。
 
-```
+```javascript
 class ColorPoint extends Point {
   constructor(x, y, color) {
     super(x, y); // 调用父类的constructor(x, y)
@@ -1347,7 +1348,7 @@ super 关键字 即可以当作函数使用，也可以当作对象使用。
 **作为函数时**
 
 super作为函数调用时，代表父类的构造函数。ES6 要求，子类的构造函数必须执行一次super函数，否则会报错。
-```
+```javascript
 class A {}
 
 class B extends A {
@@ -1375,7 +1376,7 @@ Class 作为构造函数的语法糖，同时有prototype属性和__proto__属�
 1. 子类的__proto__属性，表示构造函数的继承，总是指向父类。
 2. 子类prototype属性的__proto__属性，表示方法的继承，总是指向父类的prototype属性。
 
-```
+```javascript
 class Parent {
 }
 
@@ -1387,7 +1388,7 @@ Child.prototype.__proto__ === Parent.prototype // true
 ```
 这样的结果是因为，类的继承是按照下面的模式实现的。
 
-```
+```javascript
 class Parent {
 }
 
@@ -1411,14 +1412,14 @@ ES6 的原型链示意图为：
 
 extends关键字后面可以跟多种类型的值。
 
-```
+```javascript
 class B extends A {
 }
 ```
 上面代码的 A，只要是一个有 prototype 属性的函数，就能被 B 继承。由于函数都有 prototype 属性（除了 Function.prototype 函数），因此 A 可以是任意函数。
 
 不存在任何继承：
-```
+```javascript
 class A {
 }
 console.log(A.__proto__ === Function.prototype); // true
@@ -1436,7 +1437,7 @@ export命令除了输出变量，还可以输出函数或类（class）。通常
 export命令可以出现在模块的任何位置，只要处于模块顶层就可以。
 
 使用语法
-```
+```javascript
 // 写法一
 export var m = 1;
 
@@ -1468,7 +1469,7 @@ import命令具有提升效果，会提升到整个模块的头部，首先执�
 
 使用语法
 
-```
+```javascript
 import {a as b} from './xxx.js'
 
 ```
@@ -1477,7 +1478,7 @@ import {a as b} from './xxx.js'
 
 模块整体加载所在的那个对象（就是例子中的a），应该是可以静态分析的，所以不允许运行时改变
 
-```
+```javascript
 import * as a from './xxx.js';
 
 // 下面两行都是不允许的
@@ -1488,7 +1489,7 @@ circle.area = function () {};
 
 使用export default命令，为模块指定默认输出。一个文件中 export default命令只能使用一次 而且 引用的时候import命令后面不用加大括号
 
-```
+```javascript
 export default function foo() {
   console.log('foo');
 }
@@ -1506,7 +1507,7 @@ export default foo;
 
 import命令会被 JavaScript 引擎静态分析，先于模块内的其他语句执行。不支持无法在运行时加载模块。ES2020提案 引入import()函数，支持动态加载模块。
 
-```
+```javascript
 import(specifier)
 ```
 
@@ -1526,7 +1527,7 @@ CommonJS 模块是运行时加载，ES6 模块是编译时输出接口。
 
 **装饰类**
 
-```
+```javascript
 @test
 class MyClass { }
 
@@ -1536,7 +1537,7 @@ function log(target) {
 ```
 
 **装饰方法**
-```
+```javascript
 class MyClass {
   @readonly
   method() { }
@@ -1549,7 +1550,7 @@ function readonly(target, name, descriptor) {
 ```
 
 装饰器的原理基本是这样。
-```
+```javascript
 @decorator
 class A {}
 
@@ -1564,7 +1565,7 @@ A = decorator(A) || A;
 
 实际开发中，React 与 Redux 库结合使用时，常常需要写成下面这样。
 
-```
+```javascript
 @connect(mapStateToProps, mapDispatchToProps)
 export default class MyReactComponent extends React.Component {}
 ```
