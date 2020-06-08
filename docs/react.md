@@ -190,7 +190,7 @@ componentWillUnmount()在卸载和销毁组件之前立即调用。在此方法�
 * UNSAFE_componentWillUpdate()
 * UNSAFE_componentWillMount()
 
-## createElement
+## React.createElement
 
 写React我们用的是JSX语法，那它如何被解析呢。通过Babel转义之后，调用React.createElement.
 例子说明：
@@ -383,7 +383,7 @@ pureComponentPrototype.isPureReactComponent = true;
 
 PureComponent 继承自 Component，继承方法使用了很典型的寄生组合式。所以基本代码是一致的。
 
-## ReactChildren
+## React Children
 
 主要来看下mapChildren方法的实现。其对应日常接触的API就是React.children.map [文档](https://reactjs.org/docs/react-api.html#reactchildren)
 
@@ -603,7 +603,205 @@ function mapSingleChildIntoContext(bookKeeping, child, childKey) {
 
 ![](./images/mapChildren.png)
 
-## Fiber
+## ReactDOM.render
+
+本节主要介绍render方法源码，[源码地址](https://github.com/facebook/react/blob/master/packages/react-dom/src/client/ReactDOM.js)
+
+### render
+
+直接定位到render方法函数
+
+```javascript
+export function render(
+  element: React$Element<any>,
+  container: Container,
+  callback: ?Function,
+) {
+  invariant(
+    isValidContainer(container),
+    'Target container is not a DOM element.',
+  );
+  return legacyRenderSubtreeIntoContainer(
+    null,
+    element,
+    container,
+    false,
+    callback,
+  );
+}
+```
+
+该方法很简单，刚开始是一个校验，然后调用`legacyRenderSubtreeIntoContainer`方法,该注意的是`legacyRenderSubtreeIntoContainer`方法的第四个参数，这里默认写死的是false，因为我们看的是client 端代码。
+
+### legacyRenderSubtreeIntoContainer
+
+```javascript
+function legacyRenderSubtreeIntoContainer(
+  parentComponent: ?React$Component<any, any>,
+  children: ReactNodeList,
+  container: DOMContainer,
+  forceHydrate: boolean,
+  callback: ?Function,
+) {
+
+  // 一开始进来 container 上是肯定没有这个属性的
+  let root: Root = (container._reactRootContainer: any);
+  // 没有 root 会执行 if 中的操作
+  if (!root) {
+    // Initial mount
+    // 创建一个 root 出来，类型是 ReactRoot
+    root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
+      container,
+      forceHydrate,
+    );
+    // 反正我从没传过 callback，不关心实现
+    if (typeof callback === 'function') {
+      const originalCallback = callback;
+      callback = function() {
+        const instance = getPublicRootInstance(root._internalRoot);
+        originalCallback.call(instance);
+      };
+    }
+    // Initial mount should not be batched.
+    // batchedUpdate 是 React 中很重要的一步，也就是批量更新
+    // this.setState({ age: 1 })
+    // this.setState({ age: 2 })
+    // this.setState({ age: 3 })
+    // 以上三次 setState 会被优化成一次更新，减少了渲染次数
+    // 但是对于 Root 来说没必要批量更新，直接调用回调函数
+    unbatchedUpdates(() => {
+      // 创建 root 的时候不可能存在 parentComponent，所以也跳过了
+      // 其实也不是没可能存在 parentComponent，如果在 root 上使用 context 就可以了
+      if (parentComponent != null) {
+        root.legacy_renderSubtreeIntoContainer(
+          parentComponent,
+          children,
+          callback,
+        );
+      } else {
+        // 调用的是 ReactRoot.prototype.render
+        root.render(children, callback);
+      }
+    });
+  } else {
+    if (typeof callback === 'function') {
+      const originalCallback = callback;
+      callback = function() {
+        const instance = getPublicRootInstance(root._internalRoot);
+        originalCallback.call(instance);
+      };
+    }
+    // Update
+    if (parentComponent != null) {
+      root.legacy_renderSubtreeIntoContainer(
+        parentComponent,
+        children,
+        callback,
+      );
+    } else {
+      root.render(children, callback);
+    }
+  }
+  return getPublicRootInstance(root._internalRoot);
+}
+```
+该函数首先判断root是否存在，第一次进入root为null时创建一个root。创建root使用的是`legacyCreateRootFromDOMContainer`函数方法，同时得到的root对象也挂载在`container._reactRootContainer`属性上。container指的就是挂载节点。可以在react项目中输入以下代码查看
+``` javascript
+document.getElementById('app')._reactRootContainer
+```
+具体来看`legacyCreateRootFromDOMContainer`函数内部实现
+
+### legacyCreateRootFromDOMContainer
+
+```javascript
+function legacyCreateRootFromDOMContainer(
+  container: DOMContainer,
+  forceHydrate: boolean,
+): Root {
+  // 还是和 SSR 有关，不管这部分
+  const shouldHydrate =
+    forceHydrate || shouldHydrateDueToLegacyHeuristic(container);
+  // First clear any existing content.
+  if (!shouldHydrate) {
+    let warned = false;
+    let rootSibling;
+    // container 内部如果有元素的话，就全部清掉
+    // 但是一般来说我们都是这样写 container 的： <div id='app'></div>
+    // 所以说 container 内部不要写任何的节点，一是会被清掉，二是还要进行 DOM 操作，可能还会涉及到重绘回流等等
+    while ((rootSibling = container.lastChild)) {
+      container.removeChild(rootSibling);
+    }
+  }
+  // Legacy roots are not async by default.
+  // 对于 Root 来说不需要异步
+  const isConcurrent = false;
+  return new ReactRoot(container, isConcurrent, shouldHydrate);
+}
+
+```
+该函数就接收2个参数，一个是挂载容器节点，另一个是表示是否是服务端渲染，该参数就不多解释了。接下来可以看到该方法主要功能是去除挂载节点的内部子节点，直至内部子节点为空，然后返回一个`ReactRoot`对象。
+
+
+### ReactRoot
+
+```javascript
+function ReactRoot(
+  container: DOMContainer,
+  isConcurrent: boolean,
+  hydrate: boolean,
+) {
+  // 这个 root 指的是 FiberRoot
+  const root = createContainer(container, isConcurrent, hydrate);
+  this._internalRoot = root; 
+}
+
+function createContainer(
+  containerInfo: Container,
+  isConcurrent: boolean,
+  hydrate: boolean,
+): OpaqueRoot {
+  return createFiberRoot(containerInfo, isConcurrent, hydrate);
+}
+
+function createFiberRoot(
+  containerInfo: any,
+  isConcurrent: boolean,
+  hydrate: boolean,
+): FiberRoot {
+  // FiberRootNode 内部创建了很多属性
+  const root: FiberRoot = (new FiberRootNode(containerInfo, hydrate): any);
+
+  // Cyclic construction. This cheats the type system right now because
+  // stateNode is any.
+  // 创建一个 root fiber，这也是 React 16 中的核心架构了
+  // fiber 其实也会组成一个树结构，内部使用了单链表树结构，每个节点及组件都会对应一个 fiber
+  // FiberRoot 和 Root Fiber 会互相引用
+  // 这两个对象的内部属性可以自行查阅，反正有详细的注释表面重要的属性的含义
+  // 另外如果你有 React 写的项目的话，可以通过以下代码找到 Fiber Root，它对应着容器
+  // document.querySelector('#root')._reactRootContainer._internalRoot
+  // 另外 fiber tree 的结构可以看我画的这个图
+  // https://user-gold-cdn.xitu.io/2019/5/2/16a7672bc5152431?w=1372&h=2024&f=png&s=316240
+  const uninitializedFiber = createHostRootFiber(isConcurrent);
+  root.current = uninitializedFiber;
+  uninitializedFiber.stateNode = root;
+
+  return root;
+}
+```
+在 ReactRoot 构造函数内部就进行了一步操作，那就是创建了一个 FiberRoot 对象，并挂载到了 _internalRoot 上。和 DOM 树一样，fiber 也会构建出一个树结构（每个 DOM 节点一定对应着一个 fiber 对象），FiberRoot 就是整个 fiber 树的根节点
+
+注意 fiber 和 Fiber 的区别，fiber代表数据结构，Fiber代码整体架构
+
+
+在 createFiberRoot 函数内部，分别创建了两个 root，一个 root 叫做 FiberRoot，另一个 root 叫做 RootFiber，并且它们两者还是相互引用的。
+
+这两个对象拥有很多属性，我们具有看其中几个。
+
+对于 FiberRoot 对象来说，我们现在只需要了解两个属性，分别是 containerInfo 及 current。前者代表着容器信息，也就是我们的 document.querySelector('#root')；后者指向 RootFiber。
+
+
+
+
 
 ## setState
 
