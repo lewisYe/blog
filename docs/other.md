@@ -190,6 +190,11 @@ git clone -b 分支 --depth=1 地址
 	git push -f 强制远程仓库回退
 ```
 
+### 从远程分支拉取本地不存在的分支
+```
+git checkout -b 本地分支名 origin/远程分支名
+```
+
 ### git commit 规范
 
 * feat：新增功能；

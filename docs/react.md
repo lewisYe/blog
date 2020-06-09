@@ -793,15 +793,164 @@ function createFiberRoot(
 注意 fiber 和 Fiber 的区别，fiber代表数据结构，Fiber代码整体架构
 
 
-在 createFiberRoot 函数内部，分别创建了两个 root，一个 root 叫做 FiberRoot，另一个 root 叫做 RootFiber，并且它们两者还是相互引用的。
+在 createFiberRoot 函数内部，分别创建了两个 root，一个由`FiberRootNode`创建叫做 FiberRoot，另一个由`createHostRootFiber` 创建叫做 RootFiber，并且它们两者通过`current`和`stateNode`相互引用的。
 
 这两个对象拥有很多属性，我们具有看其中几个。
 
 对于 FiberRoot 对象来说，我们现在只需要了解两个属性，分别是 containerInfo 及 current。前者代表着容器信息，也就是我们的 document.querySelector('#root')；后者指向 RootFiber。
 
+对于 RootFiber 对象来说，最终是生成`FiberNode`
+
+```javascript
+function FiberNode(
+	tag: WorkTag,
+	pendingProps: mixed,
+	key: null | string,
+	mode: TypeOfMode,
+) {
+  // 对于 FiberNode 中的属性，我们当下只需要以下几点
+  // stateNode 保存了每个节点的 DOM 信息
+  // return、child、sibling、index 组成了单链表树结构
+  // return 代表父 fiber，child 代表子 fiber、sibling 代表下一个兄弟节点，和链表中的 next 一个含义
+  // index 代表了当前 fiber 的索引
+  // 另外还有一个 alternate 属性很重要，这个属性代表了一个更新中的 fiber，这部分的内容后面会涉及到
+	this.stateNode = null;
+	this.return = null;
+	this.child = null;
+	this.sibling = null;
+	this.effectTag = NoEffect;
+	this.alternate = null;
+}
+```
+return、child、sibling 这三个属性很重要，它们是构成 fiber 树的主体数据结构。fiber 树其实是一个单链表树结构，return 及 child 分别对应着树的父子节点，并且父节点只有一个 child 指向它的第一个子节点，即便是父节点有好多个子节点,可以用sibling，每个子节点都有一个 sibling 属性指向着下一个子节点，都有一个 return 属性指向着父节点。这么说可能有点绕，我们通过图来了解一下这个 fiber 树的结构。
+
+![](./images/fiberTree.png)
+
+在说 effectTag 之前，我们先来了解下啥是 effect，简单来说就是 DOM 的一些操作，比如增删改，那么 effectTag 就是来记录所有的 effect 的，但是这个记录是通过**位运算**来实现的，这里 是 effectTag 相关的二进制内容。
+
+```Javascript
+export type SideEffectTag = number;
+
+// Don't change these two values. They're used by React Dev Tools.
+export const NoEffect = /*              */ 0b000000000000;
+export const PerformedWork = /*         */ 0b000000000001;
+
+// You can change the rest (and add more).
+export const Placement = /*             */ 0b000000000010;
+export const Update = /*                */ 0b000000000100;
+export const PlacementAndUpdate = /*    */ 0b000000000110;
+export const Deletion = /*              */ 0b000000001000;
+export const ContentReset = /*          */ 0b000000010000;
+export const Callback = /*              */ 0b000000100000;
+export const DidCapture = /*            */ 0b000001000000;
+export const Ref = /*                   */ 0b000010000000;
+export const Snapshot = /*              */ 0b000100000000;
+export const Passive = /*               */ 0b001000000000;
+
+// Passive & Update & Callback & Ref & Snapshot
+export const LifecycleEffectMask = /*   */ 0b001110100100;
+
+// Union of all host effects
+export const HostEffectMask = /*        */ 0b001111111111;
+
+export const Incomplete = /*            */ 0b010000000000;
+export const ShouldCapture = /*         */ 0b100000000000;
+
+```
+
+如果我们想新增一个 effect 的话，可以这样写 effectTag |= Update；如果我们想删除一个 effect 的话，可以这样写 effectTag &= ~Update。
+
+### ReactRoot.prototype.render
+
+当我们创建完root之后，或者root已经存在。执行以下代码
+```javascript
+    if (typeof callback === 'function') {
+      const originalCallback = callback;
+      callback = function() {
+        const instance = getPublicRootInstance(root._internalRoot);
+        originalCallback.call(instance);
+      };
+    }
+    // Initial mount should not be batched.
+    // batchedUpdate 是 React 中很重要的一步，也就是批量更新
+    // 但是对于 Root 来说没必要批量更新，直接调用回调函数
+    unbatchedUpdates(() => {
+      // 创建 root 的时候不可能存在 parentComponent，所以也跳过了
+      // 其实也不是没可能存在 parentComponent，如果在 root 上使用 context 就可以了
+      if (parentComponent != null) {
+        root.legacy_renderSubtreeIntoContainer(
+          parentComponent,
+          children,
+          callback,
+        );
+      } else {
+        // 调用的是 ReactRoot.prototype.render
+        root.render(children, callback);
+      }
+    });
+```
+
+`unbatchedUpdates`函数 看名字就知道不需要批量更新。对于 root 来说其实没必要去批量更新，所以这里调用了 unbatchedUpdates 函数来告知内部不需要批量更新。然后在 unbatchedUpdates 回调内部判断是否存在 parentComponent。这一步我们可以假定不会存在 parentComponent，因为很少有人会在 root 外部加上 context 组件。不存在 parentComponent 的话就会执行 root.render(children, callback)，这里的 render 指的是 ReactRoot.prototype.render。
+
+```javascript
+ReactRoot.prototype.render = function(
+  children: ReactNodeList,
+  callback: ?() => mixed,
+): Work {
+  // 这里指 FiberRoot
+  const root = this._internalRoot;
+  // ReactWork 的功能就是为了在组件渲染或更新后把所有传入
+  // ReactDom.render 中的回调函数全部执行一遍
+  const work = new ReactWork();
+  callback = callback === undefined ? null : callback;
+  if (__DEV__) {
+    warnOnInvalidCallback(callback, 'render');
+  }
+  // 如果有 callback，就 push 进 work 中的数组
+  if (callback !== null) {
+    work.then(callback);
+  }
+  // work._onCommit 就是用于执行所有回调函数的
+  updateContainer(children, root, null, work._onCommit);
+  return work;
+};
+```
+
+首先从`_internalRoot`获取到`root`的信息，然后当存在`callback`时,调用`ReactWork`的方法。`ReactWork`函数的主要功能就是将回调函数执行。
+那么剩下的就是`updateContainer`方法了。
+
+### updateContainer
+
+```javascript
+export function updateContainer(
+  element: ReactNodeList,
+  container: OpaqueRoot,
+  parentComponent: ?React$Component<any, any>,
+  callback: ?Function,
+): ExpirationTime {
+  // 取出容器的 fiber 对象，也就是 fiber root
+  const current = container.current;
+  // 计算时间
+  const currentTime = requestCurrentTime();
+  // expirationTime 代表优先级，数字越大优先级越高
+  // sync 的数字是最大的，所以优先级也是最高的
+  const expirationTime = computeExpirationForFiber(currentTime, current);
+  return updateContainerAtExpirationTime(
+    element,
+    container,
+    parentComponent,
+    expirationTime,
+    callback,
+  );
+}
+```
 
 
 
+### finally
+
+以上内容的流程图如下：
+![](./images/render.png)
 
 ## setState
 
