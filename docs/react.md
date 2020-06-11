@@ -1,5 +1,7 @@
 #  React
 
+先申明本系列基于 React 版本 16.8.6
+
 ## V16 版本生命周期
 
 ### 生命周期图
@@ -944,6 +946,64 @@ export function updateContainer(
   );
 }
 ```
+从 FiberRoot 的 current 属性中取出它的 fiber 对象，然后计算了两个时间，currentTime 和 expirationTime
+
+#### requestCurrentTime
+
+该函数计算得出currentTime，该函数在react-reconciler/src/ReactFiberScheduler.old.js文件下
+```javascript
+function requestCurrentTime() {
+  if (isRendering) {
+    // We're already rendering. Return the most recently read time.
+    return currentSchedulerTime;
+  }
+  // Check if there's pending work.
+  findHighestPriorityRoot();
+  if (
+    nextFlushedExpirationTime === NoWork ||
+    nextFlushedExpirationTime === Never
+  ) {
+    // If there's no pending work, or if the pending work is offscreen, we can
+    // read the current time without risk of tearing.
+    recomputeCurrentRendererTime();
+    currentSchedulerTime = currentRendererTime;
+    return currentSchedulerTime;
+  }
+  return currentSchedulerTime;
+}
+```
+核心函数在于`recomputeCurrentRendererTime`
+```javaScript
+function recomputeCurrentRendererTime() {
+  const currentTimeMs = now() - originalStartTimeMs;
+  currentRendererTime = msToExpirationTime(currentTimeMs);
+}
+```
+`now()` 是 `performance.now()`  该方法返回一个精确到毫秒的DOMHighResTimeStamp 。返回的时间戳没有被限制在一毫秒的精确度内，而它使用了一个浮点数来达到微秒级别的精确度。
+
+originalStartTimeMs 是 React 应用初始化时就会生成的一个变量，值也是 performance.now()，并且这个值不会在后期再被改变。那么这两个值相减以后，得到的结果也就是现在离 React 应用初始化时经过了多少时间。
+
+
+将得到的currentTimeMs的值带入到msToExpirationTime函数中
+```javascript
+
+// Max 31 bit integer. The max integer size in V8 for 32-bit systems.
+// Math.pow(2, 30) - 1
+// 0b111111111111111111111111111111
+const MAX_SIGNED_31_BIT_INT =  1073741823;
+
+const UNIT_SIZE = 10;
+const MAGIC_NUMBER_OFFSET = MAX_SIGNED_31_BIT_INT - 1;
+
+// 1 unit of expiration time represents 10ms.
+export function msToExpirationTime(ms: number): ExpirationTime {
+  // Always add an offset so that we don't clash with the magic number for NoWork.
+  // 5000 - 2500 = 2500
+  // 1073741822 - 250 = 1073741572
+  return MAGIC_NUMBER_OFFSET - ((ms / UNIT_SIZE) | 0);
+}
+```
+不能理解的可能是`| 0`的作用,它的作用是取整。列如`(21/20) | 0 = 1`
 
 
 
