@@ -390,6 +390,7 @@ PureComponent 继承自 Component，继承方法使用了很典型的寄生组�
 主要来看下mapChildren方法的实现。其对应日常接触的API就是React.children.map [文档](https://reactjs.org/docs/react-api.html#reactchildren)
 
 ### mapChildren
+
 代码如下
 
 ``` javascript
@@ -426,7 +427,9 @@ function mapIntoWithKeyPrefixInternal(children, array, prefix, func, context) {
     releaseTraverseContext(traverseContext);
 }
 ```
+
 ### getPooledTraverseContext、releaseTraverseContext
+
 `getPooledTraverseContext` 和 `releaseTraverseContext` 是配套使用的。这是一种对象重用池的设计模式。当然它的用处其实很简单，就是维护一个大小固定的对象重用池，每次从这个池子里取一个对象去赋值，用完了就将对象上的属性置空然后丢回池子。维护这个池子的用意就是提高性能。
 
 ``` javascript
@@ -468,6 +471,7 @@ function releaseTraverseContext(traverseContext) {
 继续看 `traverseAllChildren` 函数
 
 ### traverseAllChildren
+
 ``` javascript
 function traverseAllChildren(children, callback, traverseContext) {
     if (children == null) {
@@ -481,10 +485,11 @@ function traverseAllChildren(children, callback, traverseContext) {
 这么代码很简单就是显而易懂，children为null返回0, 否则调用traverseAllChildrenImpl函数。
 
 ### traverseAllChildrenImpl
+
 `traverseAllChildrenImpl` 函数代码如下
 
-```javascript
-function traverseAllChildrenImpl(children, nameSoFar, callback, traverseContext ) {
+``` javascript
+function traverseAllChildrenImpl(children, nameSoFar, callback, traverseContext) {
     const type = typeof children;
 
     if (type === 'undefined' || type === 'boolean') {
@@ -555,21 +560,27 @@ function traverseAllChildrenImpl(children, nameSoFar, callback, traverseContext 
         return subtreeCount;
     }
 ```
+
 该函数主要是对children类型进行判断，不同的类型进行不同的处理。当children为undefined和布尔值时等同于null，当null、stirng、number时立即调用回调函数。另外你还可以发现在判断的过程中，代码中有使用到 $$typeof 去判断的流程。
 
 当children类型不满足上述情况，不立即调用回调时。首先会判断children是否为数组，如果为数组的话，就遍历数组并把其中的每个元素都递归调用 traverseAllChildrenImpl，也就是说必须是单个可渲染节点才可以执行上半部分代码中的 callback。
 
 如果不是数组的话，就看看 children 是否可以支持迭代，原理就是通过 obj[Symbol.iterator] 的方式去取迭代器，返回值如果是个函数的话就代表支持迭代，然后逻辑就和之前的一样了。
 
-其实这个函数核心作用就是通过把传入的 children 数组通过遍历变成一维的单个节点。上述的callback指的是`mapSingleChildIntoContext`函数。
+其实这个函数核心作用就是通过把传入的 children 数组通过遍历变成一维的单个节点。上述的callback指的是 `mapSingleChildIntoContext` 函数。
 
 这里引出一个小思考题，如下的JSX结构在页面的展示结果是什么
-```javascript
-<div>{true}</div>或者<div>{undefined}</div>
+
+``` javascript
+< div > {
+    true
+} < /div>或者<div>{undefined}</div >
 ```
+
 聪明的同学肯定已经知道答案是什么了，如果还不知道的同学动动手看看结果再回来理解下。
 
 ### mapSingleChildIntoContext
+
 `mapSingleChildIntoContext` 函数代码如下：
 
 ``` javascript
@@ -599,7 +610,7 @@ function mapSingleChildIntoContext(bookKeeping, child, childKey) {
 }
 ```
 
-参数bookKeeping就是对象复用池取出的对象。func为mapChildren 函数的第二个参数。func函数调用得到mappedChild结果。如果结果是数组这调用`mapIntoWithKeyPrefixInternal`再走一遍循环。在`mapIntoWithKeyPrefixInternal`有结果且不为null的时候，并判断是否是一个有效的Element,验证通过的话就 clone 一份并且替换掉 key，最后把返回值放入 result 中，result 其实也就是 mapChildren 的返回值。
+参数bookKeeping就是对象复用池取出的对象。func为mapChildren 函数的第二个参数。func函数调用得到mappedChild结果。如果结果是数组这调用 `mapIntoWithKeyPrefixInternal` 再走一遍循环。在 `mapIntoWithKeyPrefixInternal` 有结果且不为null的时候，并判断是否是一个有效的Element, 验证通过的话就 clone 一份并且替换掉 key，最后把返回值放入 result 中，result 其实也就是 mapChildren 的返回值。
 
 至此，mapChildren 函数相关的内容已经解析完毕。可以对照流程图再理解
 
@@ -613,224 +624,227 @@ function mapSingleChildIntoContext(bookKeeping, child, childKey) {
 
 直接定位到render方法函数
 
-```javascript
+``` javascript
 export function render(
-  element: React$Element<any>,
-  container: Container,
-  callback: ?Function,
+    element: React$Element < any > ,
+    container: Container,
+    callback: ? Function,
 ) {
-  invariant(
-    isValidContainer(container),
-    'Target container is not a DOM element.',
-  );
-  return legacyRenderSubtreeIntoContainer(
-    null,
-    element,
-    container,
-    false,
-    callback,
-  );
+    invariant(
+        isValidContainer(container),
+        'Target container is not a DOM element.',
+    );
+    return legacyRenderSubtreeIntoContainer(
+        null,
+        element,
+        container,
+        false,
+        callback,
+    );
 }
 ```
 
-该方法很简单，刚开始是一个校验，然后调用`legacyRenderSubtreeIntoContainer`方法,该注意的是`legacyRenderSubtreeIntoContainer`方法的第四个参数，这里默认写死的是false，因为我们看的是client 端代码。
+该方法很简单，刚开始是一个校验，然后调用 `legacyRenderSubtreeIntoContainer` 方法, 该注意的是 `legacyRenderSubtreeIntoContainer` 方法的第四个参数，这里默认写死的是false，因为我们看的是client 端代码。
 
 ### legacyRenderSubtreeIntoContainer
 
-```javascript
+``` javascript
 function legacyRenderSubtreeIntoContainer(
-  parentComponent: ?React$Component<any, any>,
-  children: ReactNodeList,
-  container: DOMContainer,
-  forceHydrate: boolean,
-  callback: ?Function,
+    parentComponent: ? React$Component < any, any > ,
+    children : ReactNodeList,
+    container: DOMContainer,
+    forceHydrate: boolean,
+    callback: ? Function,
 ) {
 
-  // 一开始进来 container 上是肯定没有这个属性的
-  let root: Root = (container._reactRootContainer: any);
-  // 没有 root 会执行 if 中的操作
-  if (!root) {
-    // Initial mount
-    // 创建一个 root 出来，类型是 ReactRoot
-    root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
-      container,
-      forceHydrate,
-    );
-    // 反正我从没传过 callback，不关心实现
-    if (typeof callback === 'function') {
-      const originalCallback = callback;
-      callback = function() {
-        const instance = getPublicRootInstance(root._internalRoot);
-        originalCallback.call(instance);
-      };
-    }
-    // Initial mount should not be batched.
-    // batchedUpdate 是 React 中很重要的一步，也就是批量更新
-    // this.setState({ age: 1 })
-    // this.setState({ age: 2 })
-    // this.setState({ age: 3 })
-    // 以上三次 setState 会被优化成一次更新，减少了渲染次数
-    // 但是对于 Root 来说没必要批量更新，直接调用回调函数
-    unbatchedUpdates(() => {
-      // 创建 root 的时候不可能存在 parentComponent，所以也跳过了
-      // 其实也不是没可能存在 parentComponent，如果在 root 上使用 context 就可以了
-      if (parentComponent != null) {
-        root.legacy_renderSubtreeIntoContainer(
-          parentComponent,
-          children,
-          callback,
+    // 一开始进来 container 上是肯定没有这个属性的
+    let root: Root = (container._reactRootContainer: any);
+    // 没有 root 会执行 if 中的操作
+    if (!root) {
+        // Initial mount
+        // 创建一个 root 出来，类型是 ReactRoot
+        root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
+            container,
+            forceHydrate,
         );
-      } else {
-        // 调用的是 ReactRoot.prototype.render
-        root.render(children, callback);
-      }
-    });
-  } else {
-    if (typeof callback === 'function') {
-      const originalCallback = callback;
-      callback = function() {
-        const instance = getPublicRootInstance(root._internalRoot);
-        originalCallback.call(instance);
-      };
-    }
-    // Update
-    if (parentComponent != null) {
-      root.legacy_renderSubtreeIntoContainer(
-        parentComponent,
-        children,
-        callback,
-      );
+        // 反正我从没传过 callback，不关心实现
+        if (typeof callback === 'function') {
+            const originalCallback = callback;
+            callback = function() {
+                const instance = getPublicRootInstance(root._internalRoot);
+                originalCallback.call(instance);
+            };
+        }
+        // Initial mount should not be batched.
+        // batchedUpdate 是 React 中很重要的一步，也就是批量更新
+        // this.setState({ age: 1 })
+        // this.setState({ age: 2 })
+        // this.setState({ age: 3 })
+        // 以上三次 setState 会被优化成一次更新，减少了渲染次数
+        // 但是对于 Root 来说没必要批量更新，直接调用回调函数
+        unbatchedUpdates(() => {
+            // 创建 root 的时候不可能存在 parentComponent，所以也跳过了
+            // 其实也不是没可能存在 parentComponent，如果在 root 上使用 context 就可以了
+            if (parentComponent != null) {
+                root.legacy_renderSubtreeIntoContainer(
+                    parentComponent,
+                    children,
+                    callback,
+                );
+            } else {
+                // 调用的是 ReactRoot.prototype.render
+                root.render(children, callback);
+            }
+        });
     } else {
-      root.render(children, callback);
+        if (typeof callback === 'function') {
+            const originalCallback = callback;
+            callback = function() {
+                const instance = getPublicRootInstance(root._internalRoot);
+                originalCallback.call(instance);
+            };
+        }
+        // Update
+        if (parentComponent != null) {
+            root.legacy_renderSubtreeIntoContainer(
+                parentComponent,
+                children,
+                callback,
+            );
+        } else {
+            root.render(children, callback);
+        }
     }
-  }
-  return getPublicRootInstance(root._internalRoot);
+    return getPublicRootInstance(root._internalRoot);
 }
 ```
-该函数首先判断root是否存在，第一次进入root为null时创建一个root。创建root使用的是`legacyCreateRootFromDOMContainer`函数方法，同时得到的root对象也挂载在`container._reactRootContainer`属性上。container指的就是挂载节点。可以在react项目中输入以下代码查看
+
+该函数首先判断root是否存在，第一次进入root为null时创建一个root。创建root使用的是 `legacyCreateRootFromDOMContainer` 函数方法，同时得到的root对象也挂载在 `container._reactRootContainer` 属性上。container指的就是挂载节点。可以在react项目中输入以下代码查看
+
 ``` javascript
 document.getElementById('app')._reactRootContainer
 ```
-具体来看`legacyCreateRootFromDOMContainer`函数内部实现
+
+具体来看 `legacyCreateRootFromDOMContainer` 函数内部实现
 
 ### legacyCreateRootFromDOMContainer
 
-```javascript
+``` javascript
 function legacyCreateRootFromDOMContainer(
-  container: DOMContainer,
-  forceHydrate: boolean,
+    container: DOMContainer,
+    forceHydrate: boolean,
 ): Root {
-  // 还是和 SSR 有关，不管这部分
-  const shouldHydrate =
-    forceHydrate || shouldHydrateDueToLegacyHeuristic(container);
-  // First clear any existing content.
-  if (!shouldHydrate) {
-    let warned = false;
-    let rootSibling;
-    // container 内部如果有元素的话，就全部清掉
-    // 但是一般来说我们都是这样写 container 的： <div id='app'></div>
-    // 所以说 container 内部不要写任何的节点，一是会被清掉，二是还要进行 DOM 操作，可能还会涉及到重绘回流等等
-    while ((rootSibling = container.lastChild)) {
-      container.removeChild(rootSibling);
+    // 还是和 SSR 有关，不管这部分
+    const shouldHydrate =
+        forceHydrate || shouldHydrateDueToLegacyHeuristic(container);
+    // First clear any existing content.
+    if (!shouldHydrate) {
+        let warned = false;
+        let rootSibling;
+        // container 内部如果有元素的话，就全部清掉
+        // 但是一般来说我们都是这样写 container 的： <div id='app'></div>
+        // 所以说 container 内部不要写任何的节点，一是会被清掉，二是还要进行 DOM 操作，可能还会涉及到重绘回流等等
+        while ((rootSibling = container.lastChild)) {
+            container.removeChild(rootSibling);
+        }
     }
-  }
-  // Legacy roots are not async by default.
-  // 对于 Root 来说不需要异步
-  const isConcurrent = false;
-  return new ReactRoot(container, isConcurrent, shouldHydrate);
+    // Legacy roots are not async by default.
+    // 对于 Root 来说不需要异步
+    const isConcurrent = false;
+    return new ReactRoot(container, isConcurrent, shouldHydrate);
 }
-
 ```
-该函数就接收2个参数，一个是挂载容器节点，另一个是表示是否是服务端渲染，该参数就不多解释了。接下来可以看到该方法主要功能是去除挂载节点的内部子节点，直至内部子节点为空，然后返回一个`ReactRoot`对象。
 
+该函数就接收2个参数，一个是挂载容器节点，另一个是表示是否是服务端渲染，该参数就不多解释了。接下来可以看到该方法主要功能是去除挂载节点的内部子节点，直至内部子节点为空，然后返回一个 `ReactRoot` 对象。
 
 ### ReactRoot
 
-```javascript
+``` javascript
 function ReactRoot(
-  container: DOMContainer,
-  isConcurrent: boolean,
-  hydrate: boolean,
+    container: DOMContainer,
+    isConcurrent: boolean,
+    hydrate: boolean,
 ) {
-  // 这个 root 指的是 FiberRoot
-  const root = createContainer(container, isConcurrent, hydrate);
-  this._internalRoot = root; 
+    // 这个 root 指的是 FiberRoot
+    const root = createContainer(container, isConcurrent, hydrate);
+    this._internalRoot = root;
 }
 
 function createContainer(
-  containerInfo: Container,
-  isConcurrent: boolean,
-  hydrate: boolean,
+    containerInfo: Container,
+    isConcurrent: boolean,
+    hydrate: boolean,
 ): OpaqueRoot {
-  return createFiberRoot(containerInfo, isConcurrent, hydrate);
+    return createFiberRoot(containerInfo, isConcurrent, hydrate);
 }
 
 function createFiberRoot(
-  containerInfo: any,
-  isConcurrent: boolean,
-  hydrate: boolean,
+    containerInfo: any,
+    isConcurrent: boolean,
+    hydrate: boolean,
 ): FiberRoot {
-  // FiberRootNode 内部创建了很多属性
-  const root: FiberRoot = (new FiberRootNode(containerInfo, hydrate): any);
+    // FiberRootNode 内部创建了很多属性
+    const root: FiberRoot = (new FiberRootNode(containerInfo, hydrate): any);
 
-  // Cyclic construction. This cheats the type system right now because
-  // stateNode is any.
-  // 创建一个 root fiber，这也是 React 16 中的核心架构了
-  // fiber 其实也会组成一个树结构，内部使用了单链表树结构，每个节点及组件都会对应一个 fiber
-  // FiberRoot 和 Root Fiber 会互相引用
-  // 这两个对象的内部属性可以自行查阅，反正有详细的注释表面重要的属性的含义
-  // 另外如果你有 React 写的项目的话，可以通过以下代码找到 Fiber Root，它对应着容器
-  // document.querySelector('#root')._reactRootContainer._internalRoot
-  // 另外 fiber tree 的结构可以看我画的这个图
-  // https://user-gold-cdn.xitu.io/2019/5/2/16a7672bc5152431?w=1372&h=2024&f=png&s=316240
-  const uninitializedFiber = createHostRootFiber(isConcurrent);
-  root.current = uninitializedFiber;
-  uninitializedFiber.stateNode = root;
+    // Cyclic construction. This cheats the type system right now because
+    // stateNode is any.
+    // 创建一个 root fiber，这也是 React 16 中的核心架构了
+    // fiber 其实也会组成一个树结构，内部使用了单链表树结构，每个节点及组件都会对应一个 fiber
+    // FiberRoot 和 Root Fiber 会互相引用
+    // 这两个对象的内部属性可以自行查阅，反正有详细的注释表面重要的属性的含义
+    // 另外如果你有 React 写的项目的话，可以通过以下代码找到 Fiber Root，它对应着容器
+    // document.querySelector('#root')._reactRootContainer._internalRoot
+    // 另外 fiber tree 的结构可以看我画的这个图
+    // https://user-gold-cdn.xitu.io/2019/5/2/16a7672bc5152431?w=1372&h=2024&f=png&s=316240
+    const uninitializedFiber = createHostRootFiber(isConcurrent);
+    root.current = uninitializedFiber;
+    uninitializedFiber.stateNode = root;
 
-  return root;
+    return root;
 }
 ```
+
 在 ReactRoot 构造函数内部就进行了一步操作，那就是创建了一个 FiberRoot 对象，并挂载到了 _internalRoot 上。和 DOM 树一样，fiber 也会构建出一个树结构（每个 DOM 节点一定对应着一个 fiber 对象），FiberRoot 就是整个 fiber 树的根节点
 
 注意 fiber 和 Fiber 的区别，fiber代表数据结构，Fiber代码整体架构
 
-
-在 createFiberRoot 函数内部，分别创建了两个 root，一个由`FiberRootNode`创建叫做 FiberRoot，另一个由`createHostRootFiber` 创建叫做 RootFiber，并且它们两者通过`current`和`stateNode`相互引用的。
+在 createFiberRoot 函数内部，分别创建了两个 root，一个由 `FiberRootNode` 创建叫做 FiberRoot，另一个由 `createHostRootFiber` 创建叫做 RootFiber，并且它们两者通过 `current` 和 `stateNode` 相互引用的。
 
 这两个对象拥有很多属性，我们具有看其中几个。
 
 对于 FiberRoot 对象来说，我们现在只需要了解两个属性，分别是 containerInfo 及 current。前者代表着容器信息，也就是我们的 document.querySelector('#root')；后者指向 RootFiber。
 
-对于 RootFiber 对象来说，最终是生成`FiberNode`
+对于 RootFiber 对象来说，最终是生成 `FiberNode` 
 
-```javascript
+``` javascript
 function FiberNode(
-	tag: WorkTag,
-	pendingProps: mixed,
-	key: null | string,
-	mode: TypeOfMode,
+    tag: WorkTag,
+    pendingProps: mixed,
+    key: null | string,
+    mode: TypeOfMode,
 ) {
-  // 对于 FiberNode 中的属性，我们当下只需要以下几点
-  // stateNode 保存了每个节点的 DOM 信息
-  // return、child、sibling、index 组成了单链表树结构
-  // return 代表父 fiber，child 代表子 fiber、sibling 代表下一个兄弟节点，和链表中的 next 一个含义
-  // index 代表了当前 fiber 的索引
-  // 另外还有一个 alternate 属性很重要，这个属性代表了一个更新中的 fiber，这部分的内容后面会涉及到
-	this.stateNode = null;
-	this.return = null;
-	this.child = null;
-	this.sibling = null;
-	this.effectTag = NoEffect;
-	this.alternate = null;
+    // 对于 FiberNode 中的属性，我们当下只需要以下几点
+    // stateNode 保存了每个节点的 DOM 信息
+    // return、child、sibling、index 组成了单链表树结构
+    // return 代表父 fiber，child 代表子 fiber、sibling 代表下一个兄弟节点，和链表中的 next 一个含义
+    // index 代表了当前 fiber 的索引
+    // 另外还有一个 alternate 属性很重要，这个属性代表了一个更新中的 fiber，这部分的内容后面会涉及到
+    this.stateNode = null;
+    this.return = null;
+    this.child = null;
+    this.sibling = null;
+    this.effectTag = NoEffect;
+    this.alternate = null;
 }
 ```
-return、child、sibling 这三个属性很重要，它们是构成 fiber 树的主体数据结构。fiber 树其实是一个单链表树结构，return 及 child 分别对应着树的父子节点，并且父节点只有一个 child 指向它的第一个子节点，即便是父节点有好多个子节点,可以用sibling，每个子节点都有一个 sibling 属性指向着下一个子节点，都有一个 return 属性指向着父节点。这么说可能有点绕，我们通过图来了解一下这个 fiber 树的结构。
+
+return、child、sibling 这三个属性很重要，它们是构成 fiber 树的主体数据结构。fiber 树其实是一个单链表树结构，return 及 child 分别对应着树的父子节点，并且父节点只有一个 child 指向它的第一个子节点，即便是父节点有好多个子节点, 可以用sibling，每个子节点都有一个 sibling 属性指向着下一个子节点，都有一个 return 属性指向着父节点。这么说可能有点绕，我们通过图来了解一下这个 fiber 树的结构。
 
 ![](./images/fiberTree.png)
 
 在说 effectTag 之前，我们先来了解下啥是 effect，简单来说就是 DOM 的一些操作，比如增删改，那么 effectTag 就是来记录所有的 effect 的，但是这个记录是通过**位运算**来实现的，这里 是 effectTag 相关的二进制内容。
 
-```Javascript
+``` Javascript
 export type SideEffectTag = number;
 
 // Don't change these two values. They're used by React Dev Tools.
@@ -857,7 +871,6 @@ export const HostEffectMask = /*        */ 0b001111111111;
 
 export const Incomplete = /*            */ 0b010000000000;
 export const ShouldCapture = /*         */ 0b100000000000;
-
 ```
 
 如果我们想新增一个 effect 的话，可以这样写 effectTag |= Update；如果我们想删除一个 effect 的话，可以这样写 effectTag &= ~Update。
@@ -865,151 +878,424 @@ export const ShouldCapture = /*         */ 0b100000000000;
 ### ReactRoot.prototype.render
 
 当我们创建完root之后，或者root已经存在。执行以下代码
-```javascript
+
+``` javascript
     if (typeof callback === 'function') {
-      const originalCallback = callback;
-      callback = function() {
-        const instance = getPublicRootInstance(root._internalRoot);
-        originalCallback.call(instance);
-      };
+        const originalCallback = callback;
+        callback = function() {
+            const instance = getPublicRootInstance(root._internalRoot);
+            originalCallback.call(instance);
+        };
     }
     // Initial mount should not be batched.
     // batchedUpdate 是 React 中很重要的一步，也就是批量更新
     // 但是对于 Root 来说没必要批量更新，直接调用回调函数
     unbatchedUpdates(() => {
-      // 创建 root 的时候不可能存在 parentComponent，所以也跳过了
-      // 其实也不是没可能存在 parentComponent，如果在 root 上使用 context 就可以了
-      if (parentComponent != null) {
-        root.legacy_renderSubtreeIntoContainer(
-          parentComponent,
-          children,
-          callback,
-        );
-      } else {
-        // 调用的是 ReactRoot.prototype.render
-        root.render(children, callback);
-      }
+        // 创建 root 的时候不可能存在 parentComponent，所以也跳过了
+        // 其实也不是没可能存在 parentComponent，如果在 root 上使用 context 就可以了
+        if (parentComponent != null) {
+            root.legacy_renderSubtreeIntoContainer(
+                parentComponent,
+                children,
+                callback,
+            );
+        } else {
+            // 调用的是 ReactRoot.prototype.render
+            root.render(children, callback);
+        }
     });
 ```
 
-`unbatchedUpdates`函数 看名字就知道不需要批量更新。对于 root 来说其实没必要去批量更新，所以这里调用了 unbatchedUpdates 函数来告知内部不需要批量更新。然后在 unbatchedUpdates 回调内部判断是否存在 parentComponent。这一步我们可以假定不会存在 parentComponent，因为很少有人会在 root 外部加上 context 组件。不存在 parentComponent 的话就会执行 root.render(children, callback)，这里的 render 指的是 ReactRoot.prototype.render。
+`unbatchedUpdates` 函数 看名字就知道不需要批量更新。对于 root 来说其实没必要去批量更新，所以这里调用了 unbatchedUpdates 函数来告知内部不需要批量更新。然后在 unbatchedUpdates 回调内部判断是否存在 parentComponent。这一步我们可以假定不会存在 parentComponent，因为很少有人会在 root 外部加上 context 组件。不存在 parentComponent 的话就会执行 root.render(children, callback)，这里的 render 指的是 ReactRoot.prototype.render。
 
-```javascript
+``` javascript
 ReactRoot.prototype.render = function(
-  children: ReactNodeList,
-  callback: ?() => mixed,
+    children: ReactNodeList,
+    callback: ? () => mixed,
 ): Work {
-  // 这里指 FiberRoot
-  const root = this._internalRoot;
-  // ReactWork 的功能就是为了在组件渲染或更新后把所有传入
-  // ReactDom.render 中的回调函数全部执行一遍
-  const work = new ReactWork();
-  callback = callback === undefined ? null : callback;
-  if (__DEV__) {
-    warnOnInvalidCallback(callback, 'render');
-  }
-  // 如果有 callback，就 push 进 work 中的数组
-  if (callback !== null) {
-    work.then(callback);
-  }
-  // work._onCommit 就是用于执行所有回调函数的
-  updateContainer(children, root, null, work._onCommit);
-  return work;
+    // 这里指 FiberRoot
+    const root = this._internalRoot;
+    // ReactWork 的功能就是为了在组件渲染或更新后把所有传入
+    // ReactDom.render 中的回调函数全部执行一遍
+    const work = new ReactWork();
+    callback = callback === undefined ? null : callback;
+    if (__DEV__) {
+        warnOnInvalidCallback(callback, 'render');
+    }
+    // 如果有 callback，就 push 进 work 中的数组
+    if (callback !== null) {
+        work.then(callback);
+    }
+    // work._onCommit 就是用于执行所有回调函数的
+    updateContainer(children, root, null, work._onCommit);
+    return work;
 };
 ```
 
-首先从`_internalRoot`获取到`root`的信息，然后当存在`callback`时,调用`ReactWork`的方法。`ReactWork`函数的主要功能就是将回调函数执行。
-那么剩下的就是`updateContainer`方法了。
+首先从 `_internalRoot` 获取到 `root` 的信息，然后当存在 `callback` 时, 调用 `ReactWork` 的方法。 `ReactWork` 函数的主要功能就是将回调函数执行。
+那么剩下的就是 `updateContainer` 方法了。
 
 ### updateContainer
 
-```javascript
+``` javascript
 export function updateContainer(
-  element: ReactNodeList,
-  container: OpaqueRoot,
-  parentComponent: ?React$Component<any, any>,
-  callback: ?Function,
+    element: ReactNodeList,
+    container: OpaqueRoot,
+    parentComponent: ? React$Component < any, any > ,
+    callback : ? Function,
 ): ExpirationTime {
-  // 取出容器的 fiber 对象，也就是 fiber root
-  const current = container.current;
-  // 计算时间
-  const currentTime = requestCurrentTime();
-  // expirationTime 代表优先级，数字越大优先级越高
-  // sync 的数字是最大的，所以优先级也是最高的
-  const expirationTime = computeExpirationForFiber(currentTime, current);
-  return updateContainerAtExpirationTime(
-    element,
-    container,
-    parentComponent,
-    expirationTime,
-    callback,
-  );
+    // 取出容器的 fiber 对象，也就是 fiber root
+    const current = container.current;
+    // 计算时间
+    const currentTime = requestCurrentTime();
+    // expirationTime 代表优先级，数字越大优先级越高
+    // sync 的数字是最大的，所以优先级也是最高的
+    const expirationTime = computeExpirationForFiber(currentTime, current);
+    return updateContainerAtExpirationTime(
+        element,
+        container,
+        parentComponent,
+        expirationTime,
+        callback,
+    );
 }
 ```
+
 从 FiberRoot 的 current 属性中取出它的 fiber 对象，然后计算了两个时间，currentTime 和 expirationTime
 
-#### requestCurrentTime
+### requestCurrentTime
 
 该函数计算得出currentTime，该函数在react-reconciler/src/ReactFiberScheduler.old.js文件下
-```javascript
+
+``` javascript
 function requestCurrentTime() {
-  if (isRendering) {
-    // We're already rendering. Return the most recently read time.
+    if (isRendering) {
+        // We're already rendering. Return the most recently read time.
+        return currentSchedulerTime;
+    }
+    // Check if there's pending work.
+    findHighestPriorityRoot();
+    if (
+        nextFlushedExpirationTime === NoWork ||
+        nextFlushedExpirationTime === Never
+    ) {
+        // If there's no pending work, or if the pending work is offscreen, we can
+        // read the current time without risk of tearing.
+        recomputeCurrentRendererTime();
+        currentSchedulerTime = currentRendererTime;
+        return currentSchedulerTime;
+    }
     return currentSchedulerTime;
-  }
-  // Check if there's pending work.
-  findHighestPriorityRoot();
-  if (
-    nextFlushedExpirationTime === NoWork ||
-    nextFlushedExpirationTime === Never
-  ) {
-    // If there's no pending work, or if the pending work is offscreen, we can
-    // read the current time without risk of tearing.
-    recomputeCurrentRendererTime();
-    currentSchedulerTime = currentRendererTime;
-    return currentSchedulerTime;
-  }
-  return currentSchedulerTime;
 }
 ```
-核心函数在于`recomputeCurrentRendererTime`
-```javaScript
+
+核心函数在于 `recomputeCurrentRendererTime` 
+
+``` javaScript
 function recomputeCurrentRendererTime() {
-  const currentTimeMs = now() - originalStartTimeMs;
-  currentRendererTime = msToExpirationTime(currentTimeMs);
+    const currentTimeMs = now() - originalStartTimeMs;
+    currentRendererTime = msToExpirationTime(currentTimeMs);
 }
 ```
-`now()` 是 `performance.now()`  该方法返回一个精确到毫秒的DOMHighResTimeStamp 。返回的时间戳没有被限制在一毫秒的精确度内，而它使用了一个浮点数来达到微秒级别的精确度。
+
+`now()` 是 `performance.now()` 该方法返回一个精确到毫秒的DOMHighResTimeStamp 。返回的时间戳没有被限制在一毫秒的精确度内，而它使用了一个浮点数来达到微秒级别的精确度。
 
 originalStartTimeMs 是 React 应用初始化时就会生成的一个变量，值也是 performance.now()，并且这个值不会在后期再被改变。那么这两个值相减以后，得到的结果也就是现在离 React 应用初始化时经过了多少时间。
 
-
 将得到的currentTimeMs的值带入到msToExpirationTime函数中
-```javascript
 
+``` javascript
 // Max 31 bit integer. The max integer size in V8 for 32-bit systems.
 // Math.pow(2, 30) - 1
 // 0b111111111111111111111111111111
-const MAX_SIGNED_31_BIT_INT =  1073741823;
+const MAX_SIGNED_31_BIT_INT = 1073741823;
 
 const UNIT_SIZE = 10;
-const MAGIC_NUMBER_OFFSET = MAX_SIGNED_31_BIT_INT - 1;
+const MAGIC_NUMBER_OFFSET = MAX_SIGNED_31_BIT_INT - 1 = 1073741822;
 
 // 1 unit of expiration time represents 10ms.
 export function msToExpirationTime(ms: number): ExpirationTime {
-  // Always add an offset so that we don't clash with the magic number for NoWork.
-  // 5000 - 2500 = 2500
-  // 1073741822 - 250 = 1073741572
-  return MAGIC_NUMBER_OFFSET - ((ms / UNIT_SIZE) | 0);
+    // Always add an offset so that we don't clash with the magic number for NoWork.
+    // 5000 - 2500 = 2500
+    // 1073741822 - 250 = 1073741572
+    return MAGIC_NUMBER_OFFSET - ((ms / UNIT_SIZE) | 0);
 }
 ```
-不能理解的可能是`| 0`的作用,它的作用是取整。列如`(21/20) | 0 = 1`
+
+不能理解的可能是 `| 0` 的作用, 它的作用是取整。列如 `(21/20) | 0 = 2` 
+
+假如 originalStartTimeMs 为 2500，当前时间为 5000，那么算出来的差值就是 2500，也就是说当前距离 React 应用初始化已经过去了 2500 毫秒，最后通过公式得出的结果为：
+
+``` javascript
+currentTime = 1073741822 - ((2500 / 10) | 0) = 1073741572
+```
+
+### computeExpirationForFiber
+
+接下来是计算 expirationTime，这个时间和优先级有关，值越大，优先级越高。并且同步是优先级最高的，同步的值为 1073741823，也就是之前我们看到的常量 MAGIC_NUMBER_OFFSET 加一。
+
+``` javascript
+function computeExpirationForFiber(currentTime: ExpirationTime, fiber: Fiber) {
+    let expirationTime;
+    if (expirationContext !== NoWork) {
+        // An explicit expiration context was set;
+        expirationTime = expirationContext;
+    } else if (isWorking) {
+        if (isCommitting) {
+            // Updates that occur during the commit phase should have sync priority
+            // by default.
+            expirationTime = Sync;
+        } else {
+            // Updates during the render phase should expire at the same time as
+            // the work that is being rendered.
+            expirationTime = nextRenderExpirationTime;
+        }
+    } else {
+        // No explicit expiration context was set, and we're not currently
+        // performing work. Calculate a new expiration time.
+        if (fiber.mode & ConcurrentMode) {
+            if (isBatchingInteractiveUpdates) {
+                // This is an interactive update
+                expirationTime = computeInteractiveExpiration(currentTime);
+            } else {
+                // This is an async update
+                expirationTime = computeAsyncExpiration(currentTime);
+            }
+            // If we're in the middle of rendering a tree, do not update at the same
+            // expiration time that is already rendering.
+            if (nextRoot !== null && expirationTime === nextRenderExpirationTime) {
+                expirationTime -= 1;
+            }
+        } else {
+            // This is a sync update
+            expirationTime = Sync;
+        }
+    }
+    if (isBatchingInteractiveUpdates) {
+        // This is an interactive update. Keep track of the lowest pending
+        // interactive expiration time. This allows us to synchronously flush
+        // all interactive updates when needed.
+        if (
+            lowestPriorityPendingInteractiveExpirationTime === NoWork ||
+            expirationTime < lowestPriorityPendingInteractiveExpirationTime
+        ) {
+            lowestPriorityPendingInteractiveExpirationTime = expirationTime;
+        }
+    }
+    return expirationTime;
+}
+```
+
+该段代码的核心在于
+
+``` javascript
+// 同步
+expirationTime = Sync
+// 交互事件，优先级较高
+expirationTime = computeInteractiveExpiration(currentTime)
+// 异步，优先级较低
+expirationTime = computeAsyncExpiration(currentTime)
+```
+
+接下来我们就来分析 computeInteractiveExpiration 函数内部是如何计算时间的.
+
+#### computeInteractiveExpiration
+
+``` javascript
+export const HIGH_PRIORITY_EXPIRATION = __DEV__ ? 500 : 150;
+export const HIGH_PRIORITY_BATCH_SIZE = 100;
+
+export function computeInteractiveExpiration(currentTime: ExpirationTime) {
+    // currentTime = 1073741572
+    // 250 * 10 = 经过的时间
+    // 250 + 50 = 300
+    // 1073741822 - ((((1073741822 - 1073741572 + 15) / 10) | 0) + 1) * 10
+    return computeExpirationBucket(
+        currentTime,
+        HIGH_PRIORITY_EXPIRATION,
+        HIGH_PRIORITY_BATCH_SIZE,
+    );
+}
+
+function computeExpirationBucket(
+    currentTime,
+    expirationInMs,
+    bucketSizeMs,
+): ExpirationTime {
+    // currentTime 一般是通过 performance.now() - 程序一开始进来就执行一次的 performance.now() 然后再通过 msToExpirationTime 算出来的
+    // 1073741823 毫秒（也就是同步）换算成天是 12 天多点 10737418240
+    // 另外 | 0 + 1 * bucketSizeMs / UNIT_SIZE 是为了抹平一段时间内的时间差
+    return (
+        MAGIC_NUMBER_OFFSET -
+        ceiling(
+            MAGIC_NUMBER_OFFSET - currentTime + expirationInMs / UNIT_SIZE,
+            bucketSizeMs / UNIT_SIZE,
+        )
+    );
+}
+
+function ceiling(num: number, precision: number): number {
+    return (((num / precision) | 0) + 1) * precision;
+}
+```
+
+将数值代入公式计算一波：
+
+``` javascript
+MAGIC_NUMBER_OFFSET = 1073741822
+currentTime = 1073741572
+expirationInMs = 150
+UNIT_SIZE = 10
+bucketSizeMs = 100
+
+1073741822 - ceiling(1073741822 - 1073741572 + 150 / 10, 100 / 10)
+1073741822 - ceiling(265, 10)
+1073741822 - 270 = 1073741552
+```
+
+在 ceiling 函数中的 1 * bucketSizeMs / UNIT_SIZE 是为了抹平一段时间内的时间差，在抹平的时间差内不管有多少个任务需要执行，他们的过期时间都是同一个，这也算是一个性能优化，帮助渲染页面行为节流。
+
+最后其实我们这个计算出来的 expirationTime 是可以反推出另外一个时间的：
+
+``` javascript
+export function expirationTimeToMs(expirationTime: ExpirationTime): number {
+    return (MAGIC_NUMBER_OFFSET - expirationTime) * UNIT_SIZE;
+}
+```
+
+将值代入计算
+
+```javascript 
+(1073741822-1073741552)*10 = 2700
+```
+这个时间其实和我们之前在上文中计算出来的 2500 毫秒差值很接近。因为 expirationTime 指的就是一个任务的过期时间，React 根据任务的优先级和当前时间来计算出一个任务的执行截止时间。只要这个值比当前时间大就可以一直让 React 延后这个任务的执行，以便让更高优先级的任务执行，但是一旦过了任务的截止时间，就必须让这个任务马上执行。
+
+### scheduleRootUpdate
+
+当时间被计算好之后，调用`updateContainerAtExpirationTime`方法。其核心为`scheduleRootUpdate`函数
+
+```javascript
+function scheduleRootUpdate(
+  current: Fiber,
+  element: ReactNodeList,
+  expirationTime: ExpirationTime,
+  callback: ?Function,
+) {
+  // 创建一个 update，就是内部有几个属性的对象
+  const update = createUpdate(expirationTime);
+  // Caution: React DevTools currently depends on this property
+  // being called "element".
+  update.payload = {element};
+  callback = callback === undefined ? null : callback;
+  if (callback !== null) {
+    update.callback = callback;
+  }
+  flushPassiveEffects();
+  // 把 update 入队，内部就是一些创建或者获取 queue（链表结构），然后给链表添加一个节点的操作
+  enqueueUpdate(current, update);
+  scheduleWork(current, expirationTime);
+
+  return expirationTime;
+}
+```
+
+首先是通过`createUpdate`创建一个`update`对象 ,这个对象和 `setState` 息息相关
+```javascript
+function createUpdate(expirationTime: ExpirationTime): Update<*> {
+  return {
+    expirationTime: expirationTime,
+
+    tag: UpdateState,
+    // setState 的第一二个参数
+    payload: null,
+    callback: null,
+    // 用于在队列中找到下一个节点
+    next: null,
+    nextEffect: null,
+  };
+}
+```
+对于 update 对象内部的属性来说，我们需要重点关注的是 next 属性。因为 update 其实就是一个队列中的节点，这个属性可以用于帮助我们寻找下一个 update。对于批量更新来说，我们可能会创建多个 update，因此我们需要将这些 update 串联并存储起来，在必要的时候拿出来用于更新 state。
+
+在 render 的过程中其实也是一次更新的操作，但是我们并没有 setState，因此就把 payload 赋值为 {element} 了。
+
+接下来我们将 callback 赋值给 update 的属性，这里的 callback 还是 ReactDom.render 的第三个参数。
+
+然后我们将刚才创建出来的 update 对象插入队列中，enqueueUpdate 函数核心作用就是创建或者获取一个队列，然后把 update 对象入队。
+```javascript
+export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
+  // Update queues are created lazily.
+  // 获取 fiber 的镜像
+  const alternate = fiber.alternate;
+  let queue1;
+  let queue2;
+  // 第一次 render 的时候肯定是没有这个镜像的，所以进第一个条件
+  if (alternate === null) {
+    // There's only one fiber.
+    // 一开始也没这个 queue，所以需要创建一次
+    queue1 = fiber.updateQueue;
+    queue2 = null;
+    if (queue1 === null) {
+      // UpdateQueue 是一个链表组成的队列
+      queue1 = fiber.updateQueue = createUpdateQueue(fiber.memoizedState);
+    }
+  } else {
+    // There are two owners.
+    queue1 = fiber.updateQueue;
+    queue2 = alternate.updateQueue;
+    // 以下就是在判断 q1、q2 存不存在了，不存在的话就赋值一遍
+    // clone 的意义也是为了节省开销
+    if (queue1 === null) {
+      if (queue2 === null) {
+        // Neither fiber has an update queue. Create new ones.
+        queue1 = fiber.updateQueue = createUpdateQueue(fiber.memoizedState);
+        queue2 = alternate.updateQueue = createUpdateQueue(
+          alternate.memoizedState,
+        );
+      } else {
+        // Only one fiber has an update queue. Clone to create a new one.
+        queue1 = fiber.updateQueue = cloneUpdateQueue(queue2);
+      }
+    } else {
+      if (queue2 === null) {
+        // Only one fiber has an update queue. Clone to create a new one.
+        queue2 = alternate.updateQueue = cloneUpdateQueue(queue1);
+      } else {
+        // Both owners have an update queue.
+      }
+    }
+  }
+  // 获取队列操作完毕以后，就开始入队了
+  // 以下的代码很简单，熟悉链表的应该清楚链表添加一个节点的逻辑
+  if (queue2 === null || queue1 === queue2) {
+    // There's only a single queue.
+    appendUpdateToQueue(queue1, update);
+  } else {
+    // There are two queues. We need to append the update to both queues,
+    // while accounting for the persistent structure of the list — we don't
+    // want the same update to be added multiple times.
+    if (queue1.lastUpdate === null || queue2.lastUpdate === null) {
+      // One of the queues is not empty. We must add the update to both queues.
+      appendUpdateToQueue(queue1, update);
+      appendUpdateToQueue(queue2, update);
+    } else {
+      // Both queues are non-empty. The last update is the same in both lists,
+      // because of structural sharing. So, only append to one of the lists.
+      appendUpdateToQueue(queue1, update);
+      // But we still need to update the `lastUpdate` pointer of queue2.
+      queue2.lastUpdate = update;
+    }
+  }
+}
+```
+
+最后调用 scheduleWork 函数，这里开始就是调度相关的内容。
 
 
 
 ### finally
 
-以上内容的流程图如下：
+以上内容的流程图如下
 ![](./images/render.png)
 
 ## setState
