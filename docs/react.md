@@ -1298,6 +1298,251 @@ export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
 以上内容的流程图如下
 ![](./images/render.png)
 
+## 任务调度
+
+### scheduleWork
+
+```javascript
+function scheduleWork (fiber: Fiber, expirationTime: ExpirationTime) {
+  // 获取 fiber root
+  const root = scheduleWorkToRoot(fiber, expirationTime);
+  if (root === null) {
+    return;
+  }
+  // 这个分支表示高优先级任务打断低优先级任务
+  // 这种情况发生于以下场景：有一个优先级较低的任务（必然是异步任务）没有执行完，
+  // 执行权交给了浏览器，然后再交还给 JS 的时候有一个新的高优先级任务进来了
+  // 这时候需要去执行高优先级任务，所以需要打断低优先级任务
+  if (
+    !isWorking &&
+    nextRenderExpirationTime !== NoWork &&
+    expirationTime > nextRenderExpirationTime
+  ) {
+    // This is an interruption. (Used for performance tracking.)
+    // 记录被谁打断的
+    interruptedBy = fiber;
+    // 重置 stack，具体来说应该是 valueStack
+    resetStack();
+  }
+  markPendingPriorityLevel(root, expirationTime);
+  if (
+    // If we're in the render phase, we don't need to schedule this root
+    // for an update, because we'll do it before we exit...
+    !isWorking ||
+    isCommitting ||
+    // ...unless this is a different root than the one we're rendering.
+    nextRoot !== root
+  ) {
+    const rootExpirationTime = root.expirationTime;
+    requestWork(root, rootExpirationTime);
+  }
+  // 在某些生命周期函数中 setState 会造成无限循环
+  // 这里是告知你的代码触发无限循环了
+  if (nestedUpdateCount > NESTED_UPDATE_LIMIT) {
+    // Reset this back to zero so subsequent updates don't throw.
+    nestedUpdateCount = 0;
+  }
+}
+```
+1. **`scheduleWorkToRoot`函数**
+
+该函数的功能是以下几个：
+    1. 找到当前Fiber的 root
+    2. 给更新节点的父节点链上的每个节点的expirationTime设置为这个update的expirationTime，除非他本身时间要小于expirationTime
+    3. 给更新节点的父节点链上的每个节点的childExpirationTime设置为这个update的expirationTime，除非他本身时间要小于expirationTime
+    4. 最终返回 root 节点的Fiber对象
+
+```javascript
+function scheduleWorkToRoot(fiber: Fiber, expirationTime): FiberRoot | null {
+  // 用于记录调度器的状态
+  recordScheduleUpdate();
+
+  // Update the source fiber's expiration time
+  // expirationTime 越大说明优先级越高
+  // 以下两个 if 判断是在把 fiber 的优先级设置的更高
+  if (fiber.expirationTime < expirationTime) {
+    fiber.expirationTime = expirationTime;
+  }
+  let alternate = fiber.alternate;
+  if (alternate !== null && alternate.expirationTime < expirationTime) {
+    alternate.expirationTime = expirationTime;
+  }
+  // Walk the parent path to the root and update the child expiration time.
+  // 获取 fiber 的父节点，Root Fiber 是没有 return 属性的
+  let node = fiber.return;
+  let root = null;
+  // 判断这时候 fiber 是否为 Root Fiber
+  if (node === null && fiber.tag === HostRoot) {
+    // 取出 Fiber Root
+    root = fiber.stateNode;
+  } else {
+    while (node !== null) {
+      alternate = node.alternate;
+      // 下面的判断都是在将低优先级设置为高的优先级
+      // 最后判断是否获得了 Root Fiber
+      if (node.childExpirationTime < expirationTime) {
+        node.childExpirationTime = expirationTime;
+        if (
+          alternate !== null &&
+          alternate.childExpirationTime < expirationTime
+        ) {
+          alternate.childExpirationTime = expirationTime;
+        }
+      } else if (
+        alternate !== null &&
+        alternate.childExpirationTime < expirationTime
+      ) {
+        alternate.childExpirationTime = expirationTime;
+      }
+      if (node.return === null && node.tag === HostRoot) {
+        root = node.stateNode;
+        break;
+      }
+      node = node.return;
+    }
+  }
+  return root;
+}
+```
+
+2. **判断逻辑**
+```javascript
+if (
+  !isWorking &&
+  nextRenderExpirationTime !== NoWork &&
+  expirationTime < nextRenderExpirationTime
+)
+```
+1. isWorking代表是否正在工作，在开始renderRoot和commitRoot的时候会设置为 true，也就是在render和commit两个阶段都会为true
+2. nextRenderExpirationTime在是新的renderRoot的时候会被设置为当前任务的expirationTime，而且一旦他被，只有当下次任务是NoWork的时候他才会被再次设置为NoWork，当然最开始也是NoWork
+
+那么这个条件就很明显了：目前没有任何任务在执行，并且之前有执行过任务，同时当前的任务比之前执行的任务过期时间要早（也就是优先级要高）符合该条件的时候任务会被打断并记录，同时清空状态 `resetStack`
+
+```javascript
+function resetStack() {
+  // nextUnitOfWork：下一个需要执行的 fiber 节点
+  if (nextUnitOfWork !== null) {
+    // 往上找 fiber 节点
+    let interruptedWork = nextUnitOfWork.return;
+    // 如果存在父节点的话，就清掉父节点的 valueStack
+    // valueStack 因为之前代码里没见过，所以去网上查了点资料
+    // 发现这个数组应该是用来存储数据的
+    // 这个做法应该是为了重头开始一个新的任务。因为打断一个任务的时候
+    // 被打断的任务可能已经改变一部分节点的数据，这时候新的任务开始时
+    // 不应该被之前的任务所影响，需要清掉之前任务的影响。
+    while (interruptedWork !== null) {
+      unwindInterruptedWork(interruptedWork);
+      interruptedWork = interruptedWork.return;
+    }
+  }
+  // 重置变量
+  nextRoot = null;
+  nextRenderExpirationTime = NoWork;
+  nextLatestAbsoluteTimeoutMs = -1;
+  nextRenderDidError = false;
+  nextUnitOfWork = null;
+}
+```
+3. **markPendingPriorityLevel**
+
+4. **满足条件调用requestWork**
+
+```javascript
+if (
+    // If we're in the render phase, we don't need to schedule this root
+    // for an update, because we'll do it before we exit...
+    !isWorking ||
+    isCommitting ||
+    // ...unless this is a different root than the one we're rendering.
+    nextRoot !== root
+  ) {
+    const rootExpirationTime = root.expirationTime;
+    requestWork(root, rootExpirationTime);
+  }
+```
+这个判断条件就比较简单了，!isWorking || isCommitting简单来说就是要么处于没有 work 的状态，要么只能在 render 阶段，不能处于 commit 阶段。还有一个选项nextRoot !== root，这个的意思就是你的 APP 如果有两个不同的 root，这时候也符合条件。
+
+在符合条件之后就requestWork了
+
+5. **requestWork**
+
+```javascript
+function requestWork(root: FiberRoot, expirationTime: ExpirationTime) {
+  // 将 root 加入调度中
+  addRootToSchedule(root, expirationTime);
+  if (isRendering) {
+    // Prevent reentrancy. Remaining work will be scheduled at the end of
+    // the currently rendering batch.
+    return;
+  }
+  // 判断是否需要批量更新
+  // 当我们触发事件回调时，其实回调会被 batchedUpdates 函数封装一次
+  // 这个函数会把 isBatchingUpdates 设为 true，也就是说我们在事件回调函数内部
+  // 调用 setState 不会马上触发 state 的更新及渲染，只是单纯创建了一个 updater，然后在这个分支 return 了
+  // 只有当整个事件回调函数执行完毕后恢复 isBatchingUpdates 的值，并且执行 performSyncWork
+  // 想必很多人知道在类似 setTimeout 中使用 setState 以后 state 会马上更新，如果你想在定时器回调中也实现批量更新，
+  // 就可以使用 batchedUpdates 将你需要的代码封装一下
+  if (isBatchingUpdates) {
+    // Flush work at the end of the batch.
+    // 判断是否不需要批量更新
+    if (isUnbatchingUpdates) {
+      // ...unless we're inside unbatchedUpdates, in which case we should
+      // flush it now.
+      nextFlushedRoot = root;
+      nextFlushedExpirationTime = Sync;
+      performWorkOnRoot(root, Sync, false);
+    }
+    return;
+  }
+
+  // TODO: Get rid of Sync and use current time?
+  // 判断优先级是同步还是异步，异步的话需要调度
+  if (expirationTime === Sync) {
+    performSyncWork();
+  } else {
+    // 函数核心是实现了 requestIdleCallback 的 polyfill 版本
+    // 因为这个函数浏览器的兼容性很差
+    // 具体作用可以查看 MDN 文档 https://developer.mozilla.org/zh-CN/docs/Web/API/Window/requestIdleCallback
+    // 这个函数可以让浏览器空闲时期依次调用函数，这就可以让开发者在主事件循环中执行后台或低优先级的任务，
+    // 而且不会对像动画和用户交互这样延迟敏感的事件产生影响
+    scheduleCallbackWithExpirationTime(root, expirationTime);
+  }
+}
+```
+
+**addRootToSchedule**
+
+```javascript
+function addRootToSchedule(root: FiberRoot, expirationTime: ExpirationTime) {
+  // Add the root to the schedule.
+  // Check if this root is already part of the schedule.
+  // 判断 root 是否调度过
+  if (root.nextScheduledRoot === null) {
+    // This root is not already scheduled. Add it.
+    // root 没有调度过
+    root.expirationTime = expirationTime;
+    if (lastScheduledRoot === null) {
+      firstScheduledRoot = lastScheduledRoot = root;
+      root.nextScheduledRoot = root;
+    } else {
+      lastScheduledRoot.nextScheduledRoot = root;
+      lastScheduledRoot = root;
+      lastScheduledRoot.nextScheduledRoot = firstScheduledRoot;
+    }
+  } else {
+    // This root is already scheduled, but its priority may have increased.
+    // root 已经调度过，判断是否需要更新优先级
+    const remainingExpirationTime = root.expirationTime;
+    if (expirationTime > remainingExpirationTime) {
+      // Update the priority.
+      root.expirationTime = expirationTime;
+    }
+  }
+}
+```
+addRootToSchedule把 root 加入到调度队列，但是要注意一点，不会存在两个相同的 root 前后出现在队列中.
+
+
 ## setState
 
 ## Virtual Dom
