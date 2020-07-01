@@ -51,3 +51,6 @@
 当script有async属性时，脚本的加载过程和文档加载也是异步发生的。但脚本下载完成后会停止HTML解析，执行脚本，脚本解析完继续HTML解析。
 
 当script同时有async和defer属性时，执行效果和async一致。
+
+## canvas
+
