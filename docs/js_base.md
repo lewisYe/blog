@@ -11,7 +11,10 @@ Number、String、Boolean、Null、Undefined、Object、Symbol、BigInt
 1. Number
 
 Number 类型包含整数和浮点数两种值。
-NaN 非数字类型 1. 涉及到任何关于NaN的操作都会返回NaN 2. NaN 不等于自身
+
+  NaN 非数字类型 
+  * 涉及到任何关于NaN的操作都会返回NaN 
+  * NaN 不等于自身
 
 2. String 
 
@@ -91,16 +94,23 @@ instanceof 是用来判断 A 是否为 B 的实例，表达式为 A instanceof B
 
 ``` javascript
 [] instanceof Array // true
-{}
-instanceof Objeact // true
+{} instanceof Object // true
 new Date() instanceof Date // true
 
-[] instanceof Objeact // true
+[] instanceof Object // true
 null instanceof Null // 报错
-null instanceof Objeact // false 
+null instanceof Object // false 
+
+2 instanceof Number //false
+'str' instanceof String // false
+true instanceof Boolean // false
 ```
+instanceof可以精准判断引用数据类型（Array，Function，Object），而基本数据类型不能被instanceof精准判断。
 
 会发现 [] 既是 Array的实例，又是Object的实例。因为 instanceOf 检测的是原型。[] 的 __proto__ 直接指向 Array.prototype, Array的 __proto__ 指向 Object.prototype. 所以 [] 间接指向了 Object.prototype. 所以 instanceof 只能用来判断两个对象是否属于实例关系，而不能判断一个对象实例具体属于哪种类型。
+
+在MDN中的解释：instanceof 运算符用来测试一个对象在其原型链中是否存在一个构造函数的 prototype 属性。其意思就是判断对象是否是某一数据类型的实例，请重点关注一下是判断一个对象是否是数据类型的实例。在这里字面量值，2， true ，'str'不是实例，所以判断值为false。
+
 
 #### instanceof 的实现原理
 
@@ -3067,3 +3077,5 @@ window.dispatchEvent(resizeEvent);
 ```
 
 ## 正则
+
+## Ajax
