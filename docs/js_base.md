@@ -13,8 +13,9 @@ Number、String、Boolean、Null、Undefined、Object、Symbol、BigInt
 Number 类型包含整数和浮点数两种值。
 
   NaN 非数字类型 
-  * 涉及到任何关于NaN的操作都会返回NaN 
-  * NaN 不等于自身
+
+  + 涉及到任何关于NaN的操作都会返回NaN 
+  + NaN 不等于自身
 
 2. String 
 
@@ -102,15 +103,16 @@ null instanceof Null // 报错
 null instanceof Object // false 
 
 2 instanceof Number //false
-'str' instanceof String // false
+    'str'
+instanceof String // false
 true instanceof Boolean // false
 ```
+
 instanceof可以精准判断引用数据类型（Array，Function，Object），而基本数据类型不能被instanceof精准判断。
 
-会发现 [] 既是 Array的实例，又是Object的实例。因为 instanceOf 检测的是原型。[] 的 __proto__ 直接指向 Array.prototype, Array的 __proto__ 指向 Object.prototype. 所以 [] 间接指向了 Object.prototype. 所以 instanceof 只能用来判断两个对象是否属于实例关系，而不能判断一个对象实例具体属于哪种类型。
+会发现 [] 既是 Array的实例，又是Object的实例。因为 instanceOf 检测的是原型。[] 的 `__proto__ ` 直接指向 Array.prototype, Array的 `__proto__ ` 指向 Object.prototype. 所以 [] 间接指向了 Object.prototype. 所以 instanceof 只能用来判断两个对象是否属于实例关系，而不能判断一个对象实例具体属于哪种类型。
 
 在MDN中的解释：instanceof 运算符用来测试一个对象在其原型链中是否存在一个构造函数的 prototype 属性。其意思就是判断对象是否是某一数据类型的实例，请重点关注一下是判断一个对象是否是数据类型的实例。在这里字面量值，2， true ，'str'不是实例，所以判断值为false。
-
 
 #### instanceof 的实现原理
 
@@ -158,13 +160,13 @@ Object.prototype.toString.call(document); // [object HTMLDocument]
 Object.prototype.toString.call(window); // [object global] window 是全局对象 global 的引用
 ```
 
-#### constructor 属性
+### constructor 属性
 
 constructor 属性返回所有 JavaScript 变量的构造函数。
 
 ``` javascript
 "John".constructor // 返回函数 String()  { [native code] }
-    (3.14).constructor // 返回函数 Number()  { [native code] }
+(3.14).constructor // 返回函数 Number()  { [native code] }
 false.constructor // 返回函数 Boolean() { [native code] }
 [1, 2, 3, 4].constructor // 返回函数 Array()   { [native code] }
 {
@@ -219,7 +221,7 @@ console.log(Boolean("")) //false
 |Boolean|true 为1, false为+0|
 |Number|返回与之相等的值|
 |String|请参阅下面的示例。|
-|Object|1. 先使用 ToPrimitive(input argument, hint Number) 得到 primValue 2. 返回 ToNumber(primValue). |
+|Object|1. 先使用 ToPrimitive(input argument, hint Number) 得到 primValue.     2. 返回 ToNumber(primValue). |
 
 这又涉及了 ToPrimitive 方法 在后面做介绍。
 
@@ -411,7 +413,7 @@ var num6 = _num1 + num2 // 21
 var s1 = "01"
 var s2 = "1.1"
 var s3 = "z"
-var b = false '
+var b = false
 var f = 1.1;
 var o = {
         valueOf: function() {
@@ -419,18 +421,12 @@ var o = {
         }
     }
 
-    +
-    s1 // 1
-    +
-    s2 // 1.1
-    +
-    s3 // NaN
-    +
-    b // 0
-    +
-    f // 1.1
-    +
-    0 // -1
+    +s1 // 1
+    +s2 // 1.1
+    +s3 // NaN
+    +b // 0
+    +f // 1.1
+    +o // -1
 ```
 
 一元减操作符主要用于表示负数，当应用于数值时，数值变为负数；当应用于非数值时，与一元加具有相同的规则，最后将得到的数值变为负数。
@@ -469,7 +465,7 @@ var o = {
 
 * 操作数是对象，返回 false 
 * 操作数是空字符串，返回ture
-* 操作数是非空字符串，返回ture
+* 操作数是非空字符串，返回false
 * 操作数是数值0，返回ture
 * 操作数是null，返回true
 * 操作数是NaN，返回true
@@ -490,7 +486,7 @@ var o = {
 
 逻辑与操作属于短路操作，如果第一个操作数能够决定结果，则不会对第二个操作数**求值**。这一点很重要。示例说明
 
-``` javascript
+```javascript
 var a = true;
 var res = (a || b)
 console.log(res) // 报错
@@ -531,7 +527,6 @@ var a = false,
 只要 `+` 号两边有一边是字符串 作为字符串连接理解，反之作为算术运算符理解。
 
 ``` javascript
-
 1. console.log(1 + "true") // 1true
 2. console.log(1 + true) // 2
 3. console.log(1 + undefined) // NaN
@@ -544,7 +539,7 @@ var a = false,
 3. 1 + Number(undefined) = 1 + NaN = NaN
 4. 1 + Number(null) = 1 + 0 = 1
 
-```
+``` 
 
 #### 关系运算符
 
@@ -803,7 +798,8 @@ var a = {
 基本类型值指的是简单的数据段；引用类型值指那些可能由多个值构成的对象
 
 基本类型：Number、String、Null、Undefined、Boolean
-引用类型：object、Fuction、Array、Date等
+
+引用类型：Object、Fuction、Array、Date等
 
 js的变量的存储方式--栈（stack）和堆（heap）
 
@@ -820,7 +816,7 @@ js的变量的存储方式--栈（stack）和堆（heap）
 ``` javascript
 var o = new Objeact()
 o.name = 'name'
-console.log(0. name) // 'name'
+console.log(0.name) // 'name'
 
 var name = 'name'
 name.age = 1
@@ -1059,8 +1055,7 @@ AO = {
     },
     a: 1,
     b: undefined,
-    c: reference to
-    function c() {},
+    c: reference to function c() {},
     d: undefined
 }
 ```
@@ -1077,8 +1072,7 @@ AO = {
     },
     a: 1,
     b: 3,
-    c: reference to
-    function c() {},
+    c: reference to function c() {},
     d: reference to FunctionExpression 'd'
 }
 ```
@@ -1108,15 +1102,11 @@ function foo() {
 函数创建时，各自的[[scope]]为:
 
 ``` javascript
-foo. [
-    [scope]
-] = [
+foo.[[scope]] = [
     globalContext.VO
 ]
 
-bar. [
-    [scope]
-] = [
+bar.[[scope]] = [
     fooContext.AO,
     globalContext.VO
 ]
@@ -1174,9 +1164,7 @@ globalContext = {
 初始化的同时，checkscope函数被创建，保存作用域链到函数内部属性[[scope]]
 
 ``` javascript
-checkscope. [
-    [scope]
-] = [
+checkscope.[[scope]] = [
     globalContext.VO
 ]
 ```
@@ -1207,6 +1195,7 @@ checkscopeContext = {
         },
         scope: undefined,
         f： reference to
+
         function f() {}
     },
     Scope: [AO, globalContext.VO],
@@ -1478,7 +1467,7 @@ The production MemberExpression: MemberExpression[Expression] is evaluated as fo
 
 ```
 
-重要信息未第8条 返回一个 Reference 类型，其基值为 baseValue 且其引用名为 propertyNameString, 严格模式标记为 strict. baseValue第2条讲述如何获取，propertyNameString第6条讲述如何获取。
+重要信息是第8条 返回一个 Reference 类型，其基值为 baseValue 且其引用名为 propertyNameString, 严格模式标记为 strict. baseValue第2条讲述如何获取，propertyNameString第6条讲述如何获取。
 
 ### 示例解析
 
@@ -1679,6 +1668,7 @@ Cat.prototype.height = 20;
 Cat.prototype.sayHeight = function(){
     return this.height;
 }
+//
 
 Cat.prototype = new Animal();
 
@@ -1687,6 +1677,7 @@ Cat.prototype.height = 20;
 Cat.prototype.sayHeight = function(){
     return this.height;
 }
+//
 
 var cat = new Cat()
 
@@ -1694,7 +1685,7 @@ console.log(cat.height); //1. undefined    2. 20
 console.log(cat.sayHeight()); //1. not a function     2. 20
 ```
 
-如果放在1号位则输出的undfined，放在2号位则能正常输出数值20
+如果代码放在1号位则输出的undfined，放在2号位则能正常输出数值20
 
 2. 引用类型的属性被所有实例共享
 
@@ -1726,7 +1717,7 @@ cat1.colors.push('white')
 console.log(cat1.colors) // ['red','bule','white']
 
 var cat2 = new Cat()
-console.log(cat2.colors) // ['red','bule','white']
+console.log(cat2.colors) // ['red','bule']
 ```
 
 #### 特点
@@ -1738,7 +1729,7 @@ console.log(cat2.colors) // ['red','bule','white']
 function Cat(name){
   Animal.call(this,name)
 }
-var cat1 = new Child()
+var cat1 = new Child('Tom')
 console.log(cat1.name) // Tom
 
 var cat2 = new Child('Jack')
@@ -1794,7 +1785,7 @@ cat2.sayAge() // 19
 ``` 
 function object(o){
   function F()
-  F.prototype = 0
+  F.prototype = o
   return new F()
 }
 ```
@@ -1854,7 +1845,7 @@ function inheritPrototype(subType,superType){
 
 第一步是创建超类型原型的一个副本。
 
-第二 步是为创建的副本添加 constructor 属性，从而弥补因重写原型而失去的默认的 constructor 属性。 
+第二步是为创建的副本添加 constructor 属性，从而弥补因重写原型而失去的默认的 constructor 属性。 
 
 最后一步，将新创建的对象(即副本)赋值给子类型的原型
 
@@ -2393,7 +2384,7 @@ function isArrayLike(o) {
 
 ### JS 单线程
 
-JavaScript 语音的一大特点就是单线程，也就是说，同一个时间只能做一件事。作为浏览器脚本语言，JavaScript的主要用途是与用户互动，以及操作DOM。这决定了它只能是单线程，否则会带来很复杂的同步问题。比如，假定JavaScript同时有两个线程，一个线程在某个DOM节点上添加内容，另一个线程删除了这个节点，这时浏览器应该以哪个线程为准？
+JavaScript 语言的一大特点就是单线程，也就是说，同一个时间只能做一件事。作为浏览器脚本语言，JavaScript的主要用途是与用户互动，以及操作DOM。这决定了它只能是单线程，否则会带来很复杂的同步问题。比如，假定JavaScript同时有两个线程，一个线程在某个DOM节点上添加内容，另一个线程删除了这个节点，这时浏览器应该以哪个线程为准？
 
 为了利用多核CPU的计算能力，HTML5提出Web Worker标准，允许JavaScript脚本创建多个线程，但是子线程完全受主线程控制，且不得操作DOM。所以，这个新标准并没有改变JavaScript单线程的本质。
 
@@ -2459,6 +2450,7 @@ setTimeout()接受两个参数，第一个是回调函数，第二个是推迟�
 微任务包括：
 
 * new Promise().then(回调)
+* Async/Await
 * process.nextTick
 * MutationObserver(html5新特性)
 
@@ -2877,9 +2869,9 @@ function flatDeep(arr, deep) {
 ### Array.prototype.sort()
 
 sort() 方法用原地算法对数组的元素进行排序，并返回数组。默认排序顺序是在将元素转换为字符串，然后比较它们的UTF-16代码单元值序列时构建的
-`arr.sort([compareFunction])`
+`arr.sort([compareFunction])` 
 
-```javascript
+``` javascript
 const months = ['March', 'Jan', 'Feb', 'Dec'];
 months.sort();
 console.log(months);
@@ -2889,8 +2881,8 @@ const array1 = [1, 30, 4, 21, 100000];
 array1.sort();
 console.log(array1);
 // expected output: Array [1, 100000, 21, 30, 4]
-
 ```
+
 如果没有指明 compareFunction ，那么元素会按照转换为的字符串的诸个字符的Unicode位点进行排序。例如 "Banana" 会被排列到 "cherry" 之前。当数字按由小到大排序时，9 出现在 80 之前，但因为（没有指明 compareFunction），比较的数字会先被转换为字符串，所以在Unicode顺序上 "80" 要比 "9" 要靠前。
 
 如果指明了 compareFunction ，那么数组会按照调用该函数的返回值排序。即 a 和 b 是两个将要被比较的元素：
@@ -2898,15 +2890,16 @@ console.log(array1);
 * 如果 compareFunction(a, b) 小于 0 ，那么 a 会被排列到 b 之前；
 * 如果 compareFunction(a, b) 等于 0 ， a 和 b 的相对位置不变。备注： ECMAScript 标准并不保证这一行为，而且也不是所有浏览器都会遵守（例如 Mozilla 在 2003 年之前的版本）；
 * 如果 compareFunction(a, b) 大于 0 ， b 会被排列到 a 之前。
+
 compareFunction(a, b) 必须总是对相同的输入返回相同的比较结果，否则排序的结果将是不确定的。
 
 ### Array.prototype.splice()
 
-splice() 方法通过删除或替换现有元素或者原地添加新的元素来修改数组,并以数组形式返回被修改的内容。此方法会改变原数组。
+splice() 方法通过删除或替换现有元素或者原地添加新的元素来修改数组, 并以数组形式返回被修改的内容。此方法会改变原数组。
 
-`array.splice(start[, deleteCount[, item1[, item2[, ...]]]])`
+`array.splice(start[, deleteCount[, item1[, item2[, ...]]]])` 
 
-```javascript
+``` javascript
 从第 3 位开始删除 1 个元素
 var myFish = ['angel', 'clown', 'drum', 'mandarin', 'sturgeon'];
 var removed = myFish.splice(3, 1);
@@ -2914,19 +2907,21 @@ var removed = myFish.splice(3, 1);
 // 运算后的 myFish: ["angel", "clown", "drum", "sturgeon"]
 // 被删除的元素: ["mandarin"]
 
-从第 2 位开始删除 1 个元素，插入“trumpet”
+从第 2 位开始删除 1 个元素， 插入“ trumpet”
 var myFish = ['angel', 'clown', 'drum', 'sturgeon'];
 var removed = myFish.splice(2, 1, "trumpet");
 
 // 运算后的 myFish: ["angel", "clown", "trumpet", "sturgeon"]
 // 被删除的元素: ["drum"]
 ```
+
 ### Array.prototype.slice()
+
 slice() 方法返回一个新的数组对象，这一对象是一个由 begin 和 end 决定的原数组的浅拷贝（包括 begin，不包括end）。原始数组不会被改变。
 
-`arr.slice([begin[, end]])`
+`arr.slice([begin[, end]])` 
 
-```javascript
+``` javascript
 const animals = ['ant', 'bison', 'camel', 'duck', 'elephant'];
 
 console.log(animals.slice(2));
@@ -2937,7 +2932,6 @@ console.log(animals.slice(2, 4));
 
 console.log(animals.slice(1, 5));
 // expected output: Array ["bison", "camel", "duck", "elephant"]
-
 ```
 
 ## DOM事件

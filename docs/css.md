@@ -30,7 +30,7 @@
 
   块级元素与行内元素可以相互转换，通过display属性
 
-  浮动和定位会脱离文档流
+  浮动和定位会脱离文档流(relative 相对定位不脱离文档流)
 
 ## 浮动
 
@@ -533,7 +533,7 @@ transform: skew(30deg) 或者 transform: skew(30deg, 30deg);一个参数时：�
 
 #### 移动
 
-ransform: translate(45px) 或者 transform: translate(45px, 150px);
+transform: translate(45px) 或者 transform: translate(45px, 150px);
 
 一个参数时：表示水平方向的移动距离；两个参数时：第一个参数表示水平方向的移动距离，第二个参数表示垂直方向的移动距离。
 
@@ -631,3 +631,12 @@ transition 和 animation 区别 transition需要触发事件。
 
 ```
 ## 移动端适配1px的问题
+
+在移动端web开发中，UI设计稿中设置边框为1像素，前端在开发过程中如果出现border:1px，测试会发现在retina屏机型中，1px会比较粗，即是较经典的移动端1px像素问题
+
+### 产生原因
+
+1. 设备像素比 `dpr = window.devicePixelRatio` 也是就是设备的物理像素与逻辑像素的比值
+2. 在retina屏的手机上，dpr为2或者3，那css里面写的1px映射到物理像素上就是2px或者3px
+
+例如 iPhone6的dpr为2，物理像素是750（x轴）,它的逻辑像素为375。也就是说，1个逻辑像素，在x轴和y轴方向，需要2个物理像素来显示，即：dpr=2时，表示1个CSS像素由4个物理像素点组成。
