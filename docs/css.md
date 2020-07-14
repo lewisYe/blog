@@ -640,3 +640,133 @@ transition 和 animation 区别 transition需要触发事件。
 2. 在retina屏的手机上，dpr为2或者3，那css里面写的1px映射到物理像素上就是2px或者3px
 
 例如 iPhone6的dpr为2，物理像素是750（x轴）,它的逻辑像素为375。也就是说，1个逻辑像素，在x轴和y轴方向，需要2个物理像素来显示，即：dpr=2时，表示1个CSS像素由4个物理像素点组成。
+
+### 解决方案
+
+#### 0.5px
+
+在`IOS8+`,苹果系列都已经支持0.5px了，可以借助媒体查询来处理
+```css
+.border{border:1px solid red}
+@media screen and (-webkit-min-device-pixel-ratio:2){
+  .border{border:.5px solid red}
+}
+/*ios dpr=2和dpr=3情况下border相差无几，下面代码可以省略*/
+@media screen and (-webkit-min-device-pixel-ratio: 3) {
+    .border { border: 0.333333px solid #999 }
+}
+```
+`IOS7`及以下和`Android`等其他系统里，0.5p将会显示为0px，那需要进行`Hack`处理
+
+解决方案是通过JavaScript检测浏览器能否处理0.5px的边框，如果可以，给html标签元素添加个class。
+
+```javascript
+if(window.devicePixelRatio && devicePixelRatio >= 2){
+  var elem = document.createElement('div')
+  elem.style.border = '0.5px solid transparent'
+  document.body.appendChild(elem)
+}
+// 判断是否支持0.5属性  高度为1表示支持 如果为0就是不支持
+if(elem.offsetHeight ==1){
+  document.querySelector('html').classList.add('hairlines')
+}
+document.body.removeChild(elem)
+
+//css
+div{
+  border:1px solid red;
+}
+.hairlines div{
+  border-width:0.5px
+}
+```
+
+优点：简单，代码量少
+缺点：无法兼容安卓设备、ios7以下设备
+
+#### 伪类 + transform
+
+原理：把原先元素的border去掉，然后利用:before或者:after重做border，并transform的scale缩小一半，原先的元素相对定位，新做的border绝对定位
+```css
+.border-1px, .border-top-1px, .border-bottom-1px, .border-left-1px, .border-right-1px{
+  position: relative
+}
+.border-1px::after, .border-top-1px::after, .border-bottom-1px::after, .border-left-1px::after, .border-right-1px::after{
+  background-color: #000000;
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  transform-origin: 0 0;
+}
+.border-1px::after {
+    border: 1px solid gray;
+}
+
+@media(-webkit-min-device-pixel-ratio:2){
+  .border-bottom-1px::after,.border-top-1px::after{
+    transform:scaleY(0.5)
+  }
+  .border-left-1px:after,.border-right-1px::after{
+    transform:scaleX(0.5)
+  }
+  .border-1px::after{
+    width:200%;
+    height:200%;
+    transform:scale(0.5)
+  }
+}
+@media (-webkit-min-device-pixel-ratio: 3)  {
+    .border-bottom-1px::after, .border-top-1px::after {
+        transform: scaleY(0.333);
+    }
+
+    .border-left-1px::after, .border-right-1px::after {
+        transform: scaleX(0.333);
+    }
+
+    .border-1px::after {
+        width: 300%;
+        height: 300%;
+        transform: scale(0.333);
+    }
+}
+/*需要注意<input type="button">是没有:before, :after伪元素的*/
+```
+
+优点：所有场景都能满足，支持圆角(伪类和本体类都需要加border-radius)。
+缺点：代码量也很大，对于已经使用伪类的元素(例如clearfix)，可能需要多层嵌套。
+
+#### viewport + rem
+
+原理:通过设置viewport的rem基准值
+
+当`devicePixelRatio`等于2时，设置meta
+```html
+<meta name="viewport" content="width=device-width,initial-scale=0.5,maximum-scale=0.5,minmum-scale=0.5,user-scalable=no">
+```
+当`devicePixelRatio`等于3时，设置meta
+```html
+<meta name="viewport" content="width=device-width,initial-scale=0.333333,maxumum-scale=0.333333,minmum-scale=0.333333,user-scalavle=no">
+```
+
+示例
+```javascript
+var viewport = document.querySelector("meta[name=viewport]");
+var dpr = window.devicePixelRatio || 1
+var scale = 1 / dpr
+viewport.setAttrivute("content","width=device-width,initial-scale="+scale+",maxumum-scale="+scale+",minmum-scale="+scale+",user-scalavle=no")
+
+var doc = document.documentElement
+var fontSize = 10 * (doc.clientWidth / 375) + 'px';
+doc.style.fontSize = fontSize
+```
+详细的rem知识点可以查看[Flexible](https://github.com/amfe/article/issues/17)
+
+优点：所有场景都能满足，一套代码，可以兼容基本所有布局。
+缺点：老项目修改代价过大，只适用于新项目。
+
+方法还有 border-image、background-image、 postcss-write-svg等 [参考链接](https://mp.weixin.qq.com/s/BZtfCAYvtEHf-ZKq4eB62g)
+
