@@ -1519,25 +1519,220 @@ ref = Reference,
 
 ### 总结
 
-上述的this 判断规则是基于规范中的描述来判断的，可能有很多同学一遍看不懂，其实作者本人也是读了好几遍 [冴羽](https://github.com/mqyqingfeng/Blog/issues/7)和[汤姆大叔](https://www.cnblogs.com/TomXu/archive/2012/01/17/2310479.html)的this文章，并结合读规范才逐渐理解的
+上述的this 判断规则是基于规范中的描述来判断的，可能有很多同学一遍看不懂，其实作者本人也是读了好几遍 [冴羽](https://github.com/mqyqingfeng/Blog/issues/7)和[汤姆大叔](https://www.cnblogs.com/TomXu/archive/2012/01/17/2310479.html)的this文章，并结合读规范才逐渐理解的。如果觉得难以理解可以看接下来的this的绑定规则来理解this指向
 
-如果你可能目前阶段不想理解这些，那么你可以记住this的几种调用运用场景
 
-``` javascript
-var obj = {
-    a: 1,
-    b: function() {
-        console.log(this);
+## This的绑定规则
+
+this的绑定规则有以下5种
+1. 默认绑定
+2. 隐式绑定
+3. 显示绑定
+4. new绑定
+5. 箭头函数绑定
+
+### 默认绑定
+
+默认绑定，`在不能应用其它绑定规则时使用的默认规则`，通常是`独立函数调用`。
+
+严格模式下，不能将全局对象用于默认绑定，this会绑定到undefined。只有函数运行在非严格模式下，默认绑定才能绑定到全局对象。在严格模式下调用函数则不影响默认绑定。
+
+```javascript
+function sayHi(){
+  console.log('Hello',this.name)
+}
+var name = 'Ye'
+sayHi() // 'Hello Ye'
+```
+
+### 隐式绑定
+
+1. 函数的调用是在某个对象上触发的，即调用位置上存在上下文对象。典型的形式为 XXX.fun() 
+
+```javascript
+function sayHi(){
+  console.log('Hello',this.name)
+}
+var person = {
+  name: 'Ye',
+  sayHi: sayHi
+}
+var name = 'Hong'
+person.sayHi() // Hello Ye
+```
+
+2. 对象属性引用链中只有上一层或者说最后一层在调用中起作用。
+
+```javascript
+function sayHi(){
+    console.log('Hello,', this.name);
+}
+var person1 = {
+    name: 'Hong',
+    friend: person2
+}
+var person2 = {
+    name: 'Ye',
+    sayHi: sayHi
+}
+person1.friend.sayHi(); // Hello Hong
+```
+3. 隐式绑定有一个坑，隐式绑定丢失
+
+
+```javascript
+function sayHi(){
+    console.log('Hello,', this.name);
+}
+var person = {
+    name: 'Ye',
+    sayHi: sayHi
+}
+var name = 'Hong';
+var Hi = person.sayHi;
+Hi(); // Hello Hong
+```
+赋值操作会倒是隐式绑定丢失。参数传递就是一种隐式赋值，传入函数时也会被隐式赋值。回调函数丢失this绑定是非常常见的。
+
+```javascript
+function sayHi(){
+    console.log('Hello,', this.name);
+}
+var person1 = {
+    name: 'YvetteLau',
+    sayHi: function(){
+        setTimeout(function(){
+            console.log('Hello,',this.name);
+        })
     }
 }
-1、 作为对象调用时， 指向该对象 obj.b(); // 指向obj
-2、 作为函数调用,
-var b = obj.b;
-b(); // 指向全局window
-3、 作为构造函数调用
-var b = new Fun(); // this指向当前实例对象
-4、 作为call与apply调用 obj.b.apply(object, []); // this指向当前的object
+var person2 = {
+    name: 'Christina',
+    sayHi: sayHi
+}
+var name='Wiliam';
+person1.sayHi();
+setTimeout(person2.sayHi,100);
+setTimeout(function(){
+    person2.sayHi();
+},200);
 ```
+结果为
+```
+Hello, Wiliam
+Hello, Wiliam
+Hello, Christina
+```
+
+1. 第一条输出很容易理解，setTimeout的回调函数中，this使用的是默认绑定，非严格模式下，执行的是全局对象
+
+2. 第二条输出是不是有点迷惑了？说好XXX.fun()的时候，fun中的this指向的是XXX呢，为什么这次却不是这样了！Why?
+
+其实这里我们可以这样理解: setTimeout(fn,delay){ fn(); },相当于是将person2.sayHi赋值给了一个变量，最后执行了变量，这个时候，sayHi中的this显然和person2就没有关系了。
+
+3. 第三条虽然也是在setTimeout的回调中，但是我们可以看出，这是执行的是person2.sayHi()使用的是隐式绑定，因此这是this指向的是person2，跟当前的作用域没有任何关系。
+
+
+### 显示绑定
+
+显式绑定比较好理解，就是通过call,apply,bind的方式，显式的指定this所指向的对象
+
+call,apply和bind的第一个参数，就是对应函数的this所指向的对象。call和apply的作用一样，只是传参方式不同。call和apply都会执行对应的函数，而bind方法不会。
+
+```javascript
+function sayHi(){
+    console.log('Hello,', this.name);
+}
+var person = {
+    name: 'Ye',
+    sayHi: sayHi
+}
+var name = 'Hong';
+var Hi = person.sayHi;
+Hi.call(person); 
+```
+输出的结果为: Hello, Ye. 因为使用硬绑定明确将this绑定在了person上
+
+### new 绑定
+
+* 在JS中，构造函数只是使用new操作符时被调用的普通函数，他们不属于某个类，也不会实例化一个类。
+* 包括内置对象函数（比如Number(..)）在内的所有函数都可以用new来调用，这种函数调用被称为构造函数调用。
+* 实际上并不存在所谓的“构造函数”，只有对于函数的“构造调用”。
+
+使用new来调用函数，会自动执行下面的操作：
+
+1. 创建（或者说构造）一个新对象。
+2. 这个新对象会被执行[[Prototype]]连接。
+3. 这个新对象会绑定到函数调用的this。
+4. 如果函数没有返回其他对象，那么new表达式中的函数调用会自动返回这个新对象。
+
+具体实现可以查看[new-操作符](/js_advanced.html#new-操作符)
+
+```javascript
+function sayHi(name){
+    this.name = name;
+	
+}
+var Hi = new sayHi('Ye');
+console.log('Hello,', Hi.name);
+```
+输出结果为 Hello, Ye, 原因是因为在var Hi = new sayHi('Ye');这一步，会将sayHi中的this绑定到Hi对象上。
+
+### 绑定优先级
+
+`new绑定 > 显式绑定 > 隐式绑定 > 默认绑定`
+
+### 绑定例外
+
+如果我们将null或者是undefined作为this的绑定对象传入call、apply或者是bind,这些值在调用时会被忽略，实际应用的是默认绑定规则。
+
+```javascript
+var foo = {
+    name: 'Selina'
+}
+var name = 'Chirs';
+function bar() {
+    console.log(this.name);
+}
+bar.call(null); //Chirs 
+```
+输出的结果是 Chirs，因为这时实际应用的是默认绑定规则。
+
+### 箭头函数
+
+ES6新增一种特殊函数类型：箭头函数，箭头函数无法使用上述四条规则，而是根据外层（函数或者全局）作用域（词法作用域）来决定this。
+
+```javascript
+function foo() {
+    // 返回一个箭头函数
+    return (a) => {
+        // this继承自foo()
+        console.log( this.a );
+    };
+}
+
+var obj1 = {
+    a: 2
+};
+
+var obj2 = {
+    a: 3
+}
+
+var bar = foo.call( obj1 );
+bar.call( obj2 ); // 2，不是3！
+```
+foo()内部创建的箭头函数会捕获调用时foo()的this。由于foo()的this绑定到obj1，bar(引用箭头函数)的this也会绑定到obj1，箭头函数的绑定无法被修改(new也不行)。
+
+### 总结
+
+1. 函数是否在new中调用(new绑定)，如果是，那么this绑定的是新创建的对象。
+2. 函数是否通过call,apply调用，或者使用了bind(即硬绑定)，如果是，那么this绑定的就是指定的对象。
+3. 函数是否在某个上下文对象中调用(隐式绑定)，如果是的话，this绑定的是那个上下文对象。一般是obj.foo()
+4. 如果以上都不是，那么使用默认绑定。如果在严格模式下，则绑定到undefined，否则绑定到全局对象。
+5. 如果把Null或者undefined作为this的绑定对象传入call、apply或者bind，这些值在调用时会被忽略，实际应用的是默认绑定规则。
+6. 如果是箭头函数，箭头函数的this继承的是外层代码块的this。
+
 
 ## 原型和原型链
 

@@ -770,3 +770,12 @@ doc.style.fontSize = fontSize
 
 方法还有 border-image、background-image、 postcss-write-svg等 [参考链接](https://mp.weixin.qq.com/s/BZtfCAYvtEHf-ZKq4eB62g)
 
+### 省略号的实现
+
+#### 单行省略号
+
+```css
+overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap;
+```
