@@ -1298,7 +1298,7 @@ ECStack = [
 ]
 ```
 
-## This
+<!-- ## This
 
 想必this指向问题是一个让很多同学都头疼的问题，当一些常用场景还是明确的。如下：
 
@@ -1567,10 +1567,10 @@ ref = Reference,
 
 ### 总结
 
-上述的this 判断规则是基于规范中的描述来判断的，可能有很多同学一遍看不懂，其实作者本人也是读了好几遍 [冴羽](https://github.com/mqyqingfeng/Blog/issues/7)和[汤姆大叔](https://www.cnblogs.com/TomXu/archive/2012/01/17/2310479.html)的this文章，并结合读规范才逐渐理解的。如果觉得难以理解可以看接下来的this的绑定规则来理解this指向
+上述的this 判断规则是基于规范中的描述来判断的，可能有很多同学一遍看不懂，其实作者本人也是读了好几遍 [冴羽](https://github.com/mqyqingfeng/Blog/issues/7)和[汤姆大叔](https://www.cnblogs.com/TomXu/archive/2012/01/17/2310479.html)的this文章，并结合读规范才逐渐理解的。如果觉得难以理解可以看接下来的this的绑定规则来理解this指向 -->
 
 
-## This的绑定规则
+## This
 
 this的绑定规则有以下5种
 1. 默认绑定
