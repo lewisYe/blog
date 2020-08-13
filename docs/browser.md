@@ -730,7 +730,7 @@ DOM 型 XSS 攻击，实际上就是网站前端 JavaScript 代码本身不够�
 
 对于不受信任的输入，都应该限定一个合理的长度。虽然无法完全防止XSS发生，但可以增加XSS攻击难度
 
-3. HTTP-only Cookie
+3. HttpOnly Cookie
 
 禁止 JavaScript 读取某些敏感 Cookie，攻击者完成 XSS 注入后也无法窃取此 Cookie。
 
