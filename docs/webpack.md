@@ -158,3 +158,11 @@ https://polyfill.io/v3/ 官网
 #### socpe hoisting
 
 打包之后的作用域
+
+## Writing a Loader
+
+[文档链接](https://webpack.js.org/contribute/writing-a-loader/)
+
+## Writing a Plugin
+
+[文档链接](https://webpack.js.org/contribute/writing-a-plugin/)
