@@ -163,6 +163,25 @@ https://polyfill.io/v3/ 官网
 
 [文档链接](https://webpack.js.org/contribute/writing-a-loader/)
 
+开发插件中一般会用到的工具库 `loader-utils` 和 `schema-utils`
+
+`loader-utils` 有很多工具类方法 [具体配置项链接](https://github.com/webpack/loader-utils)
+
+`schema-utils`用于参数校验
+
+可以直接return 单个结果  多个结果可以使用`this.callback(err, values...)`
+
+比如实现一个中文转unicode
+
 ## Writing a Plugin
+
+开发一个插件 必须是一个类，类中必须有一个apply 方法。 apply方法会有一个`complier`参数。
+
+然后通过监听hooks 进行操作 比如监听emit hook
+```javascript
+ complier.hooks.emit.tapAsync('MyPlugin',(compilation,callback)=>{
+     // 插件功能
+ })
+```
 
 [文档链接](https://webpack.js.org/contribute/writing-a-plugin/)
