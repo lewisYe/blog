@@ -2,38 +2,52 @@
 
 先申明本系列基于 React 版本 16.8.6
 
-## V16 版本生命周期
+## V16 Lifecycle
 
-### 生命周期图
+### Lifecycle Map
 
 ![](./images/reactlifecycle.png)
 
-### 用法建议 
+### Usage 
 
 ``` javascript
 class ExampleComponent extends React.Component {
     // 用于初始化 state
     constructor() {}
+
     // 用于替换 `componentWillReceiveProps` ，该函数会在初始化和 `update` 时被调用
     // 因为该函数是静态函数，所以取不到 `this` 
     // 如果需要对比 `prevProps` 需要单独在 `state` 中维护
     static getDerivedStateFromProps(nextProps, prevState) {}
+
     // 判断是否需要更新组件，多用于组件性能优化
     shouldComponentUpdate(nextProps, nextState) {}
+
+
     // 组件挂载后调用
     // 可以在该函数中进行请求或者订阅
     componentDidMount() {}
+
+
     // 用于获得最新的 DOM 数据
     getSnapshotBeforeUpdate() {}
+
+    
     // 组件即将销毁
     // 可以在此处移除订阅，定时器等等
     componentWillUnmount() {}
+
+
     // 组件销毁后调用
     componentDidUnMount() {}
+
+
     // 组件更新后调用
     componentDidUpdate() {}
     // 渲染组件函数
     render() {}
+
+
     // 以下函数不建议使用
     UNSAFE_componentWillMount() {}
     UNSAFE_componentWillUpdate(nextProps, nextState) {}
@@ -110,13 +124,13 @@ shouldComponentUpdate 在接受到新的props和新的state的 在渲染之前�
 
 在该生命周期中，可以进行性能的优化。也可以使用继承PureComponent组件，该组件已经对shouldComponentUpdate做了处理但是是浅比较。例如 state中有数组和对象时，你改变state的数组和对象它可能不会更新，不会深入的比较数组和对象。此时可以引入immutable.js进行结合使用。
 
-### getSnapshotBeforeUpdate()
+#### getSnapshotBeforeUpdate()
 
 `getSnapshotBeforeUpdate(prevProps, prevState)` 
 
 在该生命周期中 state 已经更新，可以进行一些dom 操作，在render更新之前
 
-### componentDidUpdate()
+#### componentDidUpdate()
 
 `componentDidUpdate(prevProps, prevState, snapshot)` 
 
@@ -124,7 +138,7 @@ componentDidUpdate()更新发生后立即调用。初始渲染不会调用此方
 该生命周期你也可以去操作dom，或者进行网络请求，当你发现props改变时。但是不能使用直接setState那样会导致无限循环，你可以再某种判断条件下使用。
 如果组件使用了 getSnapshotBeforeUpdate()生命周期，则它返回的值将作为第三个“快照”参数传递给componentDidUpdate()。否则此参数将是未定义的。
 
-###  UNSAFE_componentWillUpdate()
+####  UNSAFE_componentWillUpdate()
 
 `UNSAFE_componentWillUpdate(nextProps, nextState)` 
 
@@ -132,7 +146,7 @@ componentDidUpdate()更新发生后立即调用。初始渲染不会调用此方
 UNSAFE_componentWillUpdate()在收到新的props或state时，在渲染之前调用。使用此作为在更新发生之前执行准备的机会。初始渲染不会调用此方法
 不能再此使用this.setState
 
-### UNSAFE_componentWillReceiveProps()
+#### UNSAFE_componentWillReceiveProps()
 
 `UNSAFE_componentWillReceiveProps(nextProps)` 
 
@@ -224,10 +238,271 @@ fallback 属性接受任何在组件加载过程中你想展示的 React 元素�
 
 ### Context
 
+Context 提供了一个无需为每层组件手动添加 props，就能在组件树间进行数据传递的方法。
+
+#### Context使用场景
+
+当一个父组件需要给子组件传递一个props时，但是嵌套层数比较多时，比如4-5层，那去维护这个props就显得复杂。那么就可以使用context来共享这些数据。
+
+#### 如何使用
+
+API
+
+* React.createContext
+* Context.Provider
+* Class.contextType
+* Context.Consumer
+* Context.displayName
+
+**React.createContext**
+
+``` javascript
+const MyContext = React.createContext(defaultValue);
+```
+
+创建一个 Context 对象。当 React 渲染一个订阅了这个 Context 对象的组件，这个组件会从组件树中离自身最近的那个匹配的 Provider 中读取到当前的 context 值。
+
+只有当组件所处的树中没有匹配到 Provider 时，其 defaultValue 参数才会生效。
+
+注意：将 undefined 传递给 Provider 的 value 时，消费组件的 defaultValue 不会生效。
+
+**Context. Provider**
+
+```javascript
+<MyContext.Provider value = {/* 某个值 */ } >
+```
+
+Provider 接收一个 value 属性，传递给消费组件。一个 Provider 可以和多个消费组件有对应关系。多个 Provider 也可以嵌套使用，里层的会覆盖外层的数据。
+
+当 Provider 的 value 值发生变化时，它内部的所有消费组件都会重新渲染。Provider 及其内部 consumer 组件都不受制于 shouldComponentUpdate 函数，因此当 consumer 组件在其祖先组件退出更新的情况下也能更新。
+
+通过新旧值检测来确定变化，使用了与 Object.is 相同的算法。
+
+**Class.contextType**
+
+挂载在 class 上的 contextType 属性会被重赋值为一个由 React.createContext() 创建的 Context 对象。这能让你使用 this.context 来消费最近 Context 上的那个值。你可以在任何生命周期中访问到它，包括 render 函数中。
+
+``` javascript
+class MyClass extends React.Component {
+    static contextType = MyContext // 该写法需要安装babel插件转义
+    componentDidMount() {
+        let value = this.context;
+        /* 在组件挂载完成后，使用 MyContext 组件的值来执行一些有副作用的操作 */
+    }
+    componentDidUpdate() {
+        let value = this.context;
+        /* ... */
+    }
+    componentWillUnmount() {
+        let value = this.context;
+        /* ... */
+    }
+    render() {
+        let value = this.context;
+        /* 基于 MyContext 组件的值进行渲染 */
+    }
+}
+MyClass.contextType = MyContext;
+```
+
+**Context.Consumer**
+
+```javascript
+<MyContext.Consumer>
+  {value => /* 基于 context 值进行渲染*/}
+</MyContext.Consumer>
+```
+
+这需要函数作为子元素（function as a child）这种做法。这个函数接收当前的 context 值，返回一个 React 节点。传递给函数的 value 值等同于往上组件树离这个 context 最近的 Provider 提供的 value 值。如果没有对应的 Provider，value 参数等同于传递给 createContext() 的 defaultValue。
+
+**Context.displayName**
+
+context 对象接受一个名为 displayName 的 property，类型为字符串。React DevTools 使用该字符串来确定 context 要显示的内容。
+
+```javascript
+const MyContext = React.createContext(/* some value */);
+MyContext.displayName = 'MyDisplayName';
+
+<MyContext.Provider> // "MyDisplayName.Provider" 在 DevTools 中
+<MyContext.Consumer> // "MyDisplayName.Consumer" 在 DevTools 中
+```
+
+组合使用例子
+```javascript
+// Context 可以让我们无须明确地传遍每一个组件，就能将值深入传递进组件树。
+// 为当前的 theme 创建一个 context（“light”为默认值）。
+const ThemeContext = React.createContext('light');
+class App extends React.Component {
+  render() {
+    // 使用一个 Provider 来将当前的 theme 传递给以下的组件树。
+    // 无论多深，任何组件都能读取这个值。
+    // 在这个例子中，我们将 “dark” 作为当前的值传递下去。
+    return (
+      <ThemeContext.Provider value="dark">
+        <Toolbar />
+      </ThemeContext.Provider>
+    );
+  }
+}
+
+// 中间的组件再也不必指明往下传递 theme 了。
+function Toolbar() {
+  return (
+    <div>
+      <ThemedButton />
+    </div>
+  );
+}
+
+class ThemedButton extends React.Component {
+  // 指定 contextType 读取当前的 theme context。
+  // React 会往上找到最近的 theme Provider，然后使用它的值。
+  // 在这个例子中，当前的 theme 值为 “dark”。
+  static contextType = ThemeContext;
+  render() {
+    return <Button theme={this.context} />;
+  }
+}
+```
+
 ### ErrorBoundary
 
+错误边界是一种 React 组件，这种组件**可以捕获并打印发生在其子组件树任何位置的 JavaScript 错误，并且，它会渲染出备用 UI**，而不是渲染那些崩溃了的子组件树。错误边界在渲染期间、生命周期方法和整个组件树的构造函数中捕获错误。
 
+注意事项:
 
+错误边界无法捕获以下场景中产生的错误：
+
+* 事件处理
+* 异步代码（例如 setTimeout 或 requestAnimationFrame 回调函数）
+* 服务端渲染
+* 它自身抛出来的错误（并非它的子组件）
+
+#### 形成条件
+
+如果一个 class 组件中定义了 `static getDerivedStateFromError()` 或 `componentDidCatch()` 这两个生命周期方法中的任意一个（或两个）时，那么它就变成一个错误边界。当抛出错误后，请使用 `static getDerivedStateFromError()` 渲染备用 UI ，使用 `componentDidCatch()` 打印错误信息。
+
+```javascript
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // 更新 state 使下一次渲染能够显示降级后的 UI
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // 你同样可以将错误日志上报给服务器
+    logErrorToMyService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // 你可以自定义降级后的 UI 并渲染
+      return <h1>Something went wrong.</h1>;
+    }
+
+    return this.props.children; 
+  }
+}
+```
+### Fragments
+
+React 中的一个常见模式是一个组件返回多个元素。Fragments 允许你将子列表分组，而无需向 DOM 添加额外节点。
+
+用法：
+```javascript
+render() {
+  return (
+    <React.Fragment>
+      <ChildA />
+      <ChildB />
+      <ChildC />
+    </React.Fragment>
+  );
+}
+
+//或者短语法
+render() {
+  return (
+    <>
+      <ChildA />
+      <ChildB />
+      <ChildC />
+    </>
+  );
+}
+
+```
+
+使用显式 `<React.Fragment> `语法声明的片段可能具有 key ;短语法不支持key.
+
+### React.forwardRef
+
+Ref forwarding 是一项将 ref 自动地通过组件传递到其一子组件的技巧。
+
+为什么会有这个功能呢 因为refs 不会被props透传下去。这是因为 ref 不是 prop 属性。就像 key 一样，其被 React 进行了特殊处理。
+
+用法：React.forwardRef 接受一个渲染函数，其接收 props 和 ref 参数并返回一个 React 节点。
+
+```javascript
+function logProps(Component) {
+  class LogProps extends React.Component {
+    componentDidUpdate(prevProps) {
+      console.log('old props:', prevProps);
+      console.log('new props:', this.props);
+    }
+    render() {
+      const {forwardedRef, ...rest} = this.props;
+      // 将自定义的 prop 属性 “forwardedRef” 定义为 ref
+      return <Component ref={forwardedRef} {...rest} />;
+    }
+  }
+
+  // 注意 React.forwardRef 回调的第二个参数 “ref”。
+  // 我们可以将其作为常规 prop 属性传递给 LogProps，例如 “forwardedRef”
+  // 然后它就可以被挂载到被 LogProps 包裹的子组件上。
+  return React.forwardRef((props, ref) => {
+    return <LogProps {...props} forwardedRef={ref} />;
+  });
+}
+```
+
+该方法常用于高阶函数。
+
+### HOC
+
+高阶组件（HOC）是React中一个复用组件逻辑的高级技术。简单的说，就是获取一个组件返回一个新的组件。常见的如Redux的connect方法等。 它是一个纯函数，没有副作用
+
+用法
+```javascript
+function logProps(WrappedComponent) {
+  return class extends React.Component {
+    componentDidUpdate(prevProps) {
+      console.log('Current props: ', this.props);
+      console.log('Previous props: ', prevProps);
+    }
+    render() {
+      return <WrappedComponent {...this.props} />;
+    }
+  }
+}
+```
+注意点:
+* HOC 应该透传与自身无关的 props
+* HOC创建的容器在调试的时候会显示一样的名字 可以用displayname 来处理
+* 不能在render中使用HOC
+* 静态方法必须复制 higherOrderComponent.staticMethod = WrappedComponent.staticMethod;
+* Refs 不会被传递 可以只用React.forwardRef解决
+
+### 性能优化
+
+## HOOKS
+
+## 事件机制
 
 
 ## React.createElement
