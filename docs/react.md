@@ -440,6 +440,7 @@ render() {
 
 使用显式 `<React.Fragment> `语法声明的片段可能具有 key ;短语法不支持key.
 
+
 ### React.forwardRef
 
 Ref forwarding 是一项将 ref 自动地通过组件传递到其一子组件的技巧。
@@ -473,7 +474,7 @@ function logProps(Component) {
 
 该方法常用于高阶函数。
 
-### HOC
+### Higher-Order Components
 
 高阶组件（HOC）是React中一个复用组件逻辑的高级技术。简单的说，就是获取一个组件返回一个新的组件。常见的如Redux的connect方法等。 它是一个纯函数，没有副作用
 
@@ -498,7 +499,188 @@ function logProps(WrappedComponent) {
 * 静态方法必须复制 higherOrderComponent.staticMethod = WrappedComponent.staticMethod;
 * Refs 不会被传递 可以只用React.forwardRef解决
 
-### 性能优化
+### React.memo
+
+React.memo 为高阶组件。它与 React.PureComponent 非常相似，但只适用于函数组件，而不适用 class 组件。
+
+如果你的函数组件在给定相同 props 的情况下渲染相同的结果，那么你可以通过将其包装在 React.memo 中调用，以此通过记忆组件渲染结果的方式来提高组件的性能表现。这意味着在这种情况下，React 将跳过渲染组件的操作并直接复用最近一次渲染的结果。
+
+React.memo 仅检查 props 变更。如果函数组件被 React.memo 包裹，且其实现中拥有 useState 或 useContext 的 Hook，当 context 发生变化时，它仍会重新渲染。
+
+默认情况下其只会对复杂对象做浅层对比，如果你想要控制对比过程，那么请将自定义的比较函数通过第二个参数传入来实现。
+
+用法
+```javascript
+function MyComponent(props) {
+  /* 使用 props 渲染 */
+}
+function areEqual(prevProps, nextProps) {
+  /*
+  如果把 nextProps 传入 render 方法的返回结果与
+  将 prevProps 传入 render 方法的返回结果一致则返回 true，
+  否则返回 false
+  */
+}
+export default React.memo(MyComponent, areEqual);
+```
+
+## 性能优化
+
+### 性能和渲染（Render）正相关
+
+React 基于虚拟 DOM 和高效 Diff 算法的完美配合，实现了对 DOM 最小粒度的更新。但在个别复杂业务场景下，性能问题依然会困扰我们。此时需要采取一些措施来提升运行性能，其很重要的一个方向，就是避免不必要的渲染（Render）。
+
+### 渲染（Render）时影响性能的点
+
+React 处理 render 的基本思维模式是每次一有变动就会去重新渲染整个应用。Virtual DOM 厉害的地方并不是说它比直接操作 DOM 快，而是说不管数据怎么变，都会尽量以最小的代价去更新 DOM。React 将 render 函数返回的虚拟 DOM 树与老的进行比较，从而确定 DOM 要不要更新、怎么更新。当 DOM 树很大时，遍历两棵树进行各种比对还是相当耗性能的，特别是在顶层 setState 一个微小的修改，默认会去遍历整棵树。尽管 React 使用高度优化的 Diff 算法 ，但是这个过程仍然会损耗性能。
+
+### 渲染（Render）何时会被触发
+
+触发render的条件有：
+
+* 组件挂载
+
+    React 组件构建并将 DOM 元素插入页面的过程称为挂载。当组件首次渲染的时候会调用 render，这个过程不可避免。
+
+* setState 方法的调用
+
+    通常情况下，执行 setState 会触发 render。但当 setState 传入 null 的时候，并不会触发 render 。
+
+* 父组件重新渲染
+
+    只要父组件重新渲染了，即使传入子组件的 props 未发生变化，那么子组件也会重新渲染，进而触发 render。
+
+### 如何优化
+
+根本思路减少不必要的render
+
+#### shouldComponentUpdate 和 PureComponent
+在React类组件中，可以利用`shouldComponentUpdate` 或者 `PureComponent` 来减少因父组件更新而触发子组件的render。
+
+`shouldComponentUpdate` 生命周期，可以通过返回true代表需要重新渲染，返回false代表不渲染
+
+`PureComponent` 通过对props和state的**浅比较**结果来实现`shouldComponentUpdate`,但是当对象包含复杂的数据结构时，可能就不灵啦，对象深层的数据改变但是没有触发render。
+
+在React中`PureComponent`源码如下
+```javascript
+if (this._compositeType === CompositeTypes.PureClass) {
+  shouldUpdate = !shallowEqual(prevProps, nextProps) || ! shallowEqual(inst.state, nextState);
+}
+```
+`shallowEqual`的实现代码
+```javascript
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+/**
+ * is 方法来判断两个值是否是相等的值，为何这么写可以移步 MDN 的文档
+ * https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/is
+ */
+function is(x: mixed, y: mixed): boolean {
+  if (x === y) {
+    return x !== 0 || y !== 0 || 1 / x === 1 / y;
+  } else {
+    return x !== x && y !== y;
+  }
+}
+
+function shallowEqual(objA: mixed, objB: mixed): boolean {
+  // 首先对基本类型进行比较
+  if (is(objA, objB)) {
+    return true;
+  }
+
+  if (typeof objA !== 'object' || objA === null ||
+      typeof objB !== 'object' || objB === null) {
+    return false;
+  }
+
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+
+  // 长度不相等直接返回false
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+
+  // key相等的情况下，再去循环比较
+  for (let i = 0; i < keysA.length; i++) {
+    if (
+      !hasOwnProperty.call(objB, keysA[i]) ||
+      !is(objA[keysA[i]], objB[keysA[i]])
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+```
+
+#### 高阶组件
+
+在函数组件中，并没有`shouldComponnetUpdate`这个生命周期，但是可以利用高阶组件来实现一个类型的功能。
+
+```javascript
+const shouldComponentUpdate = areEqual => BaseComponent => {
+    class ShouldComponentUpdate extends React.Component{
+        shouldComponentUpdate(nextProps){
+            return areEqual(this.props,nextProps)
+        }
+        render(){
+            return <BaseComponent {...this.props}/>
+        }
+    }
+    ShouldComponentUpdate.displayName = `Pure(${BaseComponent.displayName})`
+    return ShouldComponentUpdate
+}
+
+const Pure = BaseComponent => {
+  const hoc = shouldComponentUpdate(
+  	(props, nextProps) => !shallowEqual(props, nextProps)
+  )
+
+  return hoc(BaseComponent);
+}
+```
+
+使用`Pure`高阶组件时，只需要对我们子组件进行装饰即可
+
+```javascript
+import React from'react';
+
+const Child = (props) =><div>{props.name}</div>;
+
+export default Pure(Child);
+```
+
+#### React.memo
+
+React.memo 为高阶组件。它与 React.PureComponent 非常相似，但只适用于函数组件，而不适用 class 组件。
+
+默认情况下其只会对复杂对象做浅层对比，如果你想要控制对比过程，那么请将自定义的比较函数通过第二个参数传入来实现。
+
+```javascript
+function MyComponent(props) {
+  /* 使用 props 渲染 */
+}
+function areEqual(prevProps, nextProps) {
+  /*
+  如果把 nextProps 传入 render 方法的返回结果与
+  将 prevProps 传入 render 方法的返回结果一致则返回 true，
+  否则返回 false
+  */
+}
+export default React.memo(MyComponent, areEqual);
+```
+
+**注意**
+
+与 class 组件中 shouldComponentUpdate() 方法不同的是，如果 props 相等，areEqual 会返回 true；如果 props 不相等，则返回 false。这与 shouldComponentUpdate 方法的返回值相反。
+
+#### 合理拆分组件
+
+试想当整个页面只有一个组件时，无论哪处改动都会触发render，那么对于组件进行拆分，颗粒度更细，render就可以得到更细的控制，性能也有一定的提升
+
 
 ## HOOKS
 
@@ -511,12 +693,7 @@ function logProps(WrappedComponent) {
 例子说明：
 
 ``` javascript
-< div className = "box"
-style = {
-    {
-        pading: 16
-    }
-} > 1 < /div>
+<div className = "box" style = {{pading: 16}}>1</div>
 // 转义之后
 React.createElement("div", {
     className: "box",
@@ -1860,7 +2037,7 @@ addRootToSchedule把 root 加入到调度队列，但是要注意一点，不会
 
 ## Virtual Dom
 
-## Diff算法
+## Diffing Algorithm
 
 ## Redux
 
