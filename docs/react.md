@@ -684,6 +684,181 @@ export default React.memo(MyComponent, areEqual);
 
 ## HOOKS
 
+Hook 是一些可以让你在函数组件里“钩入” React state 及生命周期等特性的函数。Hook 不能在 class 组件中使用 —— 这使得你不使用 class 也能使用 React。
+
+### Hook 的产生
+
+Hook的产生为了解决什么问题 或者 带来了什么便利呢？
+
+#### Hook 使你在无需修改组件结构的情况下复用状态逻辑
+
+在React 中 复用状态逻辑很难，常用的方法有 高阶组件 和 render props 。但是这些方法需要你重新组织你的组件结构，使得代码难以理解。
+
+#### Hook 将组件中相互关联的部分拆分成更小的函数（比如设置订阅或请求数据）
+
+组件常常在 componentDidMount 和 componentDidUpdate 中获取数据。但是，同一个 componentDidMount 中可能也包含很多其它的逻辑，如设置事件监听，而之后需在 componentWillUnmount 中清除。相互关联且需要对照修改的代码被进行了拆分，而完全不相关的代码却在同一个方法中组合在一起。如此很容易产生 bug，并且导致逻辑不一致。
+
+#### Hook 使你在非 class 的情况下可以使用更多的 React 特性
+
+在使用class 你需要理解js中的this机制
+
+### State Hook
+
+`useState`是React内置的一个Hook，以它为例实现一个计数器:
+```javascript
+import React, { useState } from 'react';
+
+function Example() {
+  // 声明一个叫 "count" 的 state 变量
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+```
+
+`useState`方法定义了一个 state 变量，变量名叫做count。
+
+`useState`方法有一个唯一的参数，代表是变量的初始化，可以是数字、字符、对象等类型
+
+`useState`方法的返回值为 当前 state 以及更新 state 的函数
+
+**在一个函数组件中也可以声明多个state变量**
+
+```javascript
+function ExampleWithManyStates() {
+  // 声明多个 state 变量！
+  const [age, setAge] = useState(42);
+  const [fruit, setFruit] = useState('banana');
+  const [todos, setTodos] = useState([{ text: 'Learn Hooks' }]);
+  // ...
+}
+```
+
+### Effect Hook
+
+Effect Hook 可以让你在函数组件中执行副作用操作。数据获取，设置订阅以及手动更改 React 组件中的 DOM 都属于副作用。
+
+我们为计数器增加了一个小功能：将 document 的 title 设置为包含了点击次数的消息。使用到useEffect：
+```javascript
+import React, { useState, useEffect } from 'react';
+
+function Example() {
+  const [count, setCount] = useState(0);
+
+  // 类似于 componentDidMount and componentDidUpdate:
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+```
+
+通过使用这个 useEffect Hook，你可以告诉 React 组件需要在渲染后执行某些操作。React 会保存你传递的函数（我们将它称之为 “effect”），并且在执行 DOM 更新之后调用它。
+
+
+在 React 组件中有两种常见副作用操作：需要清除的和不需要清除的。effect Hook 使用同一个 API 来满足这两种情况。通过在函数中 返回一个函数来处理。
+```javascript
+useEffect(() => {
+    // 使用
+    return () => {
+      // 清除
+    };
+  });
+```
+
+**使用多个 Effect 实现关注点分离**
+
+Hook 允许我们按照代码的用途分离他们， 而不是像生命周期函数那样。React 将按照 effect 声明的顺序依次调用组件中的每一个 effect。
+
+```javascript
+function FriendStatusWithCounter(props) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
+
+  const [isOnline, setIsOnline] = useState(null);
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+  // ...
+}
+```
+**为什么每次更新的时候都要运行 Effect**
+
+当组件已经显示在屏幕上时，prop 发生变化时会发生什么？ 我们的组件将继续展示原来状态 这是一个 bug。在class写法中需要在componentDidUpdate生命周期中处理。但是effect 并不需要特定的代码来处理更新逻辑，因为 useEffect 默认就会处理。它会在调用一个新的 effect 之前对前一个 effect 进行清理
+
+**通过跳过 Effect 进行性能优化**
+
+在某些情况下，每次渲染后都执行清理或者执行 effect 可能会导致性能问题。在 class 组件中，我们可以通过在 componentDidUpdate 中添加对 prevProps 或 prevState 的比较逻辑解决。
+
+所以它被内置到了 useEffect 的 Hook API 中。如果某些特定值在两次重渲染之间没有发生变化，你可以通知 React 跳过对 effect 的调用，只要传递数组作为 useEffect 的第二个可选参数即可：
+
+```javascript
+useEffect(() => {
+  document.title = `You clicked ${count} times`;
+}, [count]); // 仅在 count 更改时更新
+```
+
+如果你要使用此优化方式，请确保数组中包含了所有外部作用域中会随时间变化并且在 effect 中使用的变量，否则你的代码会引用到先前渲染中的旧变量
+
+如果想执行只运行一次的 effect（仅在组件挂载和卸载时执行），可以传递一个空数组（[]）作为第二个参数。
+
+### Hook Rules
+
+Hook 本质就是 JavaScript 函数，但是在使用它时需要遵循两条规则
+
+* 只在最顶层使用 Hook
+* 只在 React 函数中调用 Hook
+
+#### 只在最顶层使用 Hook
+
+**不要在循环，条件或嵌套函数中调用 Hook**， 确保总是在你的 React 函数的最顶层调用他们
+
+遵守这条规则，你就能确保 Hook 在每一次渲染中都按照同样的顺序被调用。这让 React 能够在多次的 useState 和 useEffect 调用之间保持 hook 状态的正确
+
+如果我们想要有条件地执行一个 effect，可以将判断放到 Hook 的内部
+
+#### 只在 React 函数中调用 Hook
+
+**不要在普通的 JavaScript 函数中调用 Hook**
+
+你可以：
+
+* ✅ 在 React 的函数组件中调用 Hook
+* ✅ 在自定义 Hook 中调用其他 Hook 
+
+### 自定义 Hook
+
+自定义 Hook 是一个函数，其名称以 “use” 开头，函数内部可以调用其他的 Hook。
+
+自定义 Hook 是一种重用状态逻辑的机制(例如设置为订阅并存储当前值)，所以每次使用自定义 Hook 时，其中的所有 state 和副作用都是完全隔离的。在两个组件中使用相同的 Hook 不会共享 state。
+
+自定义 Hook 解决了以前在 React 组件中无法灵活共享逻辑的问题
+
+
 ## 事件机制
 
 
