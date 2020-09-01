@@ -858,6 +858,153 @@ Hook 本质就是 JavaScript 函数，但是在使用它时需要遵循两条规
 
 自定义 Hook 解决了以前在 React 组件中无法灵活共享逻辑的问题
 
+### API概览
+
+* 基础Hook
+    * useState
+    * useEffect
+    * useContext
+* 额外的Hook
+    * useReducer
+    * useCallback
+    * useMemo
+    * useRef
+    * useImperativeHandle
+    * useLayoutEffect
+    * useDebugValue
+
+#### useState
+
+```javascript
+const [state,setState] = useState(initialState)
+```
+返回一个state，以及更新state的函数
+
+在初始渲染期间，返回的状态 (state) 与传入的第一个参数 (initialState) 值相同。
+
+setState 函数用于更新 state。它接收一个新的 state 值并将组件的一次重新渲染加入队列。`setState(newState)`
+
+在后续的重新渲染中，useState 返回的第一个值将始终是更新后最新的 state。
+
+**函数式更新**
+
+如果新的 state 需要通过使用先前的 state 计算得出，那么可以将函数传递给 setState。该函数将接收先前的 state，并返回一个更新后的值。
+
+```javascript
+setState(pervState => pervState + 1)
+```
+
+如果你的更新函数返回值与当前 state 完全相同，则随后的重渲染会被完全跳过。
+
+与 class 组件中的 setState 方法不同，useState 不会自动合并更新对象。你可以用函数式的 setState 结合展开运算符来达到合并更新对象的效果。
+```javascript
+setState(prevState => {
+  // 也可以使用 Object.assign
+  return {...prevState, ...updatedValues};
+});
+```
+
+**惰性初始state**
+
+如果初始 state 需要通过复杂计算获得，则可以传入一个函数，在函数中计算并返回初始的 state，此函数只在初始渲染时被调用
+```javascript
+const [state, setState] = useState(() => {
+  const initialState = someExpensiveComputation(props);
+  return initialState;
+});
+```
+
+#### useEffect
+
+`useEffect(didUpdate)`
+
+该Hook接收一个包含命令式、且可能有副作用代码的函数
+
+使用 useEffect 完成副作用操作。赋值给 useEffect 的函数会在组件渲染到屏幕之后执行。
+
+**清除effect**
+
+通常，组件卸载时需要清除 effect 创建的诸如订阅或计时器 ID 等资源。要实现这一点，useEffect 函数需返回一个清除函数。以下就是一个创建订阅的例子：
+
+```javascript
+useEffect(()=>{
+  const subscription = props.source.subscribe()
+  return ()=>{
+    //清除订阅
+    subscription.unsubscribe()
+  }
+})
+```
+
+为防止内存泄漏，清除函数会在组件卸载前执行。另外，如果组件多次渲染（通常如此），则在执行下一个 effect 之前，上一个 effect 就已被清除。
+
+**effect的条件执行**
+
+默认情况下，effect 会在每轮组件渲染完成后执行。这样的话，一旦 effect 的依赖发生变化，它就会被重新创建。但某些场景并不需要每次组件更新时，被执行。
+
+要实现这一点，可以给 useEffect 传递第二个参数，它是 effect 所依赖的值数组。
+
+```javascript
+useEffect(
+  ()=>{
+    const subscription = props.source.subscribe()
+    return ()=>{
+      subscription.unsubscribe()
+    }
+  },
+  [props.source]
+)
+```
+此时，只有当 props.source 改变后才会重新创建订阅。
+
+注意：
+
+* 如果你要使用此优化方式，请确保数组中包含了所有外部作用域中会发生变化且在 effect 中使用的变量，否则你的代码会引用到先前渲染中的旧变量。
+
+* 如果想执行只运行一次的 effect（仅在组件挂载和卸载时执行），可以传递一个空数组（[]）作为第二个参数。
+
+#### useContext
+
+`const value = useContext(MyContext)`
+
+接收一个 context 对象（React.createContext 的返回值）并返回该 context 的当前值。当前的 context 值由上层组件中距离当前组件最近的 <MyContext.Provider> 的 value prop 决定。
+
+当组件上层最近的 <MyContext.Provider> 更新时，该 Hook 会触发重渲染，并使用最新传递给 MyContext provider 的 context value 值。即使祖先使用 React.memo 或 shouldComponentUpdate，也会在组件本身使用 useContext 时重新渲染。
+
+示例：
+```javascript
+const themes = {
+  foreground:"#000000",
+  background:"#eeeeee"
+}
+
+const ThemeContext = React.createContext(themes);
+
+function App(){
+  return(
+    <ThemeContext.Provider value={themes}>
+      <Toolbar/>
+    </ThemeContext.Provider>
+  )
+}
+
+function Toolbar(props){
+  return(
+    <div>
+      <ThemedButton/>
+    </div>
+  )
+}
+
+function ThemedButton(){
+  const theme = useContext(ThemeContext)
+  return(
+    <button style={{background:theme.background,color:theme.foreground}}>
+    I am styled by theme context!
+    </button>
+  )
+}
+```
 
 ## 事件机制
 
