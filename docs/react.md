@@ -1110,6 +1110,60 @@ function TextInputWithFocusButton() {
 
 ## 事件机制
 
+### 事件注册
+
+// ReactFiberCompleteWork.old.js
+
+finalizeInitialChildren  //  ReactDOMHostConfig.js
+
+setInitialProperties // ReactDOMComponent.js
+
+setInitialDOMProperties // ReactDOMComponent.js
+
+ensureListeningTo // ReactDOMComponent.js
+
+listenToReactEvent // DOMPluginEventSystem.js
+
+getEventListenerMap // 函数 ReactDOMComponentTree.js
+
+listenToNativeEvent // DOMPluginEventSystem.js
+
+addTrappedEventListener //  DOMPluginEventSystem.js
+
+createEventListenerWrapperWithPriority // ReactDOMEventListener.js 注入了dispatchEvent
+
+addEventCaptureListenerWithPassiveFlag、addEventCaptureListener、addEventBubbleListenerWithPassiveFlag 、addEventBubbleListener // EventListener.js
+
+target.addEventListener(eventType, listener, false);
+
+
+dispatchEvent // ReactDOMEventListener.js
+
+dispatchEventForPluginEventSystem // DOMPluginEventSystem.js
+
+batchedEventUpdates // ReactDOMUpdateBatching.js
+
+dispatchEventsForPlugins // DOMPluginEventSystem.js
+
+extractEvents // DOMPluginEventSystem.js
+
+accumulateTwoPhaseListeners
+
+processDispatchQueue
+
+executeDispatch 
+
+invokeGuardedCallbackAndCatchFirstError
+
+
+### 事件存储
+
+### 事件分发
+
+### 事件执行
+
+
+
 
 ## React.createElement
 
