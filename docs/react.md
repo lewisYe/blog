@@ -1110,8 +1110,13 @@ function TextInputWithFocusButton() {
 
 ## 事件机制
 
-### 事件注册
+本文是基于V16.13.1进行的分析。
 
+### 事件注册与存储
+
+注册与存储的大体函数调用顺序如下：
+
+```javascript
 // ReactFiberCompleteWork.old.js
 
 finalizeInitialChildren  //  ReactDOMHostConfig.js
@@ -1124,7 +1129,7 @@ ensureListeningTo // ReactDOMComponent.js
 
 listenToReactEvent // DOMPluginEventSystem.js
 
-getEventListenerMap // 函数 ReactDOMComponentTree.js
+getEventListenerMap // ReactDOMComponentTree.js
 
 listenToNativeEvent // DOMPluginEventSystem.js
 
@@ -1134,8 +1139,274 @@ createEventListenerWrapperWithPriority // ReactDOMEventListener.js 注入了disp
 
 addEventCaptureListenerWithPassiveFlag、addEventCaptureListener、addEventBubbleListenerWithPassiveFlag 、addEventBubbleListener // EventListener.js
 
-target.addEventListener(eventType, listener, false);
+target.addEventListener(eventType, listener, false); // EventListener.js
 
+```
+**setInitialDOMProperties** 方法
+```javascript
+function setInitialDOMProperties(
+  tag: string,
+  domElement: Element,
+  rootContainerElement: Element | Document,
+  nextProps: Object,
+  isCustomComponentTag: boolean,
+): void {
+  for (const propKey in nextProps) {
+    if (!nextProps.hasOwnProperty(propKey)) {
+      continue;
+    }
+    const nextProp = nextProps[propKey];
+    if (propKey === STYLE) {
+     // ...
+    } else if (registrationNameDependencies.hasOwnProperty(propKey)) {
+      if (nextProp != null) {
+        if (!enableEagerRootListeners) {
+          ensureListeningTo(rootContainerElement, propKey, domElement);
+        }
+      }
+    }
+  }
+}
+```
+
+当propKey在`registrationNameDependencies`列表中时，会调用`ensureListeningTo`方法。这里的`registrationNameDependencies`存储了React事件类型与浏览器原生事件类型映射的一个map对象。
+![](./images/registrationNameDependencies.png)
+
+其中`onChange`的dependences
+
+![](./images/registrationNameDependencies.png)
+
+**listenToReactEvent** 方法
+
+```javascript
+export function listenToReactEvent(
+  reactEvent: string, // 例如onChange
+  rootContainerElement: Element,
+  targetElement: Element | null,
+): void {
+  // dependences这边可以理解为事件依赖，就是说注册某个事件，react会强制依赖其他事件。 如上图的onChange
+  const dependencies = registrationNameDependencies[reactEvent];
+  const dependenciesLength = dependencies.length;
+  const isPolyfillEventPlugin = dependenciesLength !== 1;
+
+  if (isPolyfillEventPlugin) {
+    // 首次返回一个空的map对象
+    const listenerMap = getEventListenerMap(rootContainerElement);
+
+    // listenerMap不包含当前事件属性，就进入判断(has是判断属性是否存在，即使内容为null，也是返回true)
+    // 也就是同一种事件只会注册一遍，onChange、onClick等等
+    if (!listenerMap.has(reactEvent)) {
+      // 给对象添加一个reactEvent属性，值为null
+      listenerMap.set(reactEvent, null); // 这个listenerMap会变成{onChange: null}
+      for (let i = 0; i < dependenciesLength; i++) {
+        // 循环遍历dependencies
+        listenToNativeEvent(
+          dependencies[i], // dependence
+          false,
+          rootContainerElement,
+          targetElement,
+        );
+      }
+    }
+  } else {
+    const isCapturePhaseListener =
+      reactEvent.substr(-7) === 'Capture' &&
+      reactEvent.substr(-14, 7) !== 'Pointer';
+    listenToNativeEvent(
+      dependencies[0],
+      isCapturePhaseListener,
+      rootContainerElement,
+      targetElement,
+    );
+  }
+}
+```
+
+**getEventListenerMap**
+```javascript
+const randomKey = Math.random().toString(36).slice(2);
+const internalEventHandlersKey = '__reactEvents$' + randomKey;
+
+export function getEventListenerMap(node: EventTarget): ElementListenerMap {
+  let elementListenerMap = (node: any)[internalEventHandlersKey];
+  if (elementListenerMap === undefined) {
+    elementListenerMap = (node: any)[internalEventHandlersKey] = new Map();
+  }
+  return elementListenerMap;
+}
+```
+🔥**listenToNativeEvent** 存储
+
+```javascript
+export function listenToNativeEvent(
+  domEventName: DOMEventName,
+  isCapturePhaseListener: boolean,
+  rootContainerElement: EventTarget,
+  targetElement: Element | null,
+  isPassiveListener?: boolean,
+  listenerPriority?: EventPriority,
+  eventSystemFlags?: EventSystemFlags = 0,
+): void {
+  let target = rootContainerElement; // div#root
+  // ...
+
+  // 这边去获取上面提到的那个map对象
+  const listenerMap = getEventListenerMap(target);
+
+  // export function getListenerMapKey(
+  //   domEventName: DOMEventName,
+  //   capture: boolean,
+  // ): string {
+  //   return `${domEventName}__${capture ? 'capture' : 'bubble'}`; 
+  // }
+
+  // listenerMapKey onChange_bubble
+  const listenerMapKey = getListenerMapKey(
+    domEventName,
+    isCapturePhaseListener, // false
+  );
+
+ // 判断listenerMap中是否存在listenerMapKey
+  const listenerEntry = ((listenerMap.get(
+    listenerMapKey,
+  ): any): ElementListenerMapEntry | void);
+
+  // 判断是否需要更新
+  const shouldUpgrade = shouldUpgradeListener(listenerEntry, isPassiveListener);
+
+   // 如果不存在当前事件，或者需要更新，进入判断
+  if (listenerEntry === undefined || shouldUpgrade) {
+    if (shouldUpgrade) {
+      removeEventListener(
+        target,
+        domEventName,
+        ((listenerEntry: any): ElementListenerMapEntry).listener,
+        isCapturePhaseListener,
+      );
+    }
+    if (isCapturePhaseListener) {
+      eventSystemFlags |= IS_CAPTURE_PHASE;
+    }
+
+    // addTrappedEventListener内部就是做了：在target上进行事件监听，并返回dispatchEvent函数
+    const listener = addTrappedEventListener(
+      target,
+      domEventName,
+      eventSystemFlags,
+      isCapturePhaseListener,
+      false,
+      isPassiveListener,
+      listenerPriority,
+    );
+
+    // 最终这个listenerMap会变成{onChange: null, change_bubble: {passive: isPassiveListener, listener}}
+    listenerMap.set(listenerMapKey, {passive: isPassiveListener, listener});
+  }
+}
+```
+listenerMap的结构 
+![](./images/listenerMap.png)
+
+🔥 **addTrappedEventListener** 事件注册
+
+```javascript
+function addTrappedEventListener(
+  targetContainer: EventTarget,
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  isCapturePhaseListener: boolean,
+  isDeferredListenerForLegacyFBSupport?: boolean,
+  isPassiveListener?: boolean,
+  listenerPriority?: EventPriority,
+): any => void {
+
+  // 这段代码尤为重要，通过传入的domEventName获取当前事件的优先级，返回的是经过包装过的三类dispatchEvent事件
+  // 分别为dispatchDiscreteEvent =>0 | dispatchUserBlockingUpdate =>1 | dispatchEvent=>2
+
+  // export function createEventListenerWrapperWithPriority(
+  //   targetContainer: EventTarget,
+  //   domEventName: DOMEventName,
+  //   eventSystemFlags: EventSystemFlags,
+  //   priority?: EventPriority,
+  // ): Function {
+  //   const eventPriority =
+  //     priority === undefined
+  //       ? getEventPriorityForPluginSystem(domEventName)
+  //       : priority;
+  //   let listenerWrapper;
+  //   switch (eventPriority) {
+  //     case DiscreteEvent:
+  //       listenerWrapper = dispatchDiscreteEvent;
+  //       break;
+  //     case UserBlockingEvent:
+  //       listenerWrapper = dispatchUserBlockingUpdate;
+  //       break;
+  //     case ContinuousEvent:
+  //     default:
+  //       listenerWrapper = dispatchEvent;
+  //       break;
+  //   }
+  //   return listenerWrapper.bind(
+  //     null,
+  //     domEventName,
+  //     eventSystemFlags,
+  //     targetContainer,
+  //   );
+  // }
+
+  let listener = createEventListenerWrapperWithPriority(
+    targetContainer,
+    domEventName,
+    eventSystemFlags,
+    listenerPriority,
+  );
+  
+  // ...
+
+
+  if (isCapturePhaseListener) {
+    if (isPassiveListener !== undefined) {
+      unsubscribeListener = addEventCaptureListenerWithPassiveFlag(
+        targetContainer,
+        domEventName,
+        listener,
+        isPassiveListener,
+      );
+    } else {
+      unsubscribeListener = addEventCaptureListener(
+        targetContainer,
+        domEventName,
+        listener,
+      );
+    }
+  } else {
+    if (isPassiveListener !== undefined) {
+      unsubscribeListener = addEventBubbleListenerWithPassiveFlag(
+        targetContainer,
+        domEventName,
+        listener,
+        isPassiveListener,
+      );
+    } else {
+      unsubscribeListener = addEventBubbleListener(
+        targetContainer,
+        domEventName,
+        listener,
+      );
+    }
+  }
+  return unsubscribeListener;
+}
+```
+
+`addEventCaptureListenerWithPassiveFlag、addEventCaptureListener、addEventBubbleListenerWithPassiveFlag 、addEventBubbleListener` 这四个方法本质都是调用的是`target.addEventListener(eventType, listener, true);`稍微有点差别
+
+到此 注册和存储已经完成啦
+
+总结：事件注册的流程就是遍历props中的event，然后将事件和其依赖事件都挂载到target上，当中所有的事件的回调函数走的都是dispatchEvent，并且相同类型的事件只会挂在一次。还有如果我绑定一个onChange事件，那么react不仅仅只绑定一个onChange事件到target上，还会绑定许多依赖事件上去，如focus,blur,input等等，组件中声明的事件并不会保存起来，而仅仅是将事件类型以及dispatchEvent函数绑定到target元素上，实现事件委派。
+
+
+### 事件分发与执行
 
 dispatchEvent // ReactDOMEventListener.js
 
@@ -1154,13 +1425,6 @@ processDispatchQueue
 executeDispatch 
 
 invokeGuardedCallbackAndCatchFirstError
-
-
-### 事件存储
-
-### 事件分发
-
-### 事件执行
 
 
 
