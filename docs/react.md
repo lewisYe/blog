@@ -1408,6 +1408,8 @@ function addTrappedEventListener(
 
 ### 事件分发与执行
 
+函数调用顺序如下：
+
 ```javascript
 
 dispatchEvent // ReactDOMEventListener.js
@@ -1808,6 +1810,69 @@ function invokeGuardedCallbackProd<A, B, C, D, E, F, Context>(
   }
 }
 ```
+
+### FAQ
+
+#### 为什么需要手动绑定this
+
+`invokeGuardedCallbackAndCatchFirstError(type, listener, undefined, event)`
+
+该方法第三个参数是`undefined`对应底层`invokeGuardedCallbackProd`函数调用时的参数context
+
+那么 `func.apply(context, funcArgs)`函数的this 就是undefined 所以需要你定义回调函数的this指向，比如使用箭头函数
+
+#### React事件和原生事件的执行顺序
+
+当点击test时，如下代码的输出顺序是什么呢？
+
+```javascript
+  componentDidMount() {
+    this.parent.addEventListener('click', (e) => {
+      console.log('dom parent');
+    })
+    this.child.addEventListener('click', (e) => {
+      console.log('dom child');
+    })
+    document.addEventListener('click', (e) => {
+      console.log('document');
+    })
+  }
+
+  childClick = (e) => {
+    console.log('react child');
+  }
+
+  parentClick = (e) => {
+    console.log('react parent');
+  }
+
+  render() {
+    return (
+      <div onClick={this.parentClick} ref={ref => this.parent = ref}>
+        <div onClick={this.childClick} ref={ref => this.child = ref}>
+          test
+        </div>
+      </div>)
+  }
+
+```
+输出结果如下:
+```javascript
+dom child
+dom parent
+react child
+react parent
+document
+```
+
+由上面的流程我们可以理解：
+
+* react的所有事件都挂载在document中
+* 当真实dom触发后冒泡到document后才会对react事件进行处理
+* 所以原生的事件会先执行
+* 然后执行react合成事件
+* 最后执行真正在document上挂载的事件
+
 
 ## React.createElement
 
