@@ -1235,7 +1235,7 @@ export function getEventListenerMap(node: EventTarget): ElementListenerMap {
   return elementListenerMap;
 }
 ```
-🔥**listenToNativeEvent** 存储
+🔥 **listenToNativeEvent** 存储
 
 ```javascript
 export function listenToNativeEvent(
@@ -1260,7 +1260,7 @@ export function listenToNativeEvent(
   //   return `${domEventName}__${capture ? 'capture' : 'bubble'}`; 
   // }
 
-  // listenerMapKey onChange_bubble
+  // 获取到的listenerMapKey值是 onChange_bubble
   const listenerMapKey = getListenerMapKey(
     domEventName,
     isCapturePhaseListener, // false
@@ -1290,10 +1290,10 @@ export function listenToNativeEvent(
 
     // addTrappedEventListener内部就是做了：在target上进行事件监听，并返回dispatchEvent函数
     const listener = addTrappedEventListener(
-      target,
-      domEventName,
-      eventSystemFlags,
-      isCapturePhaseListener,
+      target, // div#root
+      domEventName, // onChange
+      eventSystemFlags, // 0
+      isCapturePhaseListener, //false
       false,
       isPassiveListener,
       listenerPriority,
@@ -1311,10 +1311,10 @@ listenerMap的结构
 
 ```javascript
 function addTrappedEventListener(
-  targetContainer: EventTarget,
-  domEventName: DOMEventName,
-  eventSystemFlags: EventSystemFlags,
-  isCapturePhaseListener: boolean,
+  targetContainer: EventTarget, // div#root
+  domEventName: DOMEventName, // onChange
+  eventSystemFlags: EventSystemFlags, // 0
+  isCapturePhaseListener: boolean, // false
   isDeferredListenerForLegacyFBSupport?: boolean,
   isPassiveListener?: boolean,
   listenerPriority?: EventPriority,
@@ -1408,26 +1408,406 @@ function addTrappedEventListener(
 
 ### 事件分发与执行
 
+```javascript
+
 dispatchEvent // ReactDOMEventListener.js
 
 dispatchEventForPluginEventSystem // DOMPluginEventSystem.js
 
 batchedEventUpdates // ReactDOMUpdateBatching.js
 
-dispatchEventsForPlugins // DOMPluginEventSystem.js
+dispatchEventsForPlugins // DOMPluginEventSystem.js // 该函数先合成事件 然后再执行
 
 extractEvents // DOMPluginEventSystem.js
 
-accumulateTwoPhaseListeners
+// 以ChangeEventPlugin为例子
 
-processDispatchQueue
+createAndAccumulateChangeEvent //  // react-dom/src/client/events/ChangeEventPlugin.js
 
-executeDispatch 
+accumulateTwoPhaseListeners  // DOMPluginEventSystem.js
 
-invokeGuardedCallbackAndCatchFirstError
+processDispatchQueue // 在dispatchEventsForPlugins函数中调用
+
+executeDispatch  // DOMPluginEventSystem.js
+
+invokeGuardedCallbackAndCatchFirstError // shared/ReactErrorUtils
+
+```
+
+**dispatchEvent**
+
+```javascript
+export function dispatchEvent(
+  domEventName: DOMEventName,  //onChange
+  eventSystemFlags: EventSystemFlags, // 0
+  targetContainer: EventTarget, //div#root
+  nativeEvent: AnyNativeEvent,
+): void {
 
 
+  // ....
+  dispatchEventForPluginEventSystem(
+    domEventName,
+    eventSystemFlags,
+    nativeEvent,
+    null,
+    targetContainer,
+  );
+}
 
+```
+
+**dispatchEventForPluginEventSystem**
+
+```javascript
+export function dispatchEventForPluginEventSystem(
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  nativeEvent: AnyNativeEvent,
+  targetInst: null | Fiber,
+  targetContainer: EventTarget,
+): void {
+  // ...
+
+  //批量更新
+  batchedEventUpdates(() =>
+    dispatchEventsForPlugins(
+      domEventName,
+      eventSystemFlags,
+      nativeEvent,
+      ancestorInst,
+      targetContainer,
+    ),
+  );
+}
+```
+
+**batchedEventUpdates**
+
+```javascript
+export function batchedEventUpdates(fn, a, b) {
+  if (isBatchingEventUpdates) {// 初始是false
+    return fn(a, b);
+  }
+  isBatchingEventUpdates = true;
+  try {
+    return batchedEventUpdatesImpl(fn, a, b);
+  } finally {
+    isBatchingEventUpdates = false;
+    finishEventHandler();
+  }
+}
+```
+
+**dispatchEventsForPlugins**
+
+```javascript
+function dispatchEventsForPlugins(
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  nativeEvent: AnyNativeEvent,
+  targetInst: null | Fiber,
+  targetContainer: EventTarget,
+): void {
+  const nativeEventTarget = getEventTarget(nativeEvent); // 获取当前dom元素
+  const dispatchQueue: DispatchQueue = [];
+  // 进行事件合成
+  extractEvents(
+    dispatchQueue,  // []
+    domEventName, // onChange
+    targetInst,
+    nativeEvent, // 原生事件
+    nativeEventTarget, // 获取当前dom元素
+    eventSystemFlags, // 0
+    targetContainer, // div#root
+  );
+  // 按顺序执行事件队列,此时dispatchQueue已经变成[onChange, [{instance, listener, currentTarget}, ...]]
+  processDispatchQueue(dispatchQueue, eventSystemFlags);
+}
+```
+
+🔥 **extractEvents事件合成**
+
+extractEvents这个方法就是调用各种插件来创建相应函数的合成事件，一共有6种插件，这边用到了5个。事件的合成，冒泡的处理以及事件回调的查找都是在合成阶段完成的。
+```javascript
+function extractEvents(
+  dispatchQueue: DispatchQueue, // 初始为[]
+  domEventName: DOMEventName, // dependence
+  targetInst: null | Fiber, // 
+  nativeEvent: AnyNativeEvent, // 原生事件
+  nativeEventTarget: null | EventTarget, // 当前dom元素
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: EventTarget,
+) {
+  SimpleEventPlugin.extractEvents(
+    dispatchQueue,
+    domEventName,
+    targetInst,
+    nativeEvent,
+    nativeEventTarget,
+    eventSystemFlags,
+    targetContainer,
+  );
+  const shouldProcessPolyfillPlugins = (eventSystemFlags & SHOULD_NOT_PROCESS_POLYFILL_EVENT_PLUGINS) === 0;
+  if (shouldProcessPolyfillPlugins) {
+    EnterLeaveEventPlugin.extractEvents(
+      ...
+    );
+    ChangeEventPlugin.extractEvents(
+      ...
+    );
+    SelectEventPlugin.extractEvents(
+      ...
+    );
+    BeforeInputEventPlugin.extractEvents(
+     ...
+    );
+  }
+}
+```
+
+我们以ChangeEventPlugin插件举例：
+
+```javascript
+// react-dom/src/client/events/ChangeEventPlugin.js
+
+function extractEvents(
+  dispatchQueue: DispatchQueue,
+  domEventName: DOMEventName,
+  targetInst: null | Fiber,
+  nativeEvent: AnyNativeEvent,
+  nativeEventTarget: null | EventTarget,
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: null | EventTarget,
+) {
+  const targetNode = targetInst ? getNodeFromInstance(targetInst) : window;
+
+  let getTargetInstFunc, handleEventFunc;
+  // 这边判断当前的节点符不符合当前插件创建相应合成事件的要求
+  if (shouldUseChangeEvent(targetNode)) {
+    getTargetInstFunc = getTargetInstForChangeEvent;
+  } else if (isTextInputElement(((targetNode: any): HTMLElement))) {
+    if (isInputEventSupported) {
+      getTargetInstFunc = getTargetInstForInputOrChangeEvent;
+    } else {
+      getTargetInstFunc = getTargetInstForInputEventPolyfill;
+      handleEventFunc = handleEventsForInputEventPolyfill;
+    }
+  } else if (shouldUseClickEvent(targetNode)) {
+    getTargetInstFunc = getTargetInstForClickEvent;
+  }
+
+  if (getTargetInstFunc) {
+    const inst = getTargetInstFunc(domEventName, targetInst);
+    if (inst) {
+      createAndAccumulateChangeEvent(
+        dispatchQueue,
+        inst,
+        nativeEvent,
+        nativeEventTarget,
+      );
+      return;
+    }
+  }
+
+  if (handleEventFunc) {
+    handleEventFunc(domEventName, targetNode, targetInst);
+  }
+
+  if (domEventName === 'focusout') {
+    handleControlledInputBlur(((targetNode: any): HTMLInputElement));
+  }
+}
+
+```
+
+**createAndAccumulateChangeEvent**
+
+```javascript
+function createAndAccumulateChangeEvent(
+  dispatchQueue,
+  inst,
+  nativeEvent,
+  target,
+) {
+  // 生成合成事件
+  const event = new SyntheticEvent(
+    'onChange',
+    'change',
+    null,
+    nativeEvent,
+    target,
+  );
+  // Flag this event loop as needing state restore.
+  enqueueStateRestore(((target: any): Node));
+  accumulateTwoPhaseListeners(inst, dispatchQueue, event);
+}
+```
+
+🔥 **accumulateTwoPhaseListeners 事件分发**
+
+```javascript
+export function accumulateTwoPhaseListeners(
+  targetFiber: Fiber | null, 
+  dispatchQueue: DispatchQueue, // []
+  event: ReactSyntheticEvent, // onChange合成事件
+): void {
+  const bubbled = event._reactName; // 就是“onChange”
+  const captured = bubbled !== null ? bubbled + 'Capture' : null; // 就是“onChangeCapture”
+  const listeners: Array<DispatchListener> = [];
+  let instance = targetFiber;
+
+  // 这边向上查找到所有当前类型事件的回调函数，重要！！！
+  while (instance !== null) {
+    const {stateNode, tag} = instance;
+    if (tag === HostComponent && stateNode !== null) {
+      const currentTarget = stateNode;
+      if (captured !== null) {
+        // 返回当前节点的回调函数
+
+      // export default function getListener(
+      //   inst: Fiber, // 当前实例
+      //   registrationName: string, // “onChange”
+      // ): Function | null {
+      //   ...
+      //   // 返回dom上的props
+      //   const props = getFiberCurrentPropsFromNode(stateNode);
+      //   if (props === null) {
+      //     // Work in progress.
+      //     return null;
+      //   }
+      //   // 获取到当前事件的回调函数
+      //   const listener = props[registrationName]
+      //   return listener;
+      // }
+
+        const captureListener = getListener(instance, captured);
+        if (captureListener != null) {
+          // 捕获，插入数组头部
+          listeners.unshift(
+            // 工具函数，返回对象{instance, listener, currentTarget}
+            createDispatchListener(instance, captureListener, currentTarget),
+          );
+        }
+      }
+      if (bubbled !== null) {
+        // 返回当前节点的回调函数
+        const bubbleListener = getListener(instance, bubbled);
+        if (bubbleListener != null) {
+          // 冒泡，插入数组尾部
+          listeners.push(
+            // 工具函数，返回对象{instance, listener, currentTarget}
+            createDispatchListener(instance, bubbleListener, currentTarget),
+          );
+        }
+      }
+    }
+    instance = instance.return;
+  }
+
+  // listeners即某一类合成事件的所有回调函数的集合，[{instance, listener, currentTarget}, ...]
+  if (listeners.length !== 0) {
+    // createDispatchEntry返回的是对象{event, listeners};
+    // dispatchQueue最后为[{event, listeners}, ...], 即[{onChange, [{instance, listener, currentTarget}, ...]}, ...]
+    dispatchQueue.push(createDispatchEntry(event, listeners));
+  }
+}
+```
+
+🔥 **processDispatchQueue事件执行**
+
+```javascript
+export function processDispatchQueue(
+  dispatchQueue: DispatchQueue,
+  eventSystemFlags: EventSystemFlags,
+): void {
+  const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
+  // 循环取出合成事件和对应的回调函数队列
+  for (let i = 0; i < dispatchQueue.length; i++) {
+    const {event, listeners} = dispatchQueue[i];
+
+    // 逐个执行每个回调函数
+    processDispatchQueueItemsInOrder(event, listeners, inCapturePhase);
+    //  event system doesn't use pooling. 不在使用事件池
+  }
+  // This would be a good time to rethrow if any of the event handlers threw.
+  rethrowCaughtError();
+}
+```
+
+**processDispatchQueueItemsInOrder**
+
+```javascript
+function processDispatchQueueItemsInOrder(
+  event: ReactSyntheticEvent,
+  dispatchListeners: Array<DispatchListener>,
+  inCapturePhase: boolean,
+): void {
+  let previousInstance;
+  if (inCapturePhase) {
+    for (let i = dispatchListeners.length - 1; i >= 0; i--) {
+      const {instance, currentTarget, listener} = dispatchListeners[i];
+      if (instance !== previousInstance && event.isPropagationStopped()) {
+        return;
+      }
+      executeDispatch(event, listener, currentTarget);
+      previousInstance = instance;
+    }
+  } else {
+    for (let i = 0; i < dispatchListeners.length; i++) {
+      const {instance, currentTarget, listener} = dispatchListeners[i];
+      if (instance !== previousInstance && event.isPropagationStopped()) {
+        return;
+      }
+      executeDispatch(event, listener, currentTarget);
+      previousInstance = instance;
+    }
+  }
+}
+```
+
+**executeDispatch**
+
+```javascript
+function executeDispatch(
+  event: ReactSyntheticEvent, // onChange
+  listener: Function, // 对应的回调函数
+  currentTarget: EventTarget,
+): void {
+  // "onChange"
+  const type = event.type || 'unknown-event'; 
+  // 将当前dom元素赋值给合成事件的currentTarget
+  event.currentTarget = currentTarget;
+  // 执行回调函数，listener为回调函数, event为合成事件,最后执行listener(event)这个方法调用
+  // 这样就回调到了我们在JSX中注册的callback。比如onClick={(event) => {console.log(1)}}
+  // 现在就明白了callback怎么被调用的,以及event参数怎么传入callback里面的了
+  invokeGuardedCallbackAndCatchFirstError(type, listener, undefined, event);
+  event.currentTarget = null;
+}
+
+// invokeGuardedCallbackAndCatchFirstError 函数的本质是如下函数
+// shared/invokeGuardedCallbackImpl.js
+
+function invokeGuardedCallbackProd<A, B, C, D, E, F, Context>(
+  name: string | null,
+  func: (a: A, b: B, c: C, d: D, e: E, f: F) => mixed,
+  context: Context,
+  a: A,
+  b: B,
+  c: C,
+  d: D,
+  e: E,
+  f: F,
+) {
+  const funcArgs = Array.prototype.slice.call(arguments, 3);
+  try {
+    //最后就是在这里执行的回调函数
+    func.apply(context, funcArgs);
+  } catch (error) {
+    this.onError(error);
+  }
+}
+```
 
 ## React.createElement
 
