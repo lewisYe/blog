@@ -1873,6 +1873,21 @@ document
 * 然后执行react合成事件
 * 最后执行真正在document上挂载的事件
 
+### React v17中的事件
+
+#### 更改事件委托
+
+在 React 17 中，React 将不再向 document 附加事件处理器。而会将事件处理器附加到渲染 React 树的根 DOM 容器中
+
+在 React 16 或更早版本中，React 会对大多数事件执行 document.addEventListener()。React 17 将会在底层调用 rootNode.addEventListener()。
+
+例如，如果模块中使用 document.addEventListener(...) 手动添加了 DOM 监听，你可能希望能捕获到所有 React 事件。在 React 16 或更早版本中，即使你在 React 事件处理器中调用 e.stopPropagation()，你创建的 DOM 监听仍会触发，这是因为原生事件已经处于 document 级别。使用 React 17 冒泡将被阻止（按需），因此你的 document 级别的事件监听不会触发：
+
+#### 去除事件池
+
+React 17 中移除了 “event pooling（事件池）“。它并不会提高现代浏览器的性能，甚至还会使经验丰富的开发者一头雾水。
+
+
 
 ## React.createElement
 
