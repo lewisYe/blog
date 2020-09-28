@@ -190,7 +190,7 @@ let strLength: number = (someValue as string).length
 
 两种形式是等价的,然而，当你在TypeScript里使用JSX时，只有 as语法断言是被允许的。
 
-## interface
+## Interface
 
 ### 基本调用
 
@@ -392,3 +392,4 @@ class Location {
 ```
 
 
+## 类
