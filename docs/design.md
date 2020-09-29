@@ -150,3 +150,42 @@ const user2 = new StudentClass('ye2','female')
 
 使用场景： 比如根据权限生成不同用户。
 
+### 单例模式
+
+简单的理解单例模式：保证一个类仅有一个实例，并提供一个访问它的全局访问点。
+
+单例模式又分懒汉式和饿汉式两种，其区别在于懒汉式在调用的时候创建实例，而饿汉式则是在初始化就创建好实例，具体实现如下：
+
+懒汉式：
+```javascript
+// 懒汉式
+
+class Single {
+  static getInstance(){
+    if(!Single.instance){
+      Single.instance = new Single()
+    }
+    return Single.instance
+  }
+}
+
+const t1 = Single.getInstacne()
+const t2 = Single.getInstance()
+
+console.log(t1 === t2) // true
+```
+饿汉式：
+```javascript
+//饿汉式
+class Single{
+  static instance = new Single()
+  static getInstance(){
+    return Single.instance
+  }
+}
+const t1 = Single.getInstacne()
+const t2 = Single.getInstance()
+
+console.log(t1 === t2) // true
+
+```
