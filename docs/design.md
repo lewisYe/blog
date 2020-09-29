@@ -189,3 +189,43 @@ const t2 = Single.getInstance()
 console.log(t1 === t2) // true
 
 ```
+
+### 原型模式
+
+对于前端来说，原型模式在常见不过了。当前创建的对象和已有对象存在较大共性时，可以通过对象的复制来达到创建新的对象，这就是原型模式。
+
+```javascript
+// Objeact.create() 实现原型模式
+
+const user = {
+  name: 'ye',
+  age: 18
+}
+
+let userOne = Object.create(user)
+console.log(userOne.__proto__) // { name:'ye',age:18 }
+
+// 原型链继承现实原型模式
+
+class User{
+  constructor(name){
+    this.name = name
+  }
+  getName (){
+    return this.name
+  }
+}
+
+class Admin extends User{
+  constructor(name){
+    super(name)
+  }
+  setName(_name){
+    return this.name = _name
+  }
+}
+const admin = new Admin('ye')
+console.log(admin.getName()) // ye
+console.log(admin.setName('ye1'));
+console.log(admin.getName()) // ye1
+```
