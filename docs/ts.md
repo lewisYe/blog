@@ -393,3 +393,201 @@ class Location {
 
 
 ## 类
+
+### 基本简单类
+
+```javascript
+class Animal {
+  name: string;
+  constructor(theName: string) { this.name = theName; }
+  move(distanceInMeters: number = 0) {
+    console.log(`${this.name} moved ${distanceInMeters}m.`)
+  }
+}
+
+let a = new Animal("Tom")
+```
+上述代声明了一个Animal类。该类有3个成员：一个是name属性，一个是构造函数和一个move方法。
+
+访问类的成员时需要使用this.
+
+我们使用 new构造了 Animal类的一个实例。 它会调用之前定义的构造函数，创建一个 Animal类型的新对象，并执行构造函数初始化它。
+
+### 类的继承
+
+基于类的程序设计中一种最基本的模式是允许使用继承来扩展现有的类。
+
+一个基本的继承例子：
+```javascript
+class Animal {
+  move(distanceInMeters: number = 0){
+    console.log(`Animal moved ${distanceInMeters}m.`);
+  }
+}
+
+class Dog extends Animal {
+  bark(){
+    console.log('Woof!')
+  }
+}
+
+const dog = new Dog();
+dog.bark();
+dog.move(10);
+```
+Dog是一个 派生类，它派生自 Animal 基类，通过 extends关键字。 派生类通常被称作 子类，基类通常被称作 超类。
+
+一个复杂的例子：
+```javascript
+class Animal {
+  name: string;
+  constructor(theName: string) { this.name = theName }
+  move(distanceInMeters: number = 0) {
+    console.log(`${this.name} moved ${distanceInMeters}m.`)
+  }
+}
+
+class Snake extends Animal {
+  constructor(name: string) { super(name) }
+  move(distanceInMeters = 5) {
+    console.log("Slithering...");
+    super.move(distanceInMeters);
+  }
+}
+
+class Horse extends Animal {
+  constructor(name: string) { super(name); }
+  move(distanceInMeters = 45 ){
+    console.log("Galloping...")
+    super.move(distanceInMeters);
+  }
+}
+
+let sam = new Sanke("Sammy the Python")
+let tom: Animal = new Horse("Tommy the Palomino")
+
+sam.move();
+tom.move(34);
+```
+
+这一次，我们使用 extends关键字创建了 Animal的两个子类： Horse和 Snake。
+
+与前一个例子的不同点是，派生类包含了一个构造函数，它 必须调用 super()，它会执行基类的构造函数。 而且，在构造函数里访问 this的属性之前，我们 一定要调用 super()。 这个是TypeScript强制执行的一条重要规则。
+
+### 公共，私有与受保护的修饰符
+
+#### public
+
+在TypeScript里，成员都默认为 public。
+
+重写上述Animal类:
+```typescript
+class Animal {
+  public name: string;
+  public constructor(theName: string) { this.name = theName; }
+  public move(distanceInMeters: number) {
+   console.log(`${this.name} moved ${distanceInMeters}m.`);
+  }
+}
+```
+
+#### private
+
+当成员被标记成privates时，它就不能再声明它的类外部访问。比如：
+```typescript
+class Animal {
+    private name: string;
+    constructor(theName: string) { this.name = theName; }
+}
+
+new Animal("Cat").name; // 错误: 'name' 是私有的.
+```
+
+TypeScript使用的是结构性类型系统。 当我们比较两种不同的类型时，并不在乎它们从何处而来，如果所有成员的类型都是兼容的，我们就认为它们的类型是兼容的。然而，当我们比较带有 private或 protected成员的类型的时候，情况就不同了。
+
+如果其中一个类型里包含一个 private成员，那么只有当另外一个类型中也存在这样一个 private成员， 并且它们都是来自同一处声明时，我们才认为这两个类型是兼容的。 对于 protected成员也使用这个规则。
+
+
+下面来看一个例子，更好地说明了这一点：
+```typescript
+class Animal {
+    private name: string;
+    constructor(theName: string) { this.name = theName; }
+}
+
+class Rhino extends Animal {
+    constructor() { super("Rhino"); }
+}
+
+class Employee {
+    private name: string;
+    constructor(theName: string) { this.name = theName; }
+}
+
+let animal = new Animal("Goat");
+let rhino = new Rhino();
+let employee = new Employee("Bob");
+
+animal = rhino;
+animal = employee; // 错误: Animal 与 Employee 不兼容.
+```
+因为 Animal和 Rhino共享了来自 Animal里的私有成员定义 private name: string，因此它们是兼容的。 然而 Employee却不是这样. 尽管 Employee里也有一个私有成员 name，但它明显不是 Animal里面定义的那个。
+
+#### protected
+
+protected修饰符与 private修饰符的行为很相似，但有一点不同， protected成员在派生类中仍然可以访问。例如：
+```typescript
+class Person {
+    protected name: string;
+    constructor(name: string) { this.name = name; }
+}
+
+class Employee extends Person {
+    private department: string;
+
+    constructor(name: string, department: string) {
+        super(name)
+        this.department = department;
+    }
+
+    public getElevatorPitch() {
+        return `Hello, my name is ${this.name} and I work in ${this.department}.`;
+    }
+}
+
+let howard = new Employee("Howard", "Sales");
+console.log(howard.getElevatorPitch());
+console.log(howard.name); // 错误
+```
+
+
+### readonly修饰符
+
+你可以使用 readonly关键字将属性设置为只读的。 只读属性必须在声明时或构造函数里被初始化。
+
+```typescript
+class Octopus {
+    readonly name: string;
+    readonly numberOfLegs: number = 8;
+    constructor (theName: string) {
+        this.name = theName;
+    }
+}
+let dad = new Octopus("Man with the 8 strong legs");
+dad.name = "Man with the 3-piece suit"; // 错误! name 是只读的.
+```
+
+### 参数属性
+
+在上面的例子中，我们必须在Octopus类里定义一个只读成员 name和一个参数为 theName的构造函数，并且立刻将 theName的值赋给 name，这种情况经常会遇到。 参数属性可以方便地让我们在一个地方定义并初始化一个成员。 下面的例子是对之前 Octopus类的修改版，使用了参数属性：
+```typescript
+class Octopus {
+    readonly numberOfLegs: number = 8;
+    constructor(readonly name: string) {
+    }
+}
+```
+
+注意看我们是如何舍弃了 theName，仅在构造函数里使用 readonly name: string参数来创建和初始化 name成员。 我们把声明和赋值合并至一处。
+
+参数属性通过给构造函数参数前面添加一个访问限定符来声明。 使用 private限定一个参数属性会声明并初始化一个私有成员；对于 public和 protected来说也是一样。
