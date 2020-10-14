@@ -591,3 +591,138 @@ class Octopus {
 注意看我们是如何舍弃了 theName，仅在构造函数里使用 readonly name: string参数来创建和初始化 name成员。 我们把声明和赋值合并至一处。
 
 参数属性通过给构造函数参数前面添加一个访问限定符来声明。 使用 private限定一个参数属性会声明并初始化一个私有成员；对于 public和 protected来说也是一样。
+
+## 泛型
+
+软件工程中，我们不仅要创建一致的定义良好的API，同时也要考虑可重用性。 组件不仅能够支持当前的数据类型，同时也能支持未来的数据类型。这就需要使用到泛型。
+
+下面来创建第一个使用泛型的例子：identity函数。 这个函数会返回任何传入它的值。
+
+不用泛型实现的话：
+```typescript
+function identity(arg: any): any {
+  return arg;
+}
+```
+使用any类型会导致这个函数可以接收任何类型的arg参数，这样就丢失了一些信息：传入的类型与返回的类型应该是相同的。如果我们传入一个数字，我们只知道任何类型的值都有可能被返回。
+
+因此可以使用`类型变量`，一种特殊的变量，只用于表示类型而不是值。来解决这个问题。
+
+```typescript
+function identity<T>(arg: T): T {
+  return arg
+}
+```
+
+我们给identity添加了类型变量T。 T帮助我们捕获用户传入的类型（比如：number），之后我们就可以使用这个类型。 之后我们再次使用了 T当做返回值类型。现在我们可以知道参数类型与返回值类型是相同的了。 这允许我们跟踪函数里使用的类型的信息。
+
+我们把这个版本的identity函数叫做泛型，因为它可以适用于多个类型。 不同于使用 any，它不会丢失信息，保持准确性，传入数值类型并返回数值类型。
+
+我们定义了泛型函数后，可以用两种方法使用。 
+
+第一种是，传入所有的参数，包含类型参数：
+
+`let output = identity<string>("myString");// type of output will be string`
+
+第二种方法更普遍。利用了类型推论 -- 即编译器会根据传入的参数自动地帮助我们确定T的类型：
+
+`let output = identity("myString") // type of output will be 'string'`
+
+
+### 泛型变量
+
+使用泛型创建像identity这样的泛型函数时，编译器要求你在函数体必须正确的使用这个通用的类型。 换句话说，你必须把这些参数当做是任意或所有类型。
+
+看下面这个例子，比如你想打印出参数的长度：
+```typescript
+function identity<T>(arg: T): T {
+    console.log(arg.length);  // Error: T doesn't have .length
+    return arg;
+}
+```
+如果这么做，编译器会报错说我们使用了arg的length属性，但是没有地方指明arg具有这个属性。 记住，这些类型变量代表的是任意类型，所以使用这个函数的人可能传入的是个数字，而数字是没有length属性的。
+
+
+现在假设我们想操作T类型的数组而不直接是T。由于我们操作的是数组，所以.length属性是应该存在的。 我们可以像创建其它数组一样创建这个数组：
+
+```typescript
+function identity<T>(arg: T[]): T[] {
+    console.log(arg.length);  // Array has a .length, so no more error
+    return arg;
+}
+//或者
+
+function identity<T>(arg: Array<T>): Array<T> {
+    console.log(arg.length);  // Array has a .length, so no more error
+    return arg;
+}
+```
+
+该函数可以理解为接收类型参数T和参数arg，arg是个元素类型是T的数组，并返回元素类型是T的数组。
+
+### 泛型类型
+
+泛型函数的类型与非泛型函数的类型没有什么不同，只是有一个类型参数在最前面，像函数声明一样：
+```typescript
+function identity<T>(arg: T): T {
+  return arg;
+}
+
+let myIdentity: <T>(arg: T) => T = identity;
+```
+
+我们也可以使用不同的泛型参数名，只要在数量上和使用方式上能对应上就可以。
+
+```typescript
+unction identity<T>(arg: T): T {
+    return arg;
+}
+
+let myIdentity: <U>(arg: U) => U = identity;
+```
+
+还可以写泛型接口
+```typescript
+interface GenericIdentityFn {
+    <T>(arg: T): T;
+}
+
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+let myIdentity: GenericIdentityFn = identity;
+
+```
+一个相似的例子，我们可能想把泛型参数当作整个接口的一个参数。 这样我们就能清楚的知道使用的具体是哪个泛型类型（比如： Dictionary<string>而不只是Dictionary）。 这样接口里的其它成员也能知道这个参数的类型了。
+
+```typescript
+interface GenericIdentityFn<T> {
+    (arg: T): T;
+}
+
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+let myIdentity: GenericIdentityFn<number> = identity;
+```
+注意，我们的示例做了少许改动。 不再描述泛型函数，而是把非泛型函数签名作为泛型类型一部分。 当我们使用 GenericIdentityFn的时候，还得传入一个类型参数来指定泛型类型（这里是：number），锁定了之后代码里使用的类型。 
+
+### 泛型类
+
+泛型类看上去与泛型接口差不多。泛型类使用(<>)括起泛型类型，跟在类名后面。
+```typescript
+class GenericNumber<T> {
+  value: T;
+  add: (x: T, y: T) => T;
+}
+
+
+// 使用
+
+let myGenericNumber = new GenericNumber<number>();
+myGenericNumber.value = 0;
+myGenericNumber.add = function(x,y){ return x + y}
+```
+GenericNumber类的使用是十分直观的，并且你可能已经注意到了，没有什么去限制它只能使用number类型。 也可以使用字符串或其它更复杂的类型。
