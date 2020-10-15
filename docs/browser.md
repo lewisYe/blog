@@ -85,7 +85,55 @@
 
 DOM 和 HTML 内容几乎是一样的，但是和 HTML 不同的是，DOM 是保存在内存中树状结构，可以通过 JavaScript 来查询或修改其内容。
 
-### 样式计算（Recalculate Style）
+#### HTML解析器
+
+从后端返回给浏览器渲染引擎 HTML 文件字节流，HTML 文件字节流返回的过程中 HTML 解析器就一直在解析，边加载边解析。
+
+##### 阶段一 字节流转换为字符并W3C标准令牌化
+
+读取HTML的原始字节流，并根据文件的指定编码（例如UTF-8）将它们转换成各个字符。并将字符串转换成W3C HTML5标准规定的各种令牌。每个令牌都具有特殊含义和一组规则。
+
+一堆字节流 bytes
+
+` 3C 2B 1A `
+
+转换成正常的html文件
+
+```html
+<html>
+<body>
+  <div>hi <p>ye</p> </div>
+</body>
+</html>
+```
+
+##### 阶段二 通过分词器将字节流转化为 Token
+
+分词器将字节流转换为一个一个的Token，Token分为Tag Token和文本Token，上面这段代码最后分词转化的结果是：
+![](./images/token.png)
+
+##### 阶段三 Token解析为DOM节点
+
+HTML解析器维护了一个Token栈结构，这个栈结构的目的就是用来计算节点间的父子关系。具体规则如下：
+
+* HTML解析器开始工作时，会默认创建一个根为document的空DOM结构，同时会将一个StartTag document的Token压入栈底。
+
+![](./images/tokenStack1.png)
+
+* 如果压入栈中的是startTagToken类型，HTML解析器会为该Token创建一个DOM节点，然后将该节点加入到DOM树种，它的父节点为栈中相邻元素生成的DOM节点。
+
+![](./images/tokenStack2.png)
+
+* 如果是文本Token，那么会直接生成一个文件节点，加入到DOM树种，不需要入栈。它的父节点就是当前栈顶对应的DOM节点
+
+![](./images/tokenStack3.png)
+
+* 如果解析到了endTag标签，则会比较栈顶是否为对应的tag标签。如果是则对应的startTag会出栈，表示该元素解析完成。
+
+* 然后如上的规则，分词器一路解析，就形成了简单的DOM树。
+
+
+### 样式计算（Recalculate Style）`
 
 样式计算的目的是为了计算出 DOM 节点中每个元素的具体样式，这个阶段大体可分为三步来完成。
 

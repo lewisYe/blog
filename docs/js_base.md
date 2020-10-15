@@ -1627,7 +1627,17 @@ var person2 = {
 }
 person1.friend.sayHi(); // Hello Hong
 ```
-3. 隐式绑定有一个坑，隐式绑定丢失
+3. []语法
+
+```javascript
+function fn() { console.log(this) }
+var arr = [fn,fn2]
+arr[0](); // this的结果又是什么呢
+```
+
+可以换算理解`arr[0]()`理解为`arr.0()` 因为`[]`等价于`.`。但是从语法来说是错误的 但是你可以这样换算理解。那么那上述的例子this的指向显然是arr啦
+
+4. 隐式绑定有一个坑，隐式绑定丢失
 
 
 ```javascript
