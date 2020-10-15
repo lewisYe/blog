@@ -694,7 +694,7 @@ function identity<T>(arg: T): T {
 let myIdentity: GenericIdentityFn = identity;
 
 ```
-一个相似的例子，我们可能想把泛型参数当作整个接口的一个参数。 这样我们就能清楚的知道使用的具体是哪个泛型类型（比如： Dictionary<string>而不只是Dictionary）。 这样接口里的其它成员也能知道这个参数的类型了。
+一个相似的例子，我们可能想把泛型参数当作整个接口的一个参数。 这样我们就能清楚的知道使用的具体是哪个泛型类型（比如： `Dictionary<string>`而不只是Dictionary）。 这样接口里的其它成员也能知道这个参数的类型了。
 
 ```typescript
 interface GenericIdentityFn<T> {
@@ -726,3 +726,89 @@ myGenericNumber.value = 0;
 myGenericNumber.add = function(x,y){ return x + y}
 ```
 GenericNumber类的使用是十分直观的，并且你可能已经注意到了，没有什么去限制它只能使用number类型。 也可以使用字符串或其它更复杂的类型。
+
+## 枚举
+
+使用枚举可以定义一些带名字的常量。Typescript支持数字的和基于字符串的枚举。
+
+### 数字枚举
+
+```typescript
+enum Direction {
+  Up = 1,
+  Down,
+  Left,
+  Right
+}
+```
+
+上诉例子定义了一个数字枚举，Up初始化为1.其余的成员会从1开始自动增长。简单的理解就是。Up的值是1，Down是2，Left是3，Right是4。如果不对Up进行初始化，那么它的值就是0.
+
+使用枚举很简单：通过枚举的属性来访问枚举成员，和枚举的名字来访问枚举类型：
+
+```typescript
+enum Response {
+    No = 0,
+    Yes = 1,
+}
+
+function respond(recipient: string, message: Response): void {
+    // ...
+}
+
+respond("Princess Caroline", Response.Yes)
+```
+
+### 字符串枚举
+
+字符串枚举里，每个成员都必须用字符串字面量，或另外一个字符串枚举成员进行初始化。
+
+```typescript
+enum Direction {
+  Up = "UP",
+  Down = "Down",
+  Left = "Left",
+  Right = "Right"
+}
+```
+
+由于字符串枚举没有自增长的行为，字符串枚举可以很好的序列化。
+
+### 异构枚举
+
+从技术的角度来说，枚举可以混合字符串和数字成员，但是似乎你并不会这么做,除非你真的想要利用JavaScript运行时的行为，否则我们不建议这样做。
+
+```typescript
+enum BooleanLikeHeterogeneousEnum {
+    No = 0,
+    Yes = "YES",
+}
+```
+
+### 计算的和常量成员
+
+每个枚举成员都带有一个值，它可以是`常量`或`计算出来`的。当满足如下条件时，枚举成员被当作是常量：
+
+* 它是枚举的第一个成员且没有初始化，这种情况下它被赋值0
+* 它不带有初始化器且它之前的枚举成员是一个`数字常量`。这种情况下，当前枚举成员的值为它上一个枚举成员的值加1。
+* 枚举成员使用`常量枚举表达式`初始化。常数枚举表达式是Typescript表达式的子集，它可以在编译阶段求值。当一个表达式满足下面条件之一时，它就是一个常量枚举表达式：
+    * 一个枚举表达式字面量（主要是字符串字面量或数字字面量）
+    * 一个对之前定义的常量枚举成员的引用（可以是在不同的枚举类型中定义的）
+    * 带括号的常量枚举表达式
+    * 一元运算符 +, -, ~其中之一应用在了常量枚举表达式
+    * 常量枚举表达式做为二元运算符 +, -, *, /, %, <<, >>, >>>, &, |, ^的操作对象。 若常数枚举表达式求值后为 NaN或 Infinity，则会在编译阶段报错。
+
+所有其它情况的枚举成员被当作是需要计算得出的值。
+
+### 反向映射
+
+除了创建一个以属性名做为对象成员的对象之外，数字枚举成员还具有了 反向映射，从枚举值到枚举名字。 例如，在下面的例子中：
+```typescript
+enum Enum {
+    A
+}
+let a = Enum.A;
+let nameOfA = Enum[a]; // "A"
+```
+
+
