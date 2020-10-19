@@ -142,7 +142,7 @@ HTML解析器维护了一个Token栈结构，这个栈结构的目的就是用�
 CSS 样式来源主要有三种：
 
 * 通过 link 引用的外部 CSS 文件
-* <style>标记内的 CSS
+* `<style>`标记内的 CSS
 * 元素的 style 属性内嵌的 CSS
 
 和 HTML 文件一样，浏览器也是无法直接理解这些纯文本的 CSS 样式，所以**当渲染引擎接收到 CSS 文本时，会执行一个转换操作，将 CSS 文本转换为浏览器可以理解的结构——styleSheets**。
@@ -325,7 +325,26 @@ document.body.appendChild(fragment);
 ### Load 和 DOMContentLoaded 区别
 Load 事件触发代表页面中的 DOM，CSS，JS，图片已经全部加载完毕。
 
-DOMContentLoaded 事件触发代表初始的 HTML 被完全加载和解析，不需要等待 CSS，JS，图片加载
+DOMContentLoaded 事件触发代表初始的 HTML 被完全加载和解析，不需要等待 CSS，JS，图片加载\
+
+### JS对DOM、CSSOM构建的影响
+
+分为三种情况。
+
+1. 页面中只有HTML和JS，且JS不是外部引入
+
+DOM 树构建时当遇到JavaScript脚本，就要暂停 DOM 解析，先去执行Javascript，因为在JavaScript可能会操作当前已经生成的DOM节点。
+
+有一点需要注意:javascript是可能操作当前已经生成的DOM节点，如果是后面还未生成的DOM节点是不生效的
+
+2. 当页面中同时有Html、JavaScript、CSS ，而且都非外部引入。
+
+DOM 树构建时当遇到 JavaScript 脚本，就要暂停 DOM 解析，先去执行 JavaScript，同时 JavaScript 还要判断 CSSOM 是否解析完成，因为在 JavaScript 可能会操作 CSSOM 节点，CSSOM 节点确认解析完成，执行 JavaScript 再次回到 DOM 树创建。（所以这里也可以理解为CSS解析间接影响DOM树创建）
+
+3. 当页面中同时有Html，JavaScript， CSS ，而且外部引入
+
+Webkit渲染引擎有一个优化，当渲染进程接收HTML文件字节流时，会先开启一个预解析线程，如果遇到 JavaScript 文件或者 CSS 文件，那么预解析线程会提前下载这些数据。DOM树在创建过程中如果遇到JavaScript文件，接下来就和情况2类型一样了。
+
 
 ## 垃圾回收机制
 
