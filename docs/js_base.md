@@ -3331,6 +3331,67 @@ resizeEvent .initUIEvent('resize', true, false, window, 0);
 window.dispatchEvent(resizeEvent);
 ```
 
+## JS 异常类型
+
+了解Javascript的具有几种异常类型是非常有必要的，可以方便我们更快的定位和解决问题。
+
+### Error 基本错误类型
+
+Error 是最基本的错误类型，其他的错误类型都是继承自该类型。Error 对象主要有两个重要属性 message 和 name ; 分别表示错误信息和错误名称。
+
+程序运行过程中抛出的异常一般都有具体的类型，Error 类型一般都是开发人员自己抛出的异常。
+
+![](./images/error.jpg)
+
+
+### SyntaxError 语法错误
+
+SyntaxError 语法错误 也称为解析错误。语法错误在任何编程语言中都是最常见的错误类型，表示不符合编程语言的语法规范。
+
+Javascript 是一门解释性语言，执行一段代码需要经历`词法分析 -> 语法分析 -> 语法树`，然后就可以解释执行了
+
+词法分析是将字符流（char stream）转换为记号流（token stream），语法分析阶段会将记号流 生成抽象语法树（AST）。
+
+在这两个阶段，如果Javascript引擎发现了预期之外或者无法抓换的token，或者token顺序和预期不一致时，就会抛出SyntaxError
+
+![](./images/syntaxError.jpg)
+
+SyntaxError 应该和其他类型的异常区分开，此类异常发生在 JavaScript 解析/编译时，此类异常一旦发生，导致整个js文件都无法执行，而其他异常发生在代码运行时，这一类的错误会导致在错误出现的那一行之后的代码无法执行，但在那一行之前的代码不会受到影响。
+
+### TypeError 类型错误
+
+TypeError 类型错误。运行时最常见的异常，表示变量或者参数不是预期类型，比如 new 关键字后面必须为构造函数、括号前必须为函数。
+
+![](./images/typeError.jpg)
+
+### ReferenceError 引用错误
+
+ReferenceError 引用错误。
+
+引用一个不存在的变量时发生的错误，每当我们创建或定义一个变量时，变量名称都会写入一个变量存储中心里面。这个变量存储中心就像键值存储一样，每当我们引用变量时，它都去存储中找到key并提取返回value，如果找不到时，就会抛出ReferenceError。
+
+
+请注意，如果我们调用的是一个已经存在的变量的一个不存在的属性，则不会抛出 ReferenceError，因为变量本身已经在存储中了，调用它不存在的属性只会是未定义状态，也就是 undefined。
+
+![](./images/referenceError.jpg)
+
+### RangeError 边界错误
+
+RangeError 边界错误。表示超出有效范围时发生的异常，主要有以下几种情况：
+* 数组长度为负数或者超长
+* 数字类型的方法参数超出预定义范围
+* 函数堆栈调用超过最大值
+
+![](./images/rangeError.jpg)
+
+### URIError URL错误
+
+在调用 URI 相关的方法中 URL 无效时抛出的异常，主要包括 encodeURI、decodeURI()、encodeURIComponent()、decodeURIComponent()、escape()和unescape(）几个函数
+
+![](./images/uriError.jpg)
+
+当然你也可以自定义错误类型通过继承Error。
+
 ## 正则
 
 ## Ajax

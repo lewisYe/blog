@@ -19,3 +19,20 @@
 8. link与@import
 
 
+## JS
+
+1. 闭包
+
+2. 跨域
+
+3. for...in 和 for..of区别
+
+4. new 一个对象发生了什么
+
+5. 防抖与节流
+
+6. 继承
+
+7. call、apply、bind
+
+8. promise有点与缺点
