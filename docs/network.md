@@ -81,6 +81,8 @@ DCCP、SCTP、RTP、RSVP、PPTP等协议。
 
 8：DHCP动态主机配置协议: 发现协议中的引导文件名、空终止符、属名或者空, DHCP供应协议中的受限目录路径名 Options –可选参数字段，参考定义选择列表中的选择文件。
 
+<!-- https://mp.weixin.qq.com/s/iYCzJh5e1KB0Eu4Sj9ToYQ -->
+
 ## TCP协议
 
 TCP(Transmission Control Protocol 传输控制协议)是一种面向连接的、可靠的、基于字节流的传输层通信协议。

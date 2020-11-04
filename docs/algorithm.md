@@ -385,5 +385,7 @@ postOrderTraverse(node){
 
 时间复杂度O(n2) 典型的例子就是冒泡 是不是2层循环。
 
+参考链接
 
-
+[窥探数据结构的世界- ES6版](https://mp.weixin.qq.com/s/LSqDxb_srZW8aAZeOWmp9Q)
+[BFS、DFS](https://mp.weixin.qq.com/s/LU2ELdIJ1i_qqT169uvy3g)

@@ -472,7 +472,7 @@ Webkit渲染引擎有一个优化，当渲染进程接收HTML文件字节流时�
 
 #### JSONP
 
-JSONP 是 JSON with padding的简写. JSONP本质上是一个Hack，它利用`<script>`标签不受同源策略限制的特性进行跨域操作。由两部分组成:回调函数和数据。回调函数是当响应到来时应该在页面中调用的函数。回调 函数的名字一般是在请求中指定的。而数据就是传入回调函数中的 JSON 数据。下面是一个典型的 JSONP 请求。
+JSONP 是 JSON with padding的简写. JSONP本质上是一个Hack，它利用`<script>`标签不受同源策略限制的特性进行跨域操作。由两部分组成:回调函数和数据。回调函数是当响应到来时应该在页面中调用的函数。回调 函数的名字一般是在请求中指定的。而数据是被放入到回调函数的参数中。下面是一个典型的 JSONP 请求。
 
 ```javascript
 <script src="http://domain/api?callback=jsonp"></script>
@@ -484,7 +484,7 @@ JSONP 是 JSON with padding的简写. JSONP本质上是一个Hack，它利用`<s
 缺点：
 
 1. 只支持get请求（因为`<script>`标签只能get）
-2. 有安全性问题
+2. 有安全性问题，可能会遭受XSS攻击
 3. 需要服务端配合jsonp进行一定程度的改造
 
 #### CORS
@@ -496,6 +496,14 @@ CORS 需要浏览器和后端同时支持。服务端设置 Access-Control-Allow
 #### Nginx
 
 使用nginx反向代理实现跨域，是最简单的跨域方式。只需要修改nginx的配置即可解决跨域问题，支持所有浏览器，支持session，不需要修改任何代码，并且不会影响服务器性能。
+
+#### postMessage
+
+postMessage()方法允许来自不同源的脚本采用异步方式进行有限的通信，可以实现跨文本档、多窗口、跨域消息传递。
+
+<!-- https://github.com/funnycoderstar/blog/issues/73 -->
+<!-- https://mp.weixin.qq.com/s/AHsrlQsEJu3LrT-1RGdFDQ -->
+
 
 ## 本地存储
 
