@@ -191,6 +191,7 @@ Function.prototype.myBind = function(obj){
 }
 ```
 
+
 ## new 操作符
 
 ### new 的作用
@@ -526,4 +527,153 @@ function instanceof(left,right){
 
 ## Async函数实现
 
-[参考链接](https://mp.weixin.qq.com/s/ykrZZxCoC8O8D__Qimrtrg)
+<!-- [async参考链接](https://mp.weixin.qq.com/s/ykrZZxCoC8O8D__Qimrtrg) -->
+
+## EventEmitter
+
+## Class继承ES5实现
+
+## 数组去重
+
+数组去重是一道很常问的面试题，在日常开发也很频繁。那什么方法才是最优的呢？那又要哪些方法呢？
+
+### 去重的方法
+
+#### 双层for循环
+
+最笨最直接的方法
+
+```javascript
+function unique(arr){
+  let len = arr.length;
+  let res = []
+  for(let i=0; i < len; i++){
+    let flag = false
+    for(let j=i+1;j<len;j++){
+      if(arr[i] === arr[j]){
+        flag = true
+      }
+    }
+    if(!flag){
+      res.push(arr[i])
+    }
+  }
+  return res
+}
+```
+#### Array.filter() 加 indexOf
+
+使用高级函数配合indexOf查找下标，如果下标等于当前索引就不存在重复元素。
+
+```javascript
+function unique(arr){
+  return arr.filter((item,index)=>{
+    return arr.indexOf(item) === index
+  })
+}
+```
+#### Array.sort() 加一层遍历相邻元素不相等
+
+```javascript
+function unique(arr){
+  let res = []
+  let _arr = arr.sort()
+  let perNum = undefined
+  let len = _arr.length
+  for(let i=0;i<len;i++){
+    if(!i || perNum !== _arr[i]){
+      res.push(_arr[i])
+    }
+    perNum = _arr[i]
+  }
+  return res
+}
+```
+
+思想: 调用了数组的排序方法 sort()，V8引擎 的 sort() 方法在数组长度小于等于10的情况下，会使用插入排序，大于10的情况下会使用快速排序。然后根据排序后的结果进行遍历及相邻元素比对，如果相等则跳过该元素，直到遍历结束。
+
+#### Es6 Set方法
+
+```javascript
+let unique = (arr) => [...new Set(arr)]
+```
+
+#### Object 键值对
+
+```javascript
+function unique(arr){
+  let obj = {};
+  return arr.filter((item)=>{
+    let str = typeof(item) + item
+    return obj.hasOwnProperty(str) ? false : obj[str] = true
+  })
+}
+```
+
+这种方法是利用一个空的 Object 对象，我们把数组的值存成 Object 的 key 值，比如 Object[value1] = true，在判断另一个值的时候，如果 Object[value2]存在的话，就说明该值是重复的. 
+
+但是需要注意的一点是因为对象的键值只能是字符串,那么其实值为 123 和 '123' 会是相等的。所以需要加上一个类型。
+
+### 性能测试
+
+那么哪种方法的性能最好呢？我们写一段简单的测试性能代码简单的测试一下。
+
+```javascript
+let arr1 = Array.from(new Array(100000), (x, index)=>{
+    return index
+})
+
+let arr2 = Array.from(new Array(50000), (x, index)=>{
+    return index*2
+})
+
+let example = [...arr1,...arr2]
+
+console.log('初始数组长度',example.length)
+let start = window.performance.now();
+console.log('开始时间', start)
+
+let res = unique(example)// 各个方法
+
+console.log('去重后的长度', res.length)
+
+let end = window.performance.now();
+console.log('耗时', end - start)
+```
+按顺序测试得到的数据如下：
+
+
+初始数组长度 150000
+开始时间 69.05000004917383
+去重后的长度 100000
+耗时 14234.754999983124
+
+初始数组长度 150000
+开始时间 41.63500003051013
+去重后的长度 100000
+耗时 8617.219999956433
+
+
+初始数组长度 150000
+开始时间 135.97000000299886
+去重后的长度 100000
+耗时 22.514999960549176
+
+初始数组长度 150000
+开始时间 106.8849999574013
+去重后的长度 100000
+耗时 11.095000023487955
+
+初始数组长度 150000
+开始时间 48.134999989997596
+去重后的长度 100000
+耗时 90.00999998534098
+
+
+分析数据得出结果
+
+双重 for 循环 >  Array.filter()加 indexOf  > Array.sort() 加一行遍历冒泡 > Object 键值对去重复 > ES6中的Set去重 
+
+可能的测试结果有问题,但是显然可以得出 后几种的方法性能更佳
+
+<!-- https://mp.weixin.qq.com/s/qlk8ORP0t6NiEJEViySYhg -->
