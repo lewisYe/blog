@@ -676,4 +676,39 @@ console.log('耗时', end - start)
 
 可能的测试结果有问题,但是显然可以得出 后几种的方法性能更佳
 
-<!-- https://mp.weixin.qq.com/s/qlk8ORP0t6NiEJEViySYhg -->
+### 注意事项
+
+#### 特殊变量类型的考虑
+
+以上几种方法对于特殊变量类型是否都适用，比如NaN,对象等。
+
+NaN === NaN 输出的是false，indexOf底层适用的是恒等(===)进行的判断所以，indexOf查到不到NaN元素。
+
+Set可以去重NaN类型， Set内部认为尽管 NaN === NaN 为 false，但是这两个元素是重复的。
+
+用下面这个例子来测试一下：
+```javascript
+function test(){
+  var array = [1, 1, '1', '1', null, null, undefined, undefined, false,false, NaN, NaN,{a:1},{a:1},{a:2}];
+  let res = unique(array)// 各个方法
+  console.log(res)
+}
+```
+依次分别输出
+
+```javascript
+[1, "1", null, undefined, false, NaN, NaN, {a:1}, {a:1}, {a:2}] // 对象 和 NaN无效
+
+[1, "1", null, undefined, false, {a:1}, {a:1}, {a:2}] //对象 和 NaN无效
+
+[1, "1", NaN, NaN, {a:1}, {a:1}, {a:2}, false, null, undefined] //对象 和 NaN无效
+
+[1, "1", null, undefined, false, NaN, {a:1}, {a:1}, {a:2}] //对象无效
+
+[1, "1", null, undefined, false, NaN, {a:1}] //对象无效
+```
+
+
+#### 时间复杂度和空间复杂度
+
+以上的所有数组去重方式，应该 Object 对象去重复的方式是时间复杂度是最低的，除了一次遍历时间复杂度为O(n) 后，查找到重复数据的时间复杂度是O(1)，但是对象去重复的空间复杂度是最高的。
