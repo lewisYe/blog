@@ -1,5 +1,6 @@
 # 性能
 
+<!-- http://www.alloyteam.com/2020/01/14184/ -->
 ## web性能领域专业术语
 
 ### FP（First Paint）
@@ -18,8 +19,11 @@ FP 与 FCP这两个指标之间的主要区别是：FP是当浏览器开始绘�
 
 相比较，FCP指的是浏览器首次绘制来之DOM的内容。例如：文本，图片，SVG，canvas元素等，这个时间点叫FCP。
 
-FP和FCP可能是相同的时间，也可能是先FP后FCP。
+FP和FCP可能是相同的时间，也可能是先FP后FCP,这两个指标浏览器已经标准化了，从 performance 的 The Paint Timing API 可以获取到。
 
+`window.performance.getEntriesByType("paint")`
+
+![](./images/paint.jpg)
 
 ### FMP (First Meaningful Paint)
 
