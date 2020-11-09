@@ -404,3 +404,8 @@ Scope Hoisting 的实现原理其实很简单：分析出模块之间的依赖�
 ```
 
 [文档链接](https://webpack.js.org/contribute/writing-a-plugin/)
+
+ 
+## AST
+
+<!-- https://mp.weixin.qq.com/s/ek97O_jKk5_bD2WBdd95Yw -->

@@ -528,12 +528,13 @@ function instanceof(left,right){
 ## Async函数实现
 
 <!-- [async参考链接](https://mp.weixin.qq.com/s/ykrZZxCoC8O8D__Qimrtrg) -->
+<!-- https://mp.weixin.qq.com/s/-Jf48IVOoOSLgOV60rm0Wg -->
 
 ## EventEmitter
 
 ## Class继承ES5实现
 
-## 数组去重
+## 数组去重
 
 数组去重是一道很常问的面试题，在日常开发也很频繁。那什么方法才是最优的呢？那又要哪些方法呢？
 
