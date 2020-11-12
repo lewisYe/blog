@@ -208,3 +208,6 @@ git checkout -b 本地分支名 origin/远程分支名
 * test：测试用例的修改；
 * revert：回滚到上一个版本；
 
+## 点赞动画的实现
+
+参考链接：https://mp.weixin.qq.com/s/Ohnn9tXyb9Wv_zK9a1todg

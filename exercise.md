@@ -36,3 +36,5 @@
 7. call、apply、bind
 
 8. promise有点与缺点
+
+<!-- https://mp.weixin.qq.com/s/xVVP_Uk8rLBhHJaMqMMJoA -->

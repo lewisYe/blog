@@ -3501,3 +3501,5 @@ createStore是Redux中最核心的API。通过该方法可以生成一个store �
 2. dispatch(action):分发一个action,并返回这个action，这是唯一能改变store中数据的方式
 3. subscribe(listener):注册一个监听者，它在store发生变化时被调用
 4. replaceReducer(nextReducer):更新当前store里的reducer，一般只会在开发模式中调用
+
+<!-- https://mp.weixin.qq.com/s/HhjDQgK8FcPiy5BEfZ7lYQ redux 参考资料 -->
