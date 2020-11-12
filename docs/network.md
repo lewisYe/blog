@@ -1000,3 +1000,8 @@ PS：DNS 是基于 UDP 做的查询。
 5:最后渲染进程会像浏览器进程“确认提交”，这是告诉浏览器进程，说我已经准备好接受和解析页面数据了
 
 6:最后浏览器进程更新页面状态 -->
+
+
+## CDN
+
+<!-- https://mp.weixin.qq.com/s/Df9kYNquukRCwwocgRblcQ -->

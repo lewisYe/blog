@@ -533,6 +533,31 @@ function instanceof(left,right){
 
 ## Class继承ES5实现
 
+```javascript
+function Super() {
+  this.a = 1;
+}
+
+function Child() {
+  // 属性继承
+  Super.call(this);
+  this.b = 2;
+}
+// 原型继承
+Child.prototype = new Super();
+
+const child = new Child();
+child.a;  // 1
+
+
+const extends = (Child, Super) => {
+  const fn = function () {};
+  
+  fn.prototype = Super.prototype;
+  Child.prototype = new fn();
+  Child.prototype.constructor = Child;
+};
+```
 ## 数组去重
 
 数组去重是一道很常问的面试题，在日常开发也很频繁。那什么方法才是最优的呢？那又要哪些方法呢？

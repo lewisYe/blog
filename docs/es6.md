@@ -894,6 +894,10 @@ Promise.race = function (promises) {
 }
 ```
 
+### Promise 实现超时机制
+
+### Promise 并行调度器
+
 ## Iterator 和 for...of 循环
 
 遍历器（Iterator）是一种接口，为各种不同的数据结构提供统一的访问机制。任何数据结构只要部署 Iterator 接口，就可以完成遍历操作（即依次处理该数据结构的所有成员）。
