@@ -1332,6 +1332,8 @@ function TextInputWithFocusButton() {
 
 本文是基于V16.13.1进行的分析。
 
+<!-- https://mp.weixin.qq.com/s/byb5_0PYaGHwoq2wM5hVww -->
+
 ### 事件注册与存储
 
 注册与存储的大体函数调用顺序如下：

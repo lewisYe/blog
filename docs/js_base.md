@@ -2752,7 +2752,7 @@ Node.js也是单线程的Event Loop，但是它的运行机制不同于浏览器
 
 请看下面的示意图
 
-![5](https://user-images.githubusercontent.com/29204799/53956078-96b3df80-4115-11e9-9d66-ab461fb99ba0.png)
+![](https://user-images.githubusercontent.com/29204799/53956078-96b3df80-4115-11e9-9d66-ab461fb99ba0.png)
 
 根据上图，Node.js的运行机制如下。
 
