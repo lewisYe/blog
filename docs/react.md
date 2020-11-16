@@ -3505,3 +3505,42 @@ createStore是Redux中最核心的API。通过该方法可以生成一个store �
 4. replaceReducer(nextReducer):更新当前store里的reducer，一般只会在开发模式中调用
 
 <!-- https://mp.weixin.qq.com/s/HhjDQgK8FcPiy5BEfZ7lYQ redux 参考资料 -->
+
+## Recoil
+
+Recoil是React的状态管理库，由Facebook官方推出，更加的贴合react内部的调用机制。[官网文档链接](https://recoiljs.org/)
+
+接下来我们来看看具体的基本使用,项目中安装Recoil就直接跳过了。
+
+### RecoilRoot
+
+使用Recoil需要使用`RecoilRoot`将组件包裹
+
+```javascript
+import React from 'react'
+
+import {
+  RecoilRoot,
+  atom,
+  selector,
+  useRecoilState,
+  useRecoilValue,
+} from 'recoil';
+
+function App() {
+  return (
+    <RecoilRoot>
+      <CharacterCounter />
+    </RecoilRoot>
+  );
+}
+```
+
+### Atom
+
+
+
+
+
+
+<!-- https://mp.weixin.qq.com/s/8XbhvfqHFFx_qzYBg6Hf8A -->
