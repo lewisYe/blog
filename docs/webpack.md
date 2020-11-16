@@ -409,3 +409,150 @@ Scope Hoisting 的实现原理其实很简单：分析出模块之间的依赖�
 ## AST
 
 <!-- https://mp.weixin.qq.com/s/ek97O_jKk5_bD2WBdd95Yw -->
+
+
+## webpack5
+
+
+2020年10月10号webpack5发布了，带了许多的变更。下面就聊一聊我所认识的对我有影响的点。（其实我就是看懂了哪些，哈哈哈哈）
+
+
+本次重大发布的整体发展方向如下：
+
+* 尝试用持久性缓存来提高构建性能。
+* 尝试用更好的算法和默认值来改进长期缓存。
+* 尝试用更好的 Tree Shaking 和代码生成来改善包大小。
+* 尝试改善与网络平台的兼容性。
+* 尝试在不引入任何破坏性变化的情况下，清理那些在实现 v4 功能时处于奇怪状态的内部结构。
+* 试图通过现在引入突破性的变化来为未来的功能做准备，尽可能长时间地保持在 v5 版本上。
+
+
+
+### 功能清除 
+
+1. 清理已经废弃的功能
+
+所有在webpack4标记即将过期的功能，都在该版本移除。所以再升级之前请确认没有废弃的功能点。
+
+2. 不再为Node.js模块自动引用Polyfills
+
+在webpack4及之前的版本，项目中有使用node.js内置模块会自动添加Polyfills；在webpack5中将不会再添加。如果你的项目中有需要用到请手动添加。
+
+### 针对长期缓存的优化
+
+1. 确定的Chunk、模块ID和导出名称
+
+新增了长期的缓存的算法。这些算法在生产环境是默认开启的。
+
+`chunkIds:"deterministic"` `moduleIds:"deterministic"` `mangleExports:"deterministic"`
+
+该算法以确定性的方式为模块和分块分配短的（3 或 5 位）数字 ID，这是包大小和长期缓存之间的一种权衡。由于这些配置将使用确定的 ID 和名称，这意味着生成的缓存失效不再更频繁。
+
+2. 真正的contenthash
+
+在webpack5中将使用真正的文件内容哈希。之前的版本它"只"使用内容结构的哈希值。当只有注释被修改或者变量被重命名，这对长期缓存会有积极影响。这些变化在压缩后是不可见的。
+
+### 构建优化
+
+1. 嵌套的tree-shaking
+
+webpack现在能够跟着对导出的嵌套属性的访问。这可以改善重新导出命名空间 对象时的 Tree Shaking（清除未使用的导出和混淆导出）。
+
+```javascript
+// inner.js
+export const a = 1;
+export const b = 2;
+
+// module.js
+export * as inner from './inner';
+// 或 import * as inner from './inner'; export { inner };
+
+// user.js
+import * as module from './module';
+console.log(module.inner.a);
+```
+
+在这个例子中，可以在生产模式下删除导出的b。
+
+2. 内部模块tree-shaking
+
+webpack4没有分析模块的导出和引用之间的依赖关系。webpack5中有一个新的选项`optimization.innerGrph`，在生产模式下是默认开启的，它可以对模块中的标志进行分析，找出导出和引用之间的依赖关系。
+
+```javascript
+import { something } from './something';
+
+function usingSomething() {
+  return something;
+}
+
+export function test() {
+  return usingSomething();
+}
+```
+
+内部依赖图算法会找出 something 只有在使用 test 导出时才会使用。这允许将更多的出口标记为未使用，并从代码包中省略更多的代码。
+
+当设置`"sideEffects": false`时，可以省略更多的模块。在这个例子中，当 `test` 导出未被使用时，`./something` 将被省略。
+
+3. commonJs tree-shaking
+
+webpack 曾经不进行对 CommonJs 导出和 require() 调用时的导出使用分析。
+
+webpack 5 增加了对一些 CommonJs 构造的支持，允许消除未使用的 CommonJs 导出，并从 require() 调用中跟踪引用的导出名称。
+
+### 重大变更：长期未解决的问题
+
+1. 单一文件目标的代码分割
+
+只允许启动单个文件的目标（如 node、WebWorker、electron main）现在支持运行时自动加载引导所需的依赖代码片段。
+
+这允许对这些目标使用 chunks: "all" 和 optimization.runtimeChunk。
+
+2. 更新了解析器
+
+`enhanced-resolve`更新到了v5版本，有以下改进：
+
+* 追踪更多的依赖关系，比如丢失的文件
+* 别名可能有多种选择
+* 现在可以别名为`false`了
+* 支持 exports 和 imports 字段等功能
+* 性能提高
+
+3. 没有JS的代码块
+
+不包含 JS 代码的块，将不再生成 JS 文件。这就允许有只包含 CSS 的代码块。
+
+
+### 主要的内部架构变更
+
+1. 新的插件运行顺序
+
+现在 webpack 5 中的插件在应用配置默认值之前就会被应用。这使得插件可以应用自己的默认值，或者作为配置预设。但这也是一个突破性的变化，因为插件在应用时不能依赖配置值的设置。
+
+参考链接：[https://mp.weixin.qq.com/s/sh7rcv6hdhYfWr1bv_ssbg](https://mp.weixin.qq.com/s/sh7rcv6hdhYfWr1bv_ssbg)
+
+2. 入口文件的新增配置
+
+ webpack 5 中，入口文件除了字符串、字符串数组，也可以使用描述符进行配置了，如：
+ 
+ ```javascript
+module.exports = {
+  entry: {
+    catalog: {
+      import: './catalog.js',
+    },
+  },
+};
+ ```
+
+此外，也可以定义输出的文件名，之前都是通过 output.filename 进行定义的：
+```javascript
+module.exports = {
+  entry: {
+    about: { import: './about.js', filename: 'pages/[name][ext]' },
+  },
+};
+```
+3. Tapable 插件升级
+
+webpack 3 插件的 compat 层已经被移除。它在 webpack 4 中已经被取消了。一些较少使用的 tapable API 被删除或废弃。
