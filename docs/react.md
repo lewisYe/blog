@@ -3510,9 +3510,52 @@ createStore是Redux中最核心的API。通过该方法可以生成一个store �
 
 Recoil是React的状态管理库，由Facebook官方推出，更加的贴合react内部的调用机制。[官网文档链接](https://recoiljs.org/)
 
-接下来我们来看看具体的基本使用,项目中安装Recoil就直接跳过了。
 
-### RecoilRoot
+### 核心概念
+
+使用Recoil,可以创建一个数据流图，该图从atoms(共享状态)通过selectors(纯函数)一直流到React组件。
+
+Atom是组件可以预订的状态单位。
+
+selectors是可以同步或异步转换此状态。
+
+#### Atoms(原子)
+
+Atom是最小状态单位。它们是可更新和可订阅的，当Atom被更新时，每个订阅的组件都将用新值重新呈现。如果从多个组件中使用同一个 Atom ，所有这些组件都会共享它们的状态。
+
+使用atom函数来创建Atoms：
+
+```javascript
+const fontSizeState = atom({
+  key: 'fontSizeSstate',
+  default: 12
+})
+```
+原子需要一个独一无二的key，全局唯一。你可以使用`Symobl`类型作为key值。
+
+#### Selectors
+
+Selector 是一个入参为 Atom 或者其他 Selector 的纯函数。当它的上游 Atom 或者 Selector 更新时，它会进行重新计算。Selector 可以像 Atom 一样被组件订阅，当它更新时，订阅它的组件将会重新渲染。
+
+使用 selector 方法创建 Selector 实例。
+
+```javascript
+const fontSizeLabelState = selector({
+  key: 'fontSizeLabelState',
+  get: ({get}) => {
+    const fontSize = get(fontSizeState);
+    const unit = 'px';
+
+    return `${fontSize}${unit}`;
+  },
+});
+```
+
+get 属性是一个计算函数，它可以使用入参 get 字段来访问输入的 Atom 和 Selector。当它访问其他 Atom 和 Selector 时，这层依赖关系会保证更新状态的同步。
+
+
+接下来我们简单的来学习使用Recoil
+### 初始化
 
 使用Recoil需要使用`RecoilRoot`将组件包裹
 
@@ -3536,11 +3579,115 @@ function App() {
 }
 ```
 
-### Atom
+###  订阅和更新状态
+
+Recoil 采用 Hooks 方式订阅和更新状态，常用的是下面三个 API：
+* `useRecoilState` 类似useState的一个Hook，可以取到 atom 的值 和 setter 函数
+* `useSetRecoilState` 只获取setter函数 如果只使用了这个函数，状态变化不会导致组件重新渲染
+* `useRecoilValue` 只获取状态
+
+```javascript
+
+const atomKey = Symobl('atom')
+
+const textState = atom({
+  key: atomKey, // unique ID (with respect to other atoms/selectors)
+  default: '', // default value (aka initial value)
+});
+
+function CharacterCounter() {
+  return (
+    <div>
+      <TextInput />
+      <CharacterCount />
+    </div>
+  );
+}
+
+function TextInput() {
+  const [text, setText] = useRecoilState(textState);
+
+  const onChange = (event) => {
+    setText(event.target.value);
+  };
+
+  return (
+    <div>
+      <input type="text" value={text} onChange={onChange} />
+      <br />
+      Echo: {text}
+    </div>
+  );
+}
+```
+
+### 派生状态
+
+selector 表示一段派生状态，它使我们能够建立依赖于其他 atom 的状态。它有一个强制性的 get 函数。
+
+```javascript
+
+const selectorKey = Symobl('selector')
+
+const charCountState = selector({
+  key: selectorKey, // unique ID (with respect to other atoms/selectors)
+  get: ({get}) => {
+    const text = get(textState);
+
+    return text.length;
+  },
+});
+
+function CharacterCount() {
+  const count = useRecoilValue(charCountState);
+
+  return <>Character Count: {count}</>;
+}
+```
+
+### 异步状态
+
+Recoil提供了一种通过数据流图将状态和派生状态映射到React组件的方法。真正强大的功能是图中的函数也可以是异步的。这使得在异步React组件渲染函数中轻松使用异步函数成为可能. 只需从选择器get回调中将Promise返回值，而不是返回值本身.
+
+例如下面的例子，如果用户名存储在我们需要查询的某个数据库中，那么我们要做的就是返回一个 Promise 或使用一个 async 函数。如果任何依赖项发生更改，则将重新评估选择器并执行新查询。结果将被缓存，因此查询将仅对每个唯一输入执行一次。
+
+```javascript
+const currentUserNameQuery = selector({
+  key: 'CurrentUserName',
+  get: async ({get}) => {
+    const response = await myDBQuery({
+      userID: get(currentUserIDState),
+    });
+    return response.name;
+  },
+});
+
+function CurrentUserInfo() {
+  const userName = useRecoilValue(currentUserNameQuery);
+  return <div>{userName}</div>;
+}
+```
+
+Recoil 推荐使用 Suspense，Suspense 将会捕获所有异步状态，另外配合 ErrorBoundary 来进行错误捕获：
+
+```javascript
+function MyApp() {
+  return (
+    <RecoilRoot>
+      <ErrorBoundary>
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <CurrentUserInfo />
+        </React.Suspense>
+      </ErrorBoundary>
+    </RecoilRoot>
+  );
+}
+```
+
+总结：上诉内容只是简单的介绍和使用了Recoil，属于入门级，需要深入的理解和项目中使用可以查看文档，和社区成熟示例
 
 
+参考资料链接：
 
-
-
-
-<!-- https://mp.weixin.qq.com/s/8XbhvfqHFFx_qzYBg6Hf8A -->
+* [https://recoiljs.org/](https://recoiljs.org/)
+* [https://mp.weixin.qq.com/s/OwYW9v4FooE2IK2AJQePpA](https://mp.weixin.qq.com/s/OwYW9v4FooE2IK2AJQePpA)
