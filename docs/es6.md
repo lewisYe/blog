@@ -795,7 +795,7 @@ Promise.prototype.then=function(onResolved,onRejected){
 try{
   fn(resolve,reject)
 }catch(e){
-  rejected(e)
+  reject(e)
 }
 ```
 
@@ -893,7 +893,7 @@ Promise.race = function (promises) {
     })
 }
 ```
-
+#### Promise.allSettled
 ### Promise 实现超时机制
 
 ### Promise 并行调度器
