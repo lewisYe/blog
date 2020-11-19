@@ -448,12 +448,64 @@ var o = {
 **位操作符包含**
 
 1. 按位非（~）返回数值的反码
+
+将操作数所有位取反。根据js中带符号的整数的表示方法，对一个值使用~运算符相当于它的相反数减1
+```javascript
+var b=-7
+console.log(~b)//输出6
+```
 2. 按位与（&）
+
+两个操作数中相对应的位都是1时，这位为1，否则都为零
+
+```javascript
+var a=3//011
+var b=7//111
+console.log(a&b)// 输出3 => 011
+```
 3. 按位或 (|)
+
+如果两个数对应为都不为0，这位才是1
+
+```javascript
+var a=3//011
+var b=7//111
+console.log(a|b)// 输出7 => 111
+```
 4. 按位异或（^）
+两个数对应位不同，这位才为1，否则为0
+```javascript
+var a=3//011
+var b=7//111
+console.log(a^b)// 输出4 => 100
+```
 5. 左移（<<）
+
+将第一个操作数进行左移，移动的位数为第二个操作数(0~31之间的一个整数)，新的位由0补齐。
+
+```javascript
+var a=3
+var b=7//000111
+console.log(b<<a)//111000 => 输出56
+```
 6. 有符号右移（>>）
+
+将第一个操作数进行右移，移动的位数为第二个操作数(0~31之间的一个整数)，右边的溢出位被忽略，填补在左边的位由原操作数符号决定，以便保持结果的符号与原操作数一致。如果第一个操作数是正数，移位后用0填补最高位；如果为负，用1填补最高位。
+
+```javascript
+var a=2
+var b=-7//1 111111001  
+console.log(b>>a)//1 11111110 => -2  
+```
 7. 无符号右移（>>>）
+
+同样右移，最高位补0，忽略符号位
+
+```javascript
+var a=4
+var b=-1// 1 11111111
+console.log(b>>>a)//0 0000 1111 1111 1111 1111 1111 1111 1111 => 输出268435455
+```
 
 ### 布尔操作符
 
@@ -1878,9 +1930,10 @@ console.log(foo1(1, 2))
 
 ## 继承
 
-实现继承的多种方式, 以及其的优缺点。
+下面将讲述实现继承的几种方式, 以及其的优缺点。
+### 原型链继承
 
-首先我们先创建一个父类
+核心：父类的实例作为子类的原型
 
 ``` javascript
 function Animal(name) {
@@ -1891,16 +1944,11 @@ function Animal(name) {
 Animal.prototype.sayName = function(food) {
     return this.name
 }
-```
 
-### 原型链继承
+function Cat() {
+}
 
-核心：父类的实例作为子类的原型
-
-``` javascript
-function Cat() {}
-
-Cat.prototype = new Animal();
+Cat.prototype = new Animal(); // 关键
 
 var cat = new Cat()
 
@@ -1921,7 +1969,16 @@ console.log(cat instanceof Cat); // true
 
 示例说明
 
-``` 
+```javascript
+function Animal(name) {
+    this.name = name || 'Tom'
+    this.colors = ['red', 'bule']
+}
+
+Animal.prototype.sayName = function() {
+    return this.name
+}
+
 function Cat(){}
 
 // 1
@@ -1942,8 +1999,8 @@ Cat.prototype.sayHeight = function(){
 
 var cat = new Cat()
 
-console.log(cat.height); //1. undefined    2. 20
-console.log(cat.sayHeight()); //1. not a function     2. 20
+console.log(cat.height); //1号位输出. undefined    2号位输出. 20
+console.log(cat.sayHeight()); //1号位输出. not a function     2号位输出. 20
 ```
 
 如果代码放在1号位则输出的undfined，放在2号位则能正常输出数值20
@@ -1952,7 +2009,16 @@ console.log(cat.sayHeight()); //1. not a function     2. 20
 
 示例说明
 
-``` 
+```javascript 
+function Animal(name) {
+    this.name = name || 'Tom'
+    this.colors = ['red', 'bule']
+}
+
+Animal.prototype.sayName = function() {
+    return this.name
+}
+
 var cat1 = new Cat()
 cat1.colors.push('white')
 console.log(cat1.colors) // ['red','bule','white']
@@ -1968,47 +2034,57 @@ console.log(cat2.colors) // ['red','bule','white']
 
 在解决原型中包含引用类型值所带来问题的过程中开始使用一种叫做借用构造函数 (constructor stealing)的技术(有时候也叫做伪造对象或经典继承)。这种技术的基本思想相当简单，即在子类型构造函数的内部调用超类型构造函数。
 
-``` 
-function Cat(){
-  Animal.call(this)
+```javascript 
+function Animal(name) {
+    this.name = name || 'Tom'
+    this.colors = ['red', 'bule']
 }
 
-var cat1 = new Cat()
-cat1.colors.push('white')
-console.log(cat1.colors) // ['red','bule','white']
+Animal.prototype.sayName = function() {
+    return this.name
+}
 
-var cat2 = new Cat()
+function Cat(name){
+  Animal.call(this,name) // 可以向父类传参
+}
+var cat1 = new Cat('Tom')
+var cat2 = new Cat('Jack')
+
+cat1.colors.push('white')
+
+console.log(cat1.colors) // ['red','bule','white']
 console.log(cat2.colors) // ['red','bule']
+console.log(cat1.name) // Tom
+console.log(cat2.name) // Jack
+console.log(cat1 instanceof Animal) // false
+console.log(cat1.sayName()) // Uncaught TypeError: cat1.sayName is not a function
 ```
 
 #### 特点
 
 1. 解决了原型链继承中，子类实例共享父类引用属性的问题
 2. 创造子类实例时，可以向父类传递参数
-
-``` 
-function Cat(name){
-  Animal.call(this,name)
-}
-var cat1 = new Child('Tom')
-console.log(cat1.name) // Tom
-
-var cat2 = new Child('Jack')
-console.log(cat2.name) // Jack
-```
-
 3. 可以实现多继承 call 多个父类
 
 #### 缺点
 
-1. 实例是子类实例，不是父类实例 `console.log(cat instanceof Animal); // false` 
-2. 方法都在构造函数中定义，因此无法实现函数复用，每次创建实例都会创建一遍方法，影响性能
+1. 实例是子类实例，不是父类实例 `console.log(cat1 instanceof Animal); // false` 
+2. 并没有继承父类原型上的方法 `console.log(cat1.sayName()) // Uncaught TypeError: cat1.sayName is not a function`
 
 ### 组合继承
 
 组合继承，有时也叫做伪经典继承，指的是将原型链和借用构造函数的技术组合到一块，从而发挥二者之长的一种继承模式。其背后的思路是使用原型链实现对原型属性和方法的继承，而通过借用构造函数来实现对实例属性的继承。
 
-``` 
+```javascript 
+function Animal(name) {
+    this.name = name || 'Tom'
+    this.colors = ['red', 'bule']
+}
+
+Animal.prototype.sayName = function() {
+    return this.name
+}
+
 function Cat(name,age){
   // 继承属性
   Animal.call(this,name) //第二次调用Animal() 父类构造器
@@ -2023,37 +2099,39 @@ Cat.prototype.sayAge = function(){
   return this.age
 }
 
-var cat1 = new Cat('Jack',18)
-cat1.colors.push('white')
-console.log(cat.colors) // ['red','blue','white']
-cat1.sayName() // 'Jack'
-cat.sayAge() // 18
 
+var cat1 = new Cat('Jack',18)
 var cat2 = new Cat('Rose',19)
+
+cat1.colors.push('white')
+
+console.log(cat1.colors) // ['red','blue','white']
 console.log(cat2.colors) // ['red','blue']
-cat2.sayName() // Rose
-cat2.sayAge() // 19
+console.log(cat1.sayName()) // 'Jack'
+console.log(cat2.sayName()) // Rose
+console.log(cat1.sayAge()) // 18
+console.log(cat2.sayAge()) // 19
 ```
 
 组合继承避免了原型链和借用构造函数的缺陷，融合了它们的优点，成为 JavaScript 中最常用的继 承模式。而且，instanceof 和 isPrototypeOf()也能够用于识别基于组合继承创建的对象。
 
-缺点：调用两次超类型构造函数: 一次是在创建子类型原型的时候，另一次是 在子类型构造函数内部
+缺点：
+1. 调用两次超类型构造函数: 一次是在创建子类型原型的时候，另一次是 在子类型构造函数内部
 
 ### 原型式继承
 
 该方法是由道格拉斯·克罗克福德所提出，他的想法是借助原型可以基于已有的对象创建新的对象，同时还不必因此创建自定义类型。
 
-``` 
+```javascript 
 function object(o){
-  function F()
+  function F(){}
   F.prototype = o
   return new F()
 }
 ```
+这其实就是 ECMAScript 5 的 Object.create()方法的实现。
 
-ECMAScript 5 通过新增 Object.create()方法规范化了原型式继承
-
-``` 
+```javascript 
 var person = {
     name: 'Tom',
     friends: ['Jack', 'Rose']
@@ -2075,7 +2153,7 @@ console.log(person2.friends); // ["Jack", "Rose", "Tisa"]
 
 ### 寄生式继承
 
-``` 
+```javascript 
 function createObj (o) {
     var clone = Object.create(o);
     clone.sayName = function () {
@@ -2093,11 +2171,16 @@ function createObj (o) {
 
 核心:
 
-``` 
+```javascript 
+//寄生组合式继承的核心方法s
 function inheritPrototype(subType,superType){
-  var prototype = superType.prototype
+  // 继承父类的原型
+  var prototype = Object.create(superType.prototype)
+  // 重写被污染的子类的constructor
   prototype.constructor = subType
+  // 重写子类的原型
   supType.prototype = prototype
+ 
 }
 
 ```
@@ -2114,7 +2197,7 @@ function inheritPrototype(subType,superType){
 
 如何使用：
 
-``` 
+```javascript
 function Animal(name) {
     this.name = name || 'Tom'
     this.colors = ['red', 'bule']
@@ -2135,8 +2218,28 @@ var cat1 = new Child('Jack', '18');
 
 ```
 
-这个例子的高效率体现在它只调用了一次 Animal 构造函数，并且因此避免了在 Cat.prototype 上面创建不必要的、多余的属性。与此同时，原型链还能保持不变; 因此，还能够正常使用 instanceof 和 isPrototypeOf()。开发人员普遍认为寄生组合式继承是引用类型最理想的继承范式。
+该方法：
+1. 子类继承了父类的属性和方法，同时，属性没有被创建在原型链上，因此多个子类不会共享同一个属性；
+2. 子类可以传递动态参数给父类；
+3. 父类的构造函数只执行了一次。
+4. 能正常使用 instanceof 和 isPrototypeOf()
 
+然而，仍然存在一个美中不足的问题：
+
+子类想要在原型上添加方法，必须在继承之后添加，否则将覆盖掉原有原型上的方法。这样的话若是已经存在的两个类，就不好办了。
+所以，我们可以将核心代码优化一下
+```javascript
+function inheritPrototype(subType,superType){
+  // 继承父类的原型
+  var prototype = Object.create(superType.prototype)
+  // 重写被污染的子类的constructor
+  prototype.constructor = subType
+ // 将父类原型和子类原型合并，并赋值给子类的原型
+  supType.prototype = Object.assign(prototype, subType.prototype)
+ 
+}
+```
+但实际上，使用Object.assign 来进行 copy 仍然不是最好的方法。因为Object.assign 方法只会拷贝源对象自身的并且可枚举的属性到目标对象。而ES6中，类的方法默认都是不可枚举的。此外，如果子类本身已经继承自某个类，以上的继承将不能满足要求。
 ## 闭包
 
 ### 定义
@@ -3446,5 +3549,21 @@ RangeError 边界错误。表示超出有效范围时发生的异常，主要有
 例如"(?<!95|98|NT|2000)Windows"能匹配"3.1Windows"中的"Windows"，但不能匹配"2000Windows"中的"Windows"。
 
 ## Ajax
+
+```javascript
+var xhr = new XMLHttpReuest()
+xhr.open('GET', url);
+xhr.responseType = 'json'
+
+xhr.onload = function(){
+  console.log(xhr.response)
+}
+
+xhr.onerror = function(){
+  console.log(error)
+}
+
+xhr.send()
+```
 
 ## 创建对象的方式有哪些
