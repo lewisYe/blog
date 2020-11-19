@@ -165,7 +165,7 @@ Function.prototype.myBind = function(thisArg){
      // 这个时候的arguments是指bind返回的函数传入的参数
     var bindArgs = Array.prototype.slice.call(arguments);
     if(this instanceof bound){
-      if(that.prototype){
+      if(that.prototype){  // that可能是ES6的箭头函数，没有prototype，所以就没必要再指向做prototype操作。
         bound.prototype = Object.create(that.prototype)
 
         // 可以模拟实现Object.create
@@ -190,6 +190,7 @@ Function.prototype.myBind = function(thisArg){
   return bound
 }
 ```
+参考资料：[能否模拟实现JS的bind方法](https://juejin.im/post/6844903718089916429)
 
 
 
