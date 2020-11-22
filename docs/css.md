@@ -23,8 +23,8 @@
   例如：div、h1等
 
   #### 行内元素
-  1.不独占一行，可与其它行内元素并行
-  2.设置宽高无效，默认宽度为内容宽度
+  1. 不独占一行，可与其它行内元素并行
+  2. 设置宽高无效，默认宽度为内容宽度
 
   例如：span i等
 
@@ -50,7 +50,7 @@
   </div>
 
   // css
-  .clearfloat:after{
+  .clearfloat::after{
       display:block;
       clear:both;
       content:"";
@@ -63,7 +63,7 @@
   ```
   该方法支持大部分浏览器，缺点代码量过长，不好记忆。还是比较推荐使用。
 
-二、在结尾处添加空div标签clear:both
+二、在结尾处添加空div标签使用clear:both属性
 ```javascript
 <div>
 	<div class="left">left</div>
@@ -139,9 +139,9 @@ BFC(Block formatting context)直译为"块级格式化上下文"。它是一个�
 
 选择器 | 权重
 -- | --
-元素选择符 | 1
-class选择符 | 10
-id选择符 | 100
+元素选择符 | 0001
+class选择符 | 0010
+id选择符 | 0100
 内联样式表 | 1000
 1. !important 声明的样式优先级最高，如果冲突再进行计算。
 2. 如果优先级相同，则选择最后出现的样式。
@@ -375,7 +375,7 @@ flex 布局具有浏览器兼容问题 需要加上前缀；设为 Flex 布局�
 
 html 结构
 
-```javascript
+```html
 <div class="box">
  <span>垂直水平居中</span>
 </div>
@@ -383,7 +383,7 @@ html 结构
 
 1. flex布局
 
-```javascript
+```css
 .box{
   display:flex;
   flex-derition:row;
@@ -395,7 +395,7 @@ html 结构
 2. 定位 
 
 未知子元素宽高情况
-```javascript
+```css
 .box{
   position:relative;
 }
@@ -409,7 +409,7 @@ html 结构
 
 已知子元素宽高情况
 
-```javascript
+```css
 .box{
   position:relative;
 }
@@ -424,7 +424,7 @@ html 结构
 
 3. table-cell
 
-```javascript
+```css
 .box{
   display:table-cell;
   vertical-aligin:middle;
@@ -438,14 +438,14 @@ html 结构
 
 html 结构
 
-```javascript
+```html
 <div class="box">
 	<div class="left">left</div>
 	<div class="right">right</div>
 </div>
 ```
 1. 定位
-```javascript
+```css
 .left{
     position:absolute;
     top:0;
@@ -464,7 +464,7 @@ html 结构
 ```
 2. flex
 
-```javascript
+```css
 .box{
     display:flex;
 }
@@ -476,7 +476,7 @@ html 结构
 }
 ```
 3. 浮动
-```javascript
+``` css
 .left{
     float:left;
     width:200px;
@@ -560,7 +560,7 @@ transform: translate(45px) 或者 transform: translate(45px, 150px);
 * animation-iteration-count 规定动画应该播放的次数
 * animation-direction 规定是否应该轮流反向播放动画
 
-```javascript
+```css
 @-webkit-keyframes anim1 {
 	0% {
 	opacity: 0;
@@ -588,7 +588,7 @@ transition 和 animation 区别 transition需要触发事件。
 
 三角形是利用border 来实现的。例如
 
-```javascript
+```css
 // html
 <div class="example"></div>
 
@@ -606,14 +606,14 @@ transition 和 animation 区别 transition需要触发事件。
 
 1.实现箭头 
 变换思维你会发现箭头可以使用2个三角形叠加在一起颜色不同产生偏移量就可以了。
-```javascript
+```css
 // html
 <i class="left" ></div>
 //css
 .left{
  position: absolute;
 }
-.left:before,.left:after{
+.left::before,.left::after{
  position: absolute;
  content: '';
  border-top: 10px transparent dashed;
@@ -665,12 +665,13 @@ if(window.devicePixelRatio && devicePixelRatio >= 2){
   var elem = document.createElement('div')
   elem.style.border = '0.5px solid transparent'
   document.body.appendChild(elem)
+  // 判断是否支持0.5属性  高度为1表示支持 如果为0就是不支持
+  if(elem.offsetHeight ==1){
+    document.querySelector('html').classList.add('hairlines')
+  }
+  document.body.removeChild(elem)
 }
-// 判断是否支持0.5属性  高度为1表示支持 如果为0就是不支持
-if(elem.offsetHeight ==1){
-  document.querySelector('html').classList.add('hairlines')
-}
-document.body.removeChild(elem)
+
 
 //css
 div{
@@ -926,7 +927,10 @@ CSS选择器的匹配是从右向左进行的,如果嵌套的层级更多，页�
 
 伪类的操作对象时文档树中已有的元素，而伪元素则创建一个文档树以外的元素。因此他们之间的区别在于：有没有创建一个文档树之外的元素。
 
-CSS3 规范中要求使用双冒号(::) 表示伪元素，单冒号(:) 表示伪类
+CSS3 规范中要求使用双冒号`(::)` 表示伪元素，单冒号`(:)` 表示伪类
 
 
+## CSS Grid
 
+
+[CSS Grid 网格布局教程](http://www.ruanyifeng.com/blog/2019/03/grid-layout-tutorial.html)

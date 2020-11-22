@@ -239,6 +239,12 @@ console.log(f.name) // undefined
 
 从例子可以看出，当具有返回值时，构造函数内部 this 还是正常的，但当返回值是对象时，返回值会被正常使用。
 
+使用 new 来调用函数，或者说发生构造函数调用时，会自动执行下面的操作。
+1. 创建（或者说构造）一个全新的对象。
+2. 这个新对象会被执行 [[ 原型 ]]  （[[Prototype]]）连接。
+3. 这个新对象会绑定到函数调用的 this 。
+4. 如果函数没有返回其他对象，那么 new 表达式中的函数调用会自动返回这个新对象。
+
 ### new 模拟实现
 
 主要要实现的功能：
@@ -526,6 +532,14 @@ function instanceof(left,right){
 ```
 
 ## Object.create() 的实现
+
+```javascript
+
+function createObj(o) {
+    function F() {}
+    F.prototype = o;
+    return new F();
+```
 
 ## Async函数实现
 

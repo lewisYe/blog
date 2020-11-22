@@ -103,8 +103,7 @@ null instanceof Null // 报错
 null instanceof Object // false 
 
 2 instanceof Number //false
-    'str'
-instanceof String // false
+'str' instanceof String // false
 true instanceof Boolean // false
 ```
 
@@ -206,9 +205,11 @@ console.log(Boolean("")) //false
 
 > 15.7.1.1 Number ( [ value ] ) # Ⓣ  
 
-  Returns a Number value (not a Number object) computed by ToNumber(value) if value was supplied, else returns +0.
+> Returns a Number value (not a Number object) computed by ToNumber(value) if value was supplied, else returns +0.
 
-翻译理解一下就是 如果Number 函数有参数 则使用 ToNumber(value) 计算，没有参数则返回+0
+翻译理解一下就是 
+
+如果Number 函数有参数 则使用 ToNumber(value) 计算，没有参数则返回+0
 
 那 ToNumber 又是什么呢 ，在[ES5规范9.3](http://es5.github.io/#x9.3)有说明。
 
@@ -256,7 +257,7 @@ console.log(Number("12a")) // NaN
 
 > 15.5.1.1 String ( [ value ] ) # Ⓣ 
 
-  Returns a String value (not a String object) computed by ToString(value). If value is not supplied, the empty String "" is returned.
+> Returns a String value (not a String object) computed by ToString(value). If value is not supplied, the empty String "" is returned.
 
 如果 String 函数不传参数，返回空字符串，如果有参数，调用 ToString(value)，而 ToString 也给了一个对应的结果表
 
@@ -710,7 +711,7 @@ undefined === undefined // true
 ``` javascript
 
 1. console.log('2' > 10) // false
-2. console.log('2' == 2) // false
+2. console.log('2' == 2) // true
 3. console.log('2' > '10') // true
 4. console.log('abc' > 'b') // false
 5. console.log('abc' > 'aad') // false
@@ -741,10 +742,7 @@ charCodeAt 方法可以查看字符的unicode编码
 
 // 将2个数都是多位字符串时从左往右依次对位比较
 
-3. console.log('abc' > 'aad') 先是比较 'a'
-
-和 'a'
-比较 然后是第二个字符
+3. console.log('abc' > 'aad') 先是比较 'a'和 'a' 比较 然后是第二个字符
 ```
 
 3. 特殊情况 如果数据类型是 Undefined 和 Null 得出固定结果；NaN与任何数据类型比较都是NaN 
@@ -959,7 +957,7 @@ var bar = function(){
 将上面代码转换成下面的样子
 
 ```javascript
-var name = undefiend // 声明
+var myname = undefiend // 声明
 myname = 'ye' // 赋值
 
 function foo = function(){ //声明
@@ -2937,7 +2935,35 @@ Object.create()方法创建一个新对象，使用现有的对象来提供新�
 
 返回值  一个新对象，带着指定的原型对象和属性。
 
-3. Object.defineProperties()
+### Object.defineProperty() 
+
+Object.defineProperty() 方法会直接在一个对象上定义一个新属性，或者修改一个对象的现有属性，并返回此对象。
+
+语法：`Object.defineProperty(obj, prop, descriptor)`
+
+obj 要定义属性的对象。
+prop 要定义或修改的属性的名称或 Symbol 。
+descriptor 要定义或修改的属性描述符。
+
+
+```
+const object1 = {};
+
+Object.defineProperty(object1, 'property1', {
+  value: 42,
+  writable: false
+});
+
+object1.property1 = 77;
+// throws an error in strict mode
+
+console.log(object1.property1);
+// expected output: 42
+```
+
+该方法允许精确地添加或修改对象的属性。通过赋值操作添加的普通属性是可枚举的，在枚举对象属性时会被枚举到（for...in 或 Object.keys 方法），可以改变这些属性的值，也可以删除这些属性。这个方法允许修改默认的额外选项（或配置）。默认情况下，使用 Object.defineProperty() 添加的属性值是不可修改（immutable）的。
+
+### Object.defineProperties()
 
 Object.defineProperties() 方法直接在一个对象上定义新的属性或修改现有属性，并返回该对象。
 
@@ -3083,7 +3109,7 @@ Object.setPrototypeOf() 方法设置一个指定的对象的原型 ( 即, 内部
 
 参数 obj 要设置其原型的对象。prototype 该对象的新原型(一个对象 或 null).
 
-Object.setPrototypeOf()是ECMAScript 6最新草案中的方法，相对于 Object.prototype.__proto__ ，它被认为是修改对象原型更合适的方法
+Object.setPrototypeOf()是ECMAScript 6最新草案中的方法，相对于 `Object.prototype.__proto__ `，它被认为是修改对象原型更合适的方法
 
 ### Object.prototype.isPrototypeOf()
 
@@ -3297,7 +3323,50 @@ console.log(animals.slice(2, 4));
 console.log(animals.slice(1, 5));
 // expected output: Array ["bison", "camel", "duck", "elephant"]
 ```
+
+### Array.prototype.includes()
+
+includes() 方法用来判断一个数组是否包含一个指定的值，根据情况，如果包含则返回 true，否则返回false。
+
+语法: `arr.includes(valueToFind[, fromIndex])`
+
+valueToFind 需要查找的元素值。
+
+fromIndex 可选 从fromIndex 索引处开始查找 valueToFind。如果为负值，则按升序从 array.length + fromIndex 的索引开始搜 （即使从末尾开始往前跳 fromIndex 的绝对值个索引，然后往后搜寻）。默认为 0。
+
+注意 使用 includes()比较字符串和字符时是区分大小写。
+
+includes 和 indexOf 的区别
+
+例子：
+```javasscript
+[1, 2, NaN].includes(NaN); // true
+[1, 2, NaN].indexOf(NaN)  // -1
+```
+
 ## String的常用方法
+
+### String.prototype.match()
+
+match() 方法检索返回一个字符串匹配正则表达式的结果。
+
+```javascript
+const paragraph = 'The quick brown fox jumps over the lazy dog. It barked.';
+const regex = /[A-Z]/g;
+const found = paragraph.match(regex);
+
+console.log(found); // expected output: Array ["T", "I"]
+```
+
+### String.prototype.replace()
+
+replace() 方法返回一个由替换值（replacement）替换部分或所有的模式（pattern）匹配项后的新字符串。模式可以是一个字符串或者一个正则表达式，替换值可以是一个字符串或者一个每次匹配都要调用的回调函数。如果pattern是字符串，则仅替换第一个匹配项。
+
+原字符串不会改变。
+
+语法：`str.replace(regexp|substr, newSubStr|function)`
+
+
 ## DOM事件
 
 ### 事件级别
@@ -3373,7 +3442,7 @@ event.currentTarget始终是监听事件者，而event.target是事件的真正�
 
 用例子说明：
 
-``` 
+```javascript 
 <div id="a">
     aaaa
   <div id="b">
@@ -3567,3 +3636,65 @@ xhr.send()
 ```
 
 ## 创建对象的方式有哪些
+
+1. 字面量
+
+```javascript
+var obj = { 
+  name: 'ye',
+  sayName: function(){
+    console.log('my name is ye')
+  } 
+}
+```
+
+2. 使用Object()方法
+
+```javascript
+var o = new Object()
+
+o.name = 'ye'
+o.sayName = function(){
+   console.log('my name is ye')
+}
+```
+
+3. 工厂函数创建
+
+```javascript
+function createObj(name){
+  var o = new Object()
+  o.name = name
+  o.sayName = function(){
+   console.log('my name is ye')
+  }
+  return o
+}
+var obj = create('ye')
+console.log(obj.name)
+```
+
+4. 构造函数创建
+
+```javascript
+function Student(name,age){
+  this.name = name;
+  this.age = age
+}
+
+var o = new Student('ye',20)
+```
+
+5. 原型属性模式
+
+```javascript
+function Student(){}
+Student.prototype.name = 'ye'
+Student.prototype.sayName = function(){
+   console.log(this.name)
+}
+```
+
+## 操作符优先级
+
+[MDN运算符优先级](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Operator_Precedence)

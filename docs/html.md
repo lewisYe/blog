@@ -86,5 +86,8 @@ sessionStorage 的数据在浏览器关闭后自动删除;
 
 ## Canvas
 
+[MDN Canvas](https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API)
+
 ## SVG
 
+[SVG 参考手册](https://www.runoob.com/svg/svg-reference.html)
