@@ -217,6 +217,8 @@ let nums = (...nums) => nums;
 ## Symbol
 
 ES6 引入了一种新的原始数据类型 Symbol，表示独一无二的值。
+
+### 基本用法
 #### 1. Symbol 值通过 Symbol 函数生成，使用 typeof，结果为 "symbol"
 ```javascript
 var s = Symbol();
@@ -235,7 +237,84 @@ console.log(s instanceof Symbol); // false
 
 #### 5. Symbol 值不能与其他类型的值进行运算，会报错。
 
+#### 6. Symbol.prototype.description
 
+创建 Symbol 的时候，可以添加一个描述;`const sym = Symbol('foo');`的描述就是'foo'
+
+#### 7. 属性名的遍历
+
+Symbol 作为属性名，遍历对象的时候，该属性不会出现在`for...in`、`for...of`循环中，也不会被`Object.keys()`、`Object.getOwnPropertyNames()`、`JSON.stringify()`返回。
+
+但是，它也不是私有属性，有一个`Object.getOwnPropertySymbols()`方法，可以获取指定对象的所有 Symbol 属性名。
+
+该方法返回一个数组，成员是当前对象的所有用作属性名的 Symbol 值。
+
+```javascript
+const obj = {};
+let a = Symbol('a');
+let b = Symbol('b');
+
+obj[a] = 'Hello';
+obj[b] = 'World';
+
+const objectSymbols = Object.getOwnPropertySymbols(obj);
+
+objectSymbols
+// [Symbol(a), Symbol(b)]
+```
+#### 8.  Symbol.for() Symbol.keyFor()
+
+有时，我们希望重新使用同一个 Symbol 值，Symbol.for()方法可以做到这一点。它接受一个字符串作为参数，然后搜索有没有以该参数作为名称的 Symbol 值。如果有，就返回这个 Symbol 值，否则就新建一个以该字符串为名称的 Symbol 值，并将其注册到全局。
+
+Symbol.for()为 Symbol 值登记的名字，是全局环境的，不管有没有在全局环境运行。
+
+Symbol.keyFor()方法返回一个已登记的 Symbol 类型值的key。
+
+### 内置的Symbol值
+
+#### Symbol.hasInstance
+
+对象的Symbol.hasInstance属性，指向一个内部方法。当其他对象使用instanceof运算符，判断是否为该对象的实例时，会调用这个方法。比如，foo instanceof Foo在语言内部，实际调用的是Foo[Symbol.hasInstance](foo)。
+
+#### Symbol.isConcatSpreadable
+
+对象的Symbol.isConcatSpreadable属性等于一个布尔值，表示该对象用于Array.prototype.concat()时，是否可以展开。
+
+数组的默认行为是可以展开，Symbol.isConcatSpreadable默认等于undefined。该属性等于true时，也有展开的效果。
+
+类似数组的对象正好相反，默认不展开。它的Symbol.isConcatSpreadable属性设为true，才可以展开。
+
+```javascript
+
+let arr1 = ['c', 'd'];
+['a', 'b'].concat(arr1, 'e') // ['a', 'b', 'c', 'd', 'e']
+arr1[Symbol.isConcatSpreadable] // undefined
+
+let arr2 = ['c', 'd'];
+arr2[Symbol.isConcatSpreadable] = false;
+['a', 'b'].concat(arr2, 'e') // ['a', 'b', ['c','d'], 'e']
+
+let obj = {length: 2, 0: 'c', 1: 'd'};
+['a', 'b'].concat(obj, 'e') // ['a', 'b', obj, 'e']
+
+obj[Symbol.isConcatSpreadable] = true;
+['a', 'b'].concat(obj, 'e') // ['a', 'b', 'c', 'd', 'e']
+```
+
+#### 🔥 Symbol.iterator
+
+对象的Symbol.iterator属性，指向该对象的默认遍历器方法。
+
+```javasript
+const myIterable = {};
+myIterable[Symbol.iterator] = function* () {
+  yield 1;
+  yield 2;
+  yield 3;
+};
+
+[...myIterable] // [1, 2, 3]
+```
 ## Set 和 Map
 
 ### Set
@@ -264,8 +343,11 @@ var s = new Set()
 遍历方法有：
 
 keys()：返回键名的遍历器
+
 values()：返回键值的遍历器
+
 entries()：返回键值对的遍历器
+
 forEach()：使用回调函数遍历每个成员，无返回值
 
 #### 作用 
@@ -277,6 +359,28 @@ var s = new Set([1,2,3,4,4])
 return [...s] // 1,2,3,4
 ```
 
+### WeakSet
+
+WeakSet 结构与 Set类似，也是不重复的值的集合。但是它与Set有两个区别。
+
+1. WeakSet 的成员只能是对象，而不能是其他类型的值。（实际上，任何具有 Iterable 接口的对象，都可以作为 WeakSet 的参数。）
+
+2. WeakSet 中的对象都是弱引用，即垃圾回收机制不考虑 WeakSet 对该对象的引用。
+
+语法：
+
+```javascript
+const ws = new WeakSet();
+
+const a = [[1, 2], [3, 4]];
+const ws = new WeakSet(a);
+// WeakSet {[1, 2], [3, 4]}
+```
+WeakSet 结构有以下三个方法。
+
+* WeakSet.prototype.add(value)：向 WeakSet 实例添加一个新成员。
+* WeakSet.prototype.delete(value)：清除 WeakSet 实例的指定成员。
+* WeakSet.prototype.has(value)：返回一个布尔值，表示某个值是否在 WeakSet 实例之中。
 ### Map
 
 JavaScript 的对象（Object），本质上是键值对的集合（Hash 结构），但是传统上只能用字符串当作键。这给它的使用带来了很大的限制。
@@ -323,9 +427,23 @@ clear方法清除所有成员，没有返回值。
 Map 结构原生提供三个遍历器生成函数和一个遍历方法。
 
 Map.prototype.keys()：返回键名的遍历器。
+
 Map.prototype.values()：返回键值的遍历器。
+
 Map.prototype.entries()：返回所有成员的遍历器。
+
 Map.prototype.forEach()：遍历 Map 的所有成员。
+
+### WeakMap
+
+WeakMap结构与Map结构类似，也是用于生成键值对的集合。但是WeakMap与Map的区别有两点。
+
+1. WeakMap只接受对象作为键名（null除外），不接受其他类型的值作为键名。
+
+2. WeakMap的键名所指向的对象，不计入垃圾回收机制。
+
+
+
 
 ## Proxy 和 defineProperty
 
@@ -611,6 +729,54 @@ vue 2 使用 defineProperty 通 getter / setter 进行数据劫持
 
 vue 3 换成 Proxy, 存在向下兼容问题
 
+使用 Proxy 实现观察者模式
+
+```javascript
+const queuedObservers = new Set();
+
+const observe = fn => queuedObservers.add(fn);
+const observable = obj => new Proxy(obj, {set});
+
+function set(target, key, value, receiver) {
+  const result = Reflect.set(target, key, value, receiver);
+  queuedObservers.forEach(observer => observer());
+  return result;
+}
+```
+
+
+## Reflect
+
+Reflect对象与Proxy对象一样，也是 ES6 为了操作对象而提供的新 API。
+
+Reflect对象的设计目的有这样几个
+
+1. 将Object对象的一些明显属于语言内部的方法（比如Object.defineProperty），放到Reflect对象上。现阶段，某些方法同时在Object和Reflect对象上部署，未来的新方法将只部署在Reflect对象上。也就是说，从Reflect对象上可以拿到语言内部的方法。
+
+2. 修改某些Object方法的返回结果，让其变得更合理。比如，Object.defineProperty(obj, name, desc)在无法定义属性时，会抛出一个错误，而Reflect.defineProperty(obj, name, desc)则会返回false。
+
+3.  让Object操作都变成函数行为
+
+4. Reflect对象的方法与Proxy对象的方法一一对应，只要是Proxy对象的方法，就能在Reflect对象上找到对应的方法。
+
+Reflect对象一共有 13 个静态方法。
+
+* Reflect.apply(target, thisArg, args)
+* Reflect.construct(target, args)
+* Reflect.get(target, name, receiver)
+* Reflect.set(target, name, value, receiver)
+* Reflect.defineProperty(target, name, desc)
+* Reflect.deleteProperty(target, name)
+* Reflect.has(target, name)
+* Reflect.ownKeys(target)
+* Reflect.isExtensible(target)
+* Reflect.preventExtensions(target)
+* Reflect.getOwnPropertyDescriptor(target, name)
+* Reflect.getPrototypeOf(target)
+* Reflect.setPrototypeOf(target, prototype)
+
+面这些方法的作用，大部分与Object对象的同名方法的作用都是相同的，而且它与Proxy对象的方法是一一对应的
+
 ## Promise对象
 
 ### 介绍
@@ -710,6 +876,17 @@ var p = Promise.race([p1, p2, p3]);
 ```
 
 虽然该方法与Promise.all()参数相同，但是不同的在于参数实例中有一个实例率先改变状态，状态就会跟着改变。那个率先改变的 Promise 实例的返回值，就传递给回调函数。
+
+### Promise.allSettled()
+
+Promise.allSettled()方法接受一组 Promise 实例作为参数，包装成一个新的 Promise 实例。只有等到所有这些参数实例都返回结果，不管是fulfilled还是rejected，包装实例才会结束。该方法由 ES2020 引入。
+
+
+### Promise.any()
+
+ES2021 引入了Promise.any()方法。该方法接受一组 Promise 实例作为参数，包装成一个新的 Promise 实例返回。只要参数实例有一个变成fulfilled状态，包装实例就会变成fulfilled状态；如果所有参数实例都变成rejected状态，包装实例就会变成rejected状态。
+
+
 
 ### Promise.reject(reason)
 
@@ -893,10 +1070,14 @@ Promise.race = function (promises) {
     })
 }
 ```
-#### Promise.allSettled
+#### 添加 Promise.allSettled
 ### Promise 实现超时机制
 
+使用Promise.race()
+
 ### Promise 并行调度器
+
+<!-- https://juejin.cn/post/6854573217013563405 -->
 
 
 ## Iterator 和 for...of 循环
@@ -935,6 +1116,16 @@ console.log(i.next()); // { done: false, value: 2 }
 console.log(i.next()); // { done: false, value: 3 }
 console.log(i.next()); // { done: true, value: undefined }
 ```
+
+原生具备 Iterator 接口的数据结构如下。
+
+* Array
+* Map
+* Set
+* String
+* TypedArray
+* 函数的 arguments 对象
+* NodeList 对象
 ### for ... of
 
 ES6引入了for...of循环，作为遍历所有数据结构的统一的方法。
