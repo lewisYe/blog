@@ -1075,6 +1075,21 @@ Promise.race = function (promises) {
 
 使用Promise.race()
 
+```javascript
+
+var p1 = new Promise((resolve,reject)=>{
+  // http 请求
+})
+
+var p2 = new Promise((resolve,reject)=>{
+  setTimeout(()=>{
+    reject('请求超时')
+  },30000)
+})
+
+var p = Promise.race([p1,p2])
+```
+
 ### Promise 并行调度器
 
 <!-- https://juejin.cn/post/6854573217013563405 -->
