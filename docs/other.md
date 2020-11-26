@@ -176,13 +176,10 @@ git clone --depth=1 地址
 git clone -b 分支 --depth=1 地址
 ```
 
-### 本地仓库更换远程仓库
+### 本地仓库修改远程仓库
 ```
-	1. rm -r -f .git
- 	2. git init 
-	3. git remote add origin url 
+	git remote set-url origin URL // 更换远程仓库地址，URL为新地址。
 ```
-
 ### 版本回退  
 ```
 	git log
