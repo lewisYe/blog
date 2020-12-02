@@ -516,7 +516,7 @@ UDP 不止支持一对一的传输方式，同样支持一对多，多对多，�
 
 ## HTTP
 
-HTTP 协议是 Hyper Text Transfer Protocol (超文本传输协议)的缩写，是用于从万维网服务器传输超文本到本来浏览器的传送协议。基于TCP/IP通信协议来传递数据。它是一个**无状态的请求/响应协议**
+HTTP 协议是 Hyper Text Transfer Protocol (超文本传输协议)的缩写，是用于从万维网服务器传输超文本到本地浏览器的传送协议。基于TCP/IP通信协议来传递数据。它是一个**无状态的请求/响应协议**
 
 HTTP 使用统一资源标识符（Uniform Resource Identifiers, URI） 来传输数据和建立连接。URL是一种特殊类型的URI。
 
@@ -577,7 +577,7 @@ HTTP1.1新增了五种请求方法：OPTIONS, PUT, DELETE, TRACE 和 CONNECT 方
 
 1. 从缓存的角度，GET 请求会被浏览器主动缓存下来，留下历史记录，而 POST 默认不会。
 2. 从编码的角度，GET 只能进行 URL 编码，只能接收 ASCII 字符，而 POST 没有限制。
-3. 从参数的角度，GET 一般放在 URL 中，因此不安全，POST 放在请求体中，更适合传输敏感信息。
+3. 从参数的角度，GET 一般放在 URL 中，可以直接查看，POST 放在请求体中。
 4. 从幂等性的角度，GET是幂等的，而POST不是。(幂等表示执行相同的操作，结果也是相同的)
 5. 从TCP的角度，GET 请求会把请求报文一次性发出去，而 POST 会分为两个 TCP 数据包，首先发 header 部分，如果服务器响应 100(continue)， 然后发 body 部分。(火狐浏览器除外，它的 POST 请求只发一个 TCP 包)
 
@@ -618,6 +618,7 @@ HTTP1.1新增了五种请求方法：OPTIONS, PUT, DELETE, TRACE 和 CONNECT 方
 * 401 Unauthorized 表示发送的请求需要通过HTTP认证的认证信息
 * 403 Forbidden 表示对请求资源的访问被服务器拒绝
 * 404 Not Found 表示在服务器上没有找到请求的资源
+* 405 用来访问本页面的HTTP谓词不被允许（方法不被允许）get用错post之类
 
 5xx
 
