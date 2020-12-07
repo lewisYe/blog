@@ -148,5 +148,15 @@ ps:具体信息解读 自己百度dig命令
 
 当请求到服务器时，快速响应。
 
-
+## 优化方面
+1. 骨架屏代替loading菊花
+2. js 文件加载位置  script preload、prefetch、defer、async
+3. 浏览器缓存
+4. 减少资源体积
+5. 资源按需加载 js代码和图片懒加载
+6. 图片大小格式类型
+7. 减少http请求 合并请求
+8. CDN
+9. DNS优化 dns-prefetch dns 预解析
+10. 减少重绘重排
 
