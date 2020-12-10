@@ -147,15 +147,61 @@ DomContentloaded事件与onLoad事件的区别是，浏览器解析HTML这个操
 5. 骨架屏代替loading菊花
 6. 图片大小格式类型
 
-## 具体优化操作
-1. 骨架屏代替loading菊花
-2. js 文件加载位置  script preload、prefetch、defer、async
-3. 浏览器缓存
-4. 减少资源体积
-5. 资源按需加载 js代码和图片懒加载
-6. 图片大小格式类型
-7. 减少http请求 合并请求
-8. CDN
-9. DNS优化 dns-prefetch dns 预解析
-10. 减少重绘重排
+## 性能优化总结
+
+* 网络请求优化
+  * 网络请求协议优化 http1 -> http2
+  * DNS优化 DNS预解析 dns-prefetch、DNS缓存
+  * 资源加载的优化
+    * 减少请求次数 合并http请求、小图片合并雪碧图或者使用iconfont
+    * 减小请求大小 
+      * 代码合并压缩 webpack uglify
+      * 传输压缩gzip
+      * 图片无损压缩
+      * 不同的分辨率提供不同尺寸的图片
+      * 代码分割资源按需加载 import()
+      * 图片懒加载
+    * 资源预加载 prefetch、preload
+    * CDN资源
+  * 缓存 
+    * http协议缓存 
+      * 强制商缓存 http1.0 expirse、http1.1 Cache-Control
+      * 协商缓存 ETag & If-None-Match 、Last-Modified & If-Modified-Since
+    * 工程角度将不易变动的资源单独打包,静态资源CDN
+    * Service Worker
+  * 服务器响应优化
+* 浏览器渲染优化
+  * js、css资源加载位置
+  * 减少重绘与重排
+  * css动画代替js动画
+  * 服务端渲染
+* 浏览器js执行优化
+  * 使用requestAnimationFrame动画处理
+  * 大量dom操作使用createDocumentFragment
+  * react fiber架构 异步更新
+  * 函数防抖与节流
+
+### 图片相关
+  * gif 
+    * 无损压缩
+    * 支持动画
+    * 只支持256色、不适合色彩绚丽的场景
+  * jpg/jpeg
+    * 有损压缩
+    * 色彩绚丽
+    * 不支持透明
+  * png8
+    * 无损压缩
+    * 支持透明
+    * 除动画外，gif很好的替换者
+  * png24
+    * 无损压缩
+    * 支持透明
+    * 比jpg大
+  * svg 
+  * webp 
+    * 同时支持有损和无损
+    * 有损压缩比jpg小
+    * 无损比png小
+    * 兼容问题 safari 不支持
 

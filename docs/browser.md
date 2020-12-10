@@ -494,6 +494,68 @@ JSONP 是 JSON with padding的简写. JSONP本质上是一个Hack，它利用`<s
 
 CORS 需要浏览器和后端同时支持。服务端设置 Access-Control-Allow-Origin 就可以开启 CORS。
 
+cors 中会有 `简单请求` 和 `复杂请求` 的概念
+
+1. 简单请求
+
+不会触发 CORS 预检请求。这样的请求为“简单请求”，请注意，该术语并不属于 Fetch （其中定义了 CORS）规范。若请求满足所有下述条件，则该请求可视为“简单请求”：
+
+情况一: 使用以下方法(意思就是以下请求意外的都是非简单请求)
+
+* GET
+* HEAD
+* POST
+
+情况二: 人为设置以下集合外的请求头
+
+* Accept
+* Accept-Language
+* Content-Language
+* Content-Type （需要注意额外的限制）
+* DPR
+* Downlink
+* Save-Data
+* Viewport-Width
+* Width
+
+情况三：Content-Type的值仅限于下列三者之一：(例如 application/json 为非简单请求)
+
+* text/plain
+* multipart/form-data
+* application/x-www-form-urlencoded
+
+情况四:
+
+请求中的任意XMLHttpRequestUpload 对象均没有注册任何事件监听器；XMLHttpRequestUpload 对象可以使用 XMLHttpRequest.upload 属性访问。
+
+情况五:
+
+请求中没有使用 ReadableStream 对象。
+
+2. 非简单请求
+
+除以上情况外的。
+
+
+Node中CORS解决代码原生写法
+```javascript
+app.use(async (ctx, next) => {
+  ctx.set("Access-Control-Allow-Origin", ctx.headers.origin);
+  ctx.set("Access-Control-Allow-Credentials", true);
+  ctx.set("Access-Control-Request-Method", "PUT,POST,GET,DELETE,OPTIONS");
+  ctx.set(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, cc"
+  );
+  if (ctx.method === "OPTIONS") {
+    ctx.status = 204;
+    return;
+  }
+  await next();
+});
+
+```
+为了方便可以直接使用中间件`koa-cors`
 #### Nginx
 
 使用nginx反向代理实现跨域，是最简单的跨域方式。只需要修改nginx的配置即可解决跨域问题，支持所有浏览器，支持session，不需要修改任何代码，并且不会影响服务器性能。
