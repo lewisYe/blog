@@ -606,9 +606,10 @@ HTTP1.1新增了五种请求方法：OPTIONS, PUT, DELETE, TRACE 和 CONNECT 方
 
 3xx
 
-* 301 Moved Permanently, 永久性重定向，表示资源已被分配了新的URL
-* 302 Found 临时性重定向，表示资源临时被分配了新的URL
-* 303 See Other 表示资源存在着另一个URL，应使用GET方法获取资源
+* 300 Multiple Choices 当请求的 URL 对应有多个资源时（如同一个 HTML 的不同语言的版本），返回这个代码时，可以返回一个可选列表，这样用户可以自行选择。通过 Location 头字段可以自定首选内容。
+* 301 Moved Permanently, 永久性重定向，表示当前请求的资源已被移除，响应的 Location 头字段会提供资源现在的 URL。直接使用 GET 方法发起新情求。
+* 302 Found 临时性重定向，表示资源临时被分配了新的URL。与 301 类似，但客户端只应该将 Location 返回的 URL 当做临时资源来使用，将来请求时，还是用老的 URL。直接使用 GET 方法发起新情求。
+* 303 See Other 用于在 PUT 或者 POST 请求之后进行重定向，这样在结果页就不会再次触发重定向了
 * 304 Not Modified 表示服务器允许访问资源，但因发生请求未满足条件的情况
 * 307 Temporary Redirect 临时重定向 和302含义类似，但是期望客户端保持请求方法不变向新的地址发出请求
 

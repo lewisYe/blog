@@ -3506,6 +3506,10 @@ createStore是Redux中最核心的API。通过该方法可以生成一个store �
 
 <!-- https://mp.weixin.qq.com/s/HhjDQgK8FcPiy5BEfZ7lYQ redux 参考资料 -->
 
+react-redux 的核心组件只有两个，Provider 和 connect，Provider 存放 Redux 里 store 的数据到 context 里，通过 connect 从 context 拿数据，通过 props 传递给 connect 所包裹的组件。
+
+
+
 ## Recoil
 
 Recoil是React的状态管理库，由Facebook官方推出，更加的贴合react内部的调用机制。[官网文档链接](https://recoiljs.org/)

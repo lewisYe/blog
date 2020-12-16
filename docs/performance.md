@@ -175,6 +175,7 @@ DomContentloaded事件与onLoad事件的区别是，浏览器解析HTML这个操
   * 减少重绘与重排
   * css动画代替js动画
   * 服务端渲染
+  * 视觉效果上 可以用骨架片代替原有的loading动画
 * 浏览器js执行优化
   * 使用requestAnimationFrame动画处理
   * 大量dom操作使用createDocumentFragment

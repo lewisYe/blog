@@ -583,3 +583,12 @@ module.exports = {
 3. Tapable 插件升级
 
 webpack 3 插件的 compat 层已经被移除。它在 webpack 4 中已经被取消了。一些较少使用的 tapable API 被删除或废弃。
+
+## babel
+
+babel 的转译过程分为三个阶段：parsing、transforming、generating，以 ES6 代码转译为 ES5 代码为例，babel 转译的具体过程如下：
+
+1. ES6 代码输入
+2. babylon 进行解析得到 AST
+3. plugin 用 babel-traverse 对 AST 树进行遍历转译,得到新的 AST 树
+4. 用 babel-generator 通过 AST 树生成 ES5 代码
