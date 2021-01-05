@@ -73,7 +73,9 @@ JS 数据类型的判断主要有以下几种方法：typeof、instanceof 、Obj
 
 ### typeof 
 
-返回一个表示数据类型的字符串，返回结果包含：number、boolean、string、symbol、object、undefined、function、bigint等 缺点不能判断null和array
+返回一个表示数据类型的字符串，返回结果包含：number、boolean、string、symbol、object、undefined、function、bigint等 
+
+<font color=red>缺点不能判断null和array</font>
 
 ``` javascript
 typeof '' // string    有效
@@ -107,7 +109,7 @@ null instanceof Object // false
 true instanceof Boolean // false
 ```
 
-instanceof可以精准判断引用数据类型（Array，Function，Object），而基本数据类型不能被instanceof精准判断。
+<font color=red>instanceof可以精准判断引用数据类型（Array，Function，Object），而基本数据类型不能被instanceof精准判断。</font>
 
 会发现 [] 既是 Array的实例，又是Object的实例。因为 instanceOf 检测的是原型。[] 的 `__proto__ ` 直接指向 Array.prototype, Array的 `__proto__ ` 指向 Object.prototype. 所以 [] 间接指向了 Object.prototype. 所以 instanceof 只能用来判断两个对象是否属于实例关系，而不能判断一个对象实例具体属于哪种类型。
 
@@ -644,7 +646,7 @@ var a = false,
 
 ``` javascript
 null == undefined // true
-5 == NaN // flase
+5 == NaN // false
 true == 1 // true
 true == 2 // false
 0 == undefined // false
@@ -978,7 +980,7 @@ bar = function(){ // 赋值
 
 ![](./images/jsrunflow.png)
 
-1. 编辑阶段
+1. 编译阶段
 
 当输入一段代码，经过编译之后，会生成两部分内容：**执行上下文Execution context）**和**可执行代码**
 
@@ -3620,19 +3622,38 @@ RangeError 边界错误。表示超出有效范围时发生的异常，主要有
 ## Ajax
 
 ```javascript
-var xhr = new XMLHttpReuest()
+// 1. 创建一个XMLHttpRequest 异步对象兼容模式
+var xhr 
+
+if(window.XMLHttpRequest){ // IE7+、Firefox、Chrome、Safari
+  xhr = new XMLHttpRequest()
+}else{
+  xhr = new ActiveXObject("Microsoft.XMLHTTP")
+}
+
+// 2. 设置请求方式和请求地址
+
+// 第一个参数是请求方式、第二个是请求地址、第三个是是否是异步 true表示异步，false表示同步 默认是true
+
 xhr.open('GET', url);
 xhr.responseType = 'json'
 
-xhr.onload = function(){
-  console.log(xhr.response)
-}
-
-xhr.onerror = function(){
-  console.log(error)
-}
-
+// 3. 发生请求
 xhr.send()
+
+// 4. 监听状态变化
+// 状态码 0: 请求未初始化、1: 服务器已经建立连接、2: 请求已经接收、3: 请求处理中、4: 请求已经完成
+
+xhr.onreadystatechange = function(){
+  // 5. 接收返回数据
+  if(xhr.readyState === 4){
+    if(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304){
+      console.log("接收返回数据")
+    }else{
+       console.log("没有接收返回数据")
+    }
+  }
+}
 ```
 
 Promise 版
