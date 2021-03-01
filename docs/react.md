@@ -922,6 +922,8 @@ Hook的产生为了解决什么问题 或者 带来了什么便利呢？
 
 在使用class 你需要理解js中的this机制
 
+参考链接：[React为什么需要Hook](https://zhuanlan.zhihu.com/p/137183261)
+
 ### State Hook
 
 `useState`是React内置的一个Hook，以它为例实现一个计数器:
@@ -2111,7 +2113,7 @@ React 17 中移除了 “event pooling（事件池）“。它并不会提高现
 
 
 
-## React.createElement
+<!-- ## React.createElement
 
 写React我们用的是JSX语法，那它如何被解析呢。通过Babel转义之后，调用React.createElement.
 例子说明：
@@ -3454,14 +3456,109 @@ function addRootToSchedule(root: FiberRoot, expirationTime: ExpirationTime) {
   }
 }
 ```
-addRootToSchedule把 root 加入到调度队列，但是要注意一点，不会存在两个相同的 root 前后出现在队列中.
+addRootToSchedule把 root 加入到调度队列，但是要注意一点，不会存在两个相同的 root 前后出现在队列中. -->
 
 
-## setState
+<!-- ## setState
 
-## Virtual Dom
+## Virtual Dom -->
 
 ## Diffing Algorithm
+
+### 三个基本策略
+
+  1. 只对同级的 react element进行对比。如果一个DOM节点在前后两次更新中跨域了层级，那么则不会复用它。比较点为父节点的不同。
+  2. 不同类型节点(type 值不同 和key值)生成的dom树不同，此时会直接销毁老节点及子孙节点，并新建节点
+  3. 可以通过key来对元素diff的过程提供复用的线索
+
+### 同级节点Diff 
+
+  同级节点Diff 分为 同级单节点Diff 和 同级多节点Diff
+
+####  同级节点Diff
+
+  同级单节点diff有如下几种情况：
+  * key 和 type 相同代表可以复用
+  * key 不同直接删除标记节点 新建节点
+  * key相同type不同，标记删除该节点和兄弟节点，然后新创建节点
+
+   
+
+   
+####  同级多节点Diff
+
+  同级多节点时有如下几种情况
+
+  * 节点更新（类型、属性更新）
+
+  * 节点新增或者删除
+  * 节点移动
+
+   同级节点Diff需要两次遍历，React团队认为在日常开发中，组件更新的频率最高。所以第一次遍历会处理更新的节点，第二轮遍历：处理剩下的不属于`更新`的节点。
+
+  
+
+   第一轮遍历
+
+   因为老的节点存在于current Fiber中，所以它是个链表结构，还记得Fiber双缓存结构嘛，节点通过child、return、sibling连接，而newChildren存在于jsx当中，所以遍历对比的时候，首先让newChildren[i]`与`oldFiber对比，然后让i++、nextOldFiber = oldFiber.sibling。
+
+   
+
+   1. 从第一个节点开始遍历（i = 0），判断新、旧节点的类型（type）是否相同和 key 是否相同，如果 type 和 key 都相同，则说明对应的 DOM 可复用；
+   2. 如果这个节点对应的 DOM 可复用，则 i++，去判断下一组新、旧节点的 type 和 key，看它们对应的 DOM 是否可复用，如果可以复用，则重复步骤 2；
+   3. 如果不可复用，分两种情况：
+
+   - `key`不同导致不可复用，立即跳出整个遍历，**第一轮遍历结束。**
+   - `key`相同`type`不同导致不可复用，会将`oldFiber`标记为`DELETION`，并继续遍历
+
+   4. 如果`newChildren`遍历完（即`i === newChildren.length - 1`）或者`oldFiber`遍历完（即`oldFiber.sibling === null`），跳出遍历，**第一轮遍历结束。**
+
+   当遍历结束后，会有两种结果：
+
+   1. 步骤3跳出的遍历，此时 newChildren 没有遍历完，oldFiber 也没有遍历完
+   2. 步骤4跳出的遍历 可能是 newChildren 遍历完 或者 oldFiber 遍历完 或者他们同时遍历完
+
+   
+
+   第二轮遍历
+
+   对于第一轮遍历的结果，我们分别讨论
+
+   1. newChildren 和 oldFiber 同时遍历完，这是最理想的情况，只要一轮遍历进行组件更新，此时diff结束
+
+   2. newChildren 没有遍历完、oldFiber遍历完
+
+      已有的`DOM节点`都复用了，这时还有新加入的节点，意味着本次更新有新节点插入，我们只需要遍历剩下的`newChildren`为生成的`workInProgress fiber`依次标记 Placement 新增。
+
+   3. newChildren 遍历完、oldFiber没有遍历完
+
+      意味着本次更新比之前的节点数量少，有节点被删除了。所以需要遍历剩下的`oldFiber`，依次标记`Deletion 删除`。
+
+   4. newChildren 与 oldFiber都没有遍历完  这意味着有节点在这次更新中改变了位置，这是`Diff算法`最精髓也是最难懂的部分
+
+       
+
+      为了快速找到key对应的oldFiber 我们将所有还未处理的 oldFiber 存入以key 为key ，oldFiber 为value 的Map中。这个 map 叫做 `existingChildren` 
+
+      接下来遍历剩余的newChildredn 通过newChildren[i].key 就能在map中找到key相同的oldFiber
+
+      如果能找到 key相同的oldFiber 接下来就是判断它们的 type 是否相同：
+
+      * 假如 key 相同、type 也相同，说明该节点对应的 DOM 可复用，只是位置发生了变化；
+      * 假如 key 相同、type 不同，则该节点对应的 DOM 不可复用，需要销毁原来的节点，并重新插入一个新的节点；
+
+      如果找不到的话，代表是一个新增节点
+
+      以上两种情况处理了新增和删除的  剩下节点移动的
+
+      这里有一个基准点的概念 React 使用 `lastPlacedIndex` 这个变量来存放「参考点」`lastPlacedIndex` 这个变量表示当前最后一个可复用的节点，对应在「旧同级节点链表」中的索引。初始值为 0
+
+      在遍历剩下的 newChildren时，每一个新节点会通过 `existingChildren` 找到对应的旧节点，然后就可以得到旧节点的索引 `oldIndex`（即在「旧同级节点链表」中的位置）。
+
+      接下来会进行以下判断：
+
+      - 假如 `oldIndex` >= `lastPlacedIndex`，代表该复用节点不需要移动位置，并将 lastPlacedIndex = oldIndex；
+      - 假如 `oldIndex` < `lastPlacedIndex`，代表该节点需要向右移动，并且该节点需要移动到上一个遍历到的新节点的后面；
 
 ## Redux
 
@@ -3695,3 +3792,238 @@ function MyApp() {
 
 * [https://recoiljs.org/](https://recoiljs.org/)
 * [https://mp.weixin.qq.com/s/OwYW9v4FooE2IK2AJQePpA](https://mp.weixin.qq.com/s/OwYW9v4FooE2IK2AJQePpA)
+
+
+## requestIdleCallback
+
+### 用法与说明
+
+`window.requestIdleCallbacck() `方法将在浏览器的空闲时段内调用的函数排队。这使得开发者能够在主事件循环上执行后台和低优先级工作。、
+
+语法：`var handle = window.requestIdleCallback(callback[,options])`
+
+返回值是一个ID，可以把它传入`window.cancelIdleCallback()`方法来结束回调
+
+参数：
+1. callback 一个在事件循环空闲时即将被调用的函数引用。函数接收一个名为 IdleDeadline 的参数。该参数具有一个`timeRemaining()`方法 返回当前frame还剩多少时间和didTimeout属性用来判断当前的回调函数是否被执行。如果没有执行didTimeout属性将为ture
+
+2. options 可选
+包括可选的配置参数。具有如下属性：
+* timeout：如果指定了timeout并具有一个正值，并且尚未通过超时毫秒数调用回调，那么回调会在下一次空闲时期被强制执行，尽管这样很可能会对性能造成负面影响。
+
+requestIdleCallback中可以传递{timeout: 2000}表明2s内必须调用myNonEssentialWork，如果myNonEssentialWork调用是因为timeout则didTimeout为true。
+
+示例：
+```javascript
+    requestIdelCallback(myNonEssentialWork);
+    
+    
+    function myNonEssentialWork (deadline) {
+    
+      // deadline.timeRemaining()可以获取到当前帧剩余时间
+      while (deadline.timeRemaining() > 0 && tasks.length > 0) {
+        doWorkIfNeeded();
+      }
+      if (tasks.length > 0){
+        requestIdleCallback(myNonEssentialWork);
+      }
+    }
+
+```
+### 兼容性与缺陷
+
+> requestIdleCallback is called only 20 times per second - Chrome on my 6x2 core Linux machine, it's not really useful for UI work。—— from Releasing Suspense
+
+requestIdleCallback 的 FPS 只有 20, 这远远低于页面流畅度的要求！(一般 FPS 为 60 时对用户来说是感觉流程的, 即一帧时间为 16.7 ms)
+
+requestIdleCallback 的兼容性不太好在safari中不支持
+
+### React中的polyfill版本
+
+#### 非DOM环境下
+在不能操作DOM的环境下可以使用setTimeout来实现。比如node环境中
+
+```javascript
+requestIdleCallback = (callback) => {
+  setTimeout(callback({
+    timeRemaining() {
+      return Infinity
+    }
+  }))
+}
+```
+
+#### DOM环境下
+
+requestAnimationFrame + 计算帧时间及下一帧时间 + MessageChannel 就是我们实现 requestIdleCallback 的三个关键点了。
+
+
+但是requestAnimationFrame又一点小瑕疵。页面处于后台时该回调函数不会执行，因此我们需要对于这种情况做个补救措施
+
+React中当 requestAnimationFrame 不执行时，会有 setTimeout 去补救，两个定时器内部可以互相取消对方。
+
+```javascript
+const ANIMATION_FRAME_TIMEOUT = 100;
+let rAFID;
+let rAFTimeoutID;
+// 调用 requestAnimationFrame, 并对执行时间超过 100 ms 的任务用 setTimeout 进行处理
+const requestAnimationFrameWithTimeout = function (callback) {
+  rAFID = requestAnimationFrame(function (timestamp) {
+    clearTimeout(rAFTimeoutID);
+    callback(timestamp);
+  });
+  // 如果在一帧中某个任务执行时间超过 100 ms 则终止该帧的执行并将该任务放入下一个事件队列中
+  rAFTimeoutID = setTimeout(function () {
+    cancelAnimationFrame(rAFID);
+    callback(getCurrentTime());
+  }, ANIMATION_FRAME_TIMEOUT);
+};
+```
+
+requestHostCallback(也就是 requestIdleCallback) 这部分源码的实现比较复杂, 可以将其分解为以下几个重要的步骤(有一些细节点可以看注释):
+
+* 步骤一: 如果有优先级更高的任务, 则通过 postMessage 触发步骤四, 否则如果 requestAnimationFrame 在当前帧没有安排任务, 则开始一个帧的流程;
+
+* 步骤二: 在一个帧的流程中调用 requestAnimationFrameWithTimeout 函数, 该函数调用了 requestAnimationFrame, 并对执行时间超过 100ms 的任务用 setTimeout 放到下一个事件队列中处理;
+
+* 步骤三: 执行 requestAnimationFrame 中的回调函数 animationTick, 在该回调函数中得到当前帧的截止时间 frameDeadline, 并通过 postMessage 触发步骤四;
+
+* 步骤四: 通过 onmessage 接受 postMessage 指令, 触发消息事件的执行。在 onmessage 函数中根据 frameDeadline - currentTime <= 0 判断任务是否可以在当前帧执行，如果可以的话执行该任务, 否则进入下一帧的调用。
+
+```javascript
+
+let scheduledHostCallback = null; // 调度器回调函数
+let isMessageEventScheduled = false; // 消息事件是否执行
+let timeoutTime = -1;
+
+let isAnimationFrameScheduled = false;
+
+let isFlushingHostCallback = false;
+
+let frameDeadline = 0; // 当前帧的截止时间
+
+// 假设最开始的 FPS(feet per seconds) 为 30, 但这个值会随着动画帧调用的频率而动态变化
+let previousFrameTime = 33; // 一帧的时间: 1000 / 30 ≈ 33
+let activeFrameTime = 33;
+
+// 建立通道
+const channel = new MessageChannel();
+const port = channel.port2;
+
+
+shouldYieldToHost = function () {
+  return frameDeadline <= getCurrentTime();
+};
+
+getCurrentTime = function () {
+  return performance.now();
+};
+
+
+// 步骤一
+requestHostCallback = function (callback, absoluteTimeout) {
+  scheduledHostCallback = callback; // 这里的 callback 为调度器回调函数
+  timeoutTime = absoluteTimeout;
+  if (isFlushingHostCallback || absoluteTimeout < 0) {
+    // 针对优先级较高的任务不等下一个帧，在当前帧通过 postMessage 尽快执行
+    port.postMessage(undefined);
+  } else if (!isAnimationFrameScheduled) {
+    // 如果 rAF 在当前帧没有安排任务, 则开始一个帧的流程
+    isAnimationFrameScheduled = true;
+    requestAnimationFrameWithTimeout(animationTick);
+  }
+};
+
+// 步骤二 上述代码requestAnimationFrameWithTimeout部门
+
+
+// 步骤三 requestAnimationFrame 的回调函数。传入的 rafTime 为执行该帧的时间戳。
+const animationTick = function (rafTime) {
+  // 如果存在调度器回调函数则在一帧的开头急切地安排下一帧的动画回调(急切是因为如果在帧的后半段安排动画回调的话, 就会增大下一帧超过 100ms 的几率, 从而会浪费一个帧的利用, 可以结合步骤②来理解这句话), 如果不存在调度器回调函数否则立马终止执行。
+  if (scheduledHostCallback !== null) {
+    requestAnimationFrameWithTimeout(animationTick);
+  } else {
+    isAnimationFrameScheduled = false;
+    return;
+  }
+
+  let nextFrameTime = rafTime - frameDeadline + activeFrameTime; // 当前帧开始调用动画的时间 - 上一帧调用动画的截止时间 + 当前帧执行的时间，这里的 nextFrameTime 仅仅是临时变量
+  // 如果连续两帧的时间都小于当前帧的时间, 则说明得调高 FPS
+  if (nextFrameTime < activeFrameTime && previousFrameTime < activeFrameTime) {
+    // 将 activeFrameTime 的值减小相当于调高 FPS。同时取 nextFrameTime 与 previousFrameTime 中较大的一个以让前后两帧都不出问题。
+    activeFrameTime = nextFrameTime < previousFrameTime ? previousFrameTime : nextFrameTime;
+  } else {
+    previousFrameTime = nextFrameTime;
+  }
+  frameDeadline = rafTime + activeFrameTime; // 当前帧的截止时间(上面几行代码的目的是得到该 frameDeadline 值, 该值在 postMessage 会用来判断)
+  if (!isMessageEventScheduled) {
+    isMessageEventScheduled = true;
+    port.postMessage(undefined); // 最后进入第④步, 通过 postMessage 触发消息事件。
+  }
+};
+
+
+
+// 步骤四  接受 `postMessage` 指令, 触发消息事件的执行。在其中判断任务是否在当前帧执行，如果在的话执行该任务
+channel.port1.onmessage = function (event) {
+  isMessageEventScheduled = false;
+
+  const prevScheduledCallback = scheduledHostCallback;
+  const prevTimeoutTime = timeoutTime;
+  scheduledHostCallback = null;
+  timeoutTime = -1;
+
+  const currentTime = getCurrentTime();
+
+  let didTimeout = false; // 是否超时
+  // 如果当前帧已经没有时间剩余, 检查是否有 timeout 参数，如果有的话是否已经超过这个时间
+  if (frameDeadline - currentTime <= 0) {
+    if (prevTimeoutTime !== -1 && prevTimeoutTime <= currentTime) {
+      // didTimeout 为 true 后, 在当前帧中执行(针对优先级较高的任务)
+      didTimeout = true;
+    } else {
+      // 在下一帧中执行
+      if (!isAnimationFrameScheduled) {
+        isAnimationFrameScheduled = true;
+        requestAnimationFrameWithTimeout(animationTick);
+      }
+      scheduledHostCallback = prevScheduledCallback;
+      timeoutTime = prevTimeoutTime;
+      return;
+    }
+  }
+
+  if (prevScheduledCallback !== null) {
+    isFlushingHostCallback = true;
+    try {
+      prevScheduledCallback(didTimeout);
+    } finally {
+      isFlushingHostCallback = false;
+    }
+  }
+};
+
+// 取消
+cancelHostCallback = function () {
+  scheduledHostCallback = null;
+  isMessageEventScheduled = false;
+  timeoutTime = -1;
+};
+
+```
+
+
+
+## requestAnimationFrame
+
+window.requestAnimationFrame() 告诉浏览器——你希望执行一个动画，并且要求浏览器在下次重绘之前调用指定的回调函数更新动画。该方法需要传入一个回调函数作为参数，该回调函数会在浏览器下一次重绘之前执行
+
+### 语法
+
+`window.requestAnimationFrame(callback)`
+
+该callback会被传入DOMHighResTimeStamp参数，该参数与performance.now()的返回值相同，它表示requestAnimationFrame() 开始去执行回调函数的时刻。
+
+### 缺陷
+
+为了提高性能和电池寿命，因此在大多数浏览器里，当requestAnimationFrame() 运行在后台标签页或者隐藏的`<iframe>` 里时，`requestAnimationFrame()` 会被暂停调用以提升性能和电池寿命。
