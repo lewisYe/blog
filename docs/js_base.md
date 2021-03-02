@@ -2851,27 +2851,125 @@ setTimeout(()=>{
 
 ### Node.js的Event Loop
 
-Node.js也是单线程的Event Loop，但是它的运行机制不同于浏览器环境。
+Node.js也是单线程的Event Loop，但是它的运行机制不同于浏览器环境。node中事件循环的实现是依靠的libuv引擎。
 
-请看下面的示意图
+我们知道node选择chrome v8引擎作为js解释器，v8引擎将js代码分析后去调用对应的node api，而这些api最后则由libuv引擎驱动，执行对应的任务，并把不同的事件放在不同的队列中等待主线程执行。 因此实际上node中的事件循环存在于libuv引擎中。
 
-![](https://user-images.githubusercontent.com/29204799/53956078-96b3df80-4115-11e9-9d66-ab461fb99ba0.png)
+下面是一个libuv引擎中的事件循环的模型:
+```
+   ┌───────────────────────┐
+┌─>│        timers         │
+│  └──────────┬────────────┘
+│  ┌──────────┴────────────┐
+│  │     I/O callbacks     │
+│  └──────────┬────────────┘
+│  ┌──────────┴────────────┐
+│  │     idle, prepare     │
+│  └──────────┬────────────┘      ┌───────────────┐
+│  ┌──────────┴────────────┐      │   incoming:   │
+│  │         poll          │<──connections───     │
+│  └──────────┬────────────┘      │   data, etc.  │
+│  ┌──────────┴────────────┐      └───────────────┘
+│  │        check          │
+│  └──────────┬────────────┘
+│  ┌──────────┴────────────┐
+└──┤    close callbacks    │
+   └───────────────────────┘
+```
 
-根据上图，Node.js的运行机制如下。
+注：模型中的每一个方块代表事件循环的一个阶段
 
-> （1）V8引擎解析JavaScript脚本。
->
-> （2）解析后的代码，调用Node API。
->
-> （3）[libuv库](https://github.com/joyent/libuv)负责Node API的执行。它将不同的任务分配给不同的线程，形成一个Event Loop（事件循环），以异步的方式将任务的执行结果返回给V8引擎。
->
-> （4）V8引擎再将结果返回给用户。
 
-除了setTimeout和setInterval这两个方法，Node.js还提供了另外两个与"任务队列"有关的方法：[process.nextTick](http://nodejs.org/docs/latest/api/process.html#process_process_nexttick_callback)和[setImmediate](http://nodejs.org/docs/latest/api/timers.html#timers_setimmediate_callback_arg)。它们可以帮助我们加深对"任务队列"的理解。
+从上面这个模型中，我们可以大致分析出node中的事件循环的顺序:
 
-process.nextTick方法可以在当前"执行栈"的尾部----下一次Event Loop（主线程读取"任务队列"）之前----触发回调函数。也就是说，它指定的任务总是发生在所有异步任务之前。如果有多个process.nextTick语句（不管它们是否嵌套），将全部在当前"执行栈"执行。
+1. 外部输入数据
+2. 轮询阶段(poll)
+3. 检查阶段(check)
+4. 关闭事件回调阶段（close callback）
+5. 定时器检测阶段(timer)
+6. I/O事件回调阶段(I/O callbacks)
+7. 闲置阶段(idle,prepare)
+8. 轮询阶段
+....
 
-setImmediate方法则是在当前"任务队列"的尾部添加事件，也就是说，它指定的任务总是在下一次Event Loop时执行，这与setTimeout(fn, 0)很像。
+这些阶段大致的功能如下：
+
+timers: 这个阶段执行定时器队列中的回调如 setTimeout() 和 setInterval()。
+
+I/O callbacks: 这个阶段执行几乎所有的回调。但是不包括close事件，定时器和setImmediate()的回调。
+
+idle, prepare: 这个阶段仅在内部使用，可以不必理会。
+
+poll: 等待新的I/O事件，node在一些特殊情况下会阻塞在这里。
+
+check: setImmediate()的回调会在这个阶段执行。
+
+close callbacks: 例如socket.on('close', ...)这种close事件的回调。
+
+
+#### process.nextTick()
+
+node中存在着一个特殊的队列，既nextTick queue。这个队列中的回调执行虽然没有被表示为一个阶段，但是这个些事件却会在每一个阶段执行完毕准备进入下一个阶段时优先执行。
+
+与执行poll queue中的任务不同的是，这个操作在队列清空前是不会停止的。这也就意味着，错误的使用process.nextTick()方法会导致node进入一个死循环。。直到内存泄漏。
+
+#### setImmediate()
+
+setImmediate() 方法从意义上讲是立刻执行的意思，但是实际上它却是在一个固定的阶段才会执行回调，既poll阶段之后。
+
+setImmediate()和setTimeout()相似，但是根据调用时间的不同，行为也不同
+
+setImmediate()设计用于在当前轮询阶段完成后执行脚本。
+setTimeout() 计划在最小阈值（毫秒）过去后运行脚本。
+
+计时器的执行顺序将根据调用它们的上下文而有所不同。如果两者都是从主模块中调用的，则时序将受到进程性能的限制（这可能会受到计算机上运行的其他应用程序的影响）。
+
+```javascript
+// timeout_vs_immediate.js
+setTimeout(() => {
+  console.log('timeout');
+}, 0);
+
+setImmediate(() => {
+  console.log('immediate');
+});
+
+// 输出
+node timeout_vs_immediate.js
+
+timeout
+immediate
+
+node timeout_vs_immediate.js
+
+immediate
+timeout
+```
+
+但是，如果在一个I / O周期内移动两个调用，则始终首先执行setImmediate()
+```javascript
+// timeout_vs_immediate.js
+const fs = require('fs');
+
+fs.readFile(__filename, () => {
+  setTimeout(() => {
+    console.log('timeout');
+  }, 0);
+  setImmediate(() => {
+    console.log('immediate');
+  });
+});
+
+$ node timeout_vs_immediate.js
+immediate
+timeout
+
+$ node timeout_vs_immediate.js
+immediate
+timeout
+```
+
+
 
 ### 知识点实践运用解题
 
