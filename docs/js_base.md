@@ -3664,6 +3664,215 @@ RangeError 边界错误。表示超出有效范围时发生的异常，主要有
 
 当然你也可以自定义错误类型通过继承Error。
 
+## JS 异常处理
+
+异常是不可控的，会影响最终的呈现结果，但是我们有充分的理由去做这样的事情。
+* 增强用户体验；
+* 方便远程定位问题；
+* 未雨绸缪，及早发现问题；
+* 方便复现问题，尤其是移动端，机型，系统都是问题；
+* 完善的前端方案，前端监控系统；
+
+
+那哪些异常需要处理呢？对于前端来说，我们可做的异常捕获还真不少。总结一下，大概如下：
+* JS 语法错误、代码异常
+* AJAX 请求异常
+* 静态资源加载异常
+* Promise 异常
+* Iframe 异常
+* 跨域 Script error
+* 崩溃和卡顿
+
+下面我会针对每种具体情况来说明如何处理这些异常。
+
+###  try catch
+
+try catch最常用的捕获异常的方式，但是它有一个弊端。只能捕获到同步的运行时错误，对语法和异步错误却捕获不到。
+
+1. 可以捕获的同步运行时错误
+```javascript
+try{
+  var name = 'ye';
+  console.log(name1)
+}catch(e){
+  console.log('捕获到异常',e)
+}
+
+// 输出
+捕获到异常：ReferenceError:name1 is not defined
+```
+
+2. 不能捕获到具体的语法错误,修改上述代码删除一个单引号
+```javascript
+try{
+  var name = 'ye
+  console.log(name1)
+}catch(e){
+  console.log('捕获到异常',e)
+}
+// 输出
+Uncaught SyntaxError: Invalid or unexpected token
+```
+但是语法错误一般在开发过程中ide 就会有提示  
+
+3. 异步错误无法捕获
+```javascript
+try {
+  setTimeout(() => {
+    undefined.map(v => v);
+  }, 1000)
+} catch(e) {
+  console.log('捕获到异常：',e);
+}
+// 输出
+Uncaught TypeError: Cannot read property 'map' of undefined at setTimeout 
+```
+并没有捕获到异常，这是需要我们特别注意的点。
+
+
+### window.onerror
+
+当JavaScript运行时错误（包括语法错误）发生时，window会触发一个ErrorEvent接口的error事件，并执行window.onerror()。
+
+`window.onerror = function(message, source, lineno, colno, error) { ... }`
+
+函数参数：
+
+* message：错误信息（字符串）。可用于HTML onerror=""处理程序中的event。
+* source：发生错误的脚本URL（字符串）
+* lineno：发生错误的行号（数字）
+* colno：发生错误的列号（数字）
+* error：Error对象（对象）
+
+若该函数返回true，则阻止执行默认事件处理函数。
+
+但是onerror 还是不能解决所有的情况，它依然无法捕获到语法错误、静态资源异常、接口异常等。
+
+到这里基本就清晰了：在实际的使用过程中，onerror 主要是来捕获预料之外的错误，而 try-catch 则是用来在可预见情况下监控特定的错误，两者结合使用更加高效。
+
+
+那捕获不到静态资源加载异常怎么办？
+### window.addEventListener
+
+当一项资源`（如<img>或<script>）`加载失败，加载资源的元素会触发一个Event接口的error事件，并执行该元素上的onerror()处理函数。这些error事件不会向上冒泡到window，不过（至少在Firefox中）能被单一的window.addEventListener (en-US)捕获。
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+<img src="./ye.png">
+<script>
+window.addEventListener('error', (error) => {
+    console.log('捕获到异常：', error);
+}, true)
+</script>
+</body>
+</html>
+```
+输出：
+![](./images/error.png)
+
+
+由于网络请求异常不会事件冒泡，因此必须在捕获阶段将其捕捉到才行，但是这种方式虽然可以捕捉到网络请求的异常，但是无法判断 HTTP 的状态是 404 还是其他比如 500 等等，所以还需要配合服务端日志才进行排查分析才可以。
+
+注意：
+1. 不同浏览器下返回的 error 对象可能不同，需要注意兼容处理。
+2. 需要注意避免 addEventListener 重复监听。
+
+
+### Promise Catch
+
+在 promise 中使用 catch 可以非常方便的捕获到异步 error ，这个很简单。
+
+没有写 catch 的 Promise 中抛出的错误无法被 onerror 或 try-catch 捕获到，所以我们务必要在 Promise 中不要忘记写 catch 处理抛出的异常。
+
+解决方案：为了防止有漏掉的 Promise 异常，建议在全局增加一个对 unhandledrejection 的监听，用来全局监听Uncaught Promise Error。使用方式：
+
+```javascript
+window.addEventListener("unhandlerejection",function(e){
+  console.log(e)
+})
+```
+
+### React 异常捕获
+
+React 16 提供了一个内置函数 componentDidCatch，使用它可以非常简单的获取到 react 下的错误信息.
+
+需要注意的是：error boundaries 并不会捕捉下面这些错误。
+* 事件处理器
+* 异步代码
+* 服务端的渲染代码
+* 在 error boundaries 区域内的错误
+
+### 页面崩溃与卡顿 
+
+卡顿也就是网页暂时响应比较慢， JS 可能无法及时执行。但崩溃就不一样了，网页都崩溃了，JS 都不运行了，还有什么办法可以监控网页的崩溃，并将网页崩溃上报呢？
+
+1. 利用 window 对象的 load 和 beforeunload 事件实现了网页崩溃的监控 推荐文章[Logging Information on Browser Crashes](http://jasonjl.me/blog/2015/06/21/taking-action-on-browser-crashes/)
+
+```javascript
+window.addEventListener('load', function () {
+    sessionStorage.setItem('good_exit', 'pending');
+    setInterval(function () {
+        sessionStorage.setItem('time_before_crash', new Date().toString());
+    }, 1000);
+  });
+
+  window.addEventListener('beforeunload', function () {
+    sessionStorage.setItem('good_exit', 'true');
+  });
+
+  if(sessionStorage.getItem('good_exit') &&
+    sessionStorage.getItem('good_exit') !== 'true') {
+    /*
+        insert crash logging code here
+    */
+    alert('Hey, welcome back from your crash, looks like you crashed on: ' + sessionStorage.getItem('time_before_crash'));
+  }
+```
+2. 基于以下原因，我们可以使用 Service Worker 来实现网页崩溃的监控
+
+Service Worker 有自己独立的工作线程，与网页区分开，网页崩溃了，Service Worker 一般情况下不会崩溃；Service Worker 生命周期一般要比网页还要长，可以用来监控网页的状态；网页可以通过 navigator.serviceWorker.controller.postMessage API 向掌管自己的 SW 发送消息。
+
+
+### Script error
+
+一般情况，如果出现 Script error 这样的错误，基本上可以确定是出现了跨域问题。这时候，是不会有其他太多辅助信息的，但是解决思路无非如下：
+
+跨源资源共享机制( CORS )：我们为 script 标签添加 crossOrigin 属性。
+
+特别注意，服务器端需要设置：Access-Control-Allow-Origin
+
+### 错误上报
+
+通过 Ajax 发送数据 因为 Ajax 请求本身也有可能会发生异常，而且有可能会引发跨域问题，一般情况下更推荐使用动态创建 img 标签的形式进行上报。
+
+```javascript
+function report(error) {
+  let reportUrl = 'http://xxx/report';
+  new Image().src = `${reportUrl}?logs=${error}`;
+}
+```
+
+收集异常信息量太多，怎么办？实际中，我们不得不考虑这样一种情况：如果你的网站访问量很大，那么一个必然的错误发送的信息就有很多条，这时候，我们需要设置采集率，从而减缓服务器的压力。
+
+可以参考使用sentry 来做错误监控系统
+
+### 总结
+
+如何优雅的处理异常呢？
+
+1. 可疑区域增加 Try-Catch
+2. 全局监控 JS 异常 window.onerror
+3. 全局监控静态资源异常 window.addEventListener
+4. 捕获没有 Catch 的 Promise 异常：unhandledrejection
+5. React componentDidCatch
+6. 监控网页崩溃：window 对象的 load 和 beforeunload
+7. 跨域 crossOrigin 解决
+
 ## 正则
 
 ### 常用正则符号

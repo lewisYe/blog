@@ -1086,6 +1086,9 @@ Cache-control 常用字段：[完整属性列表](https://developer.mozilla.org/
 
 Cache-control 的优先级高于 Expires，为了兼容 HTTP/1.0 和 HTTP/1.1，实际项目中两个字段都会设置。
 
+如果没有Cache-Contorl和Expires的 header，但有Last-Modified 浏览器会采用一个启发式的算法，通常会取响应头中的 Date 减去 Last-Modified 值的 10% 作为缓存时间。
+
+
 ### 协商缓存
 
 当强制缓存失效(超过规定时间)时，就需要使用协商缓存，由服务器决定缓存内容是否失效。
@@ -1142,6 +1145,7 @@ Last-Modified的时间单位是秒，如果某个文件在1秒内改变了多次
 | 浏览器前进后退 | 有效 | 有效 |
 | F5刷新 | 无效 | 有效 |
 | ctrl + F5 强制刷新 | 无效 | 无效 |
+
 
 ### 实际项目中的缓存问题
 
