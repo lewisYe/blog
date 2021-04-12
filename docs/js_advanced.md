@@ -154,43 +154,21 @@ Function.prototype.myApply = function(thisArg, arr){
 ### 实现bind
 
 ```javascript
-Function.prototype.myBind = function(thisArg){
-  if(typeof this !== 'function'){
-    throw new TypeError(this + 'must be a function');
+Function.prototype.myBind = function(){
+  var slice = Array.prototype.slice;
+  var thatFunc = this, thatArg = arguments[0];
+  var args = slice.call(arguments, 1);
+  if (typeof thatFunc !== 'function') {
+    throw new TypeError('Function.prototype.bind - ' + 'what is trying to be bound is not callable');
   }
-
-  var that = this // this为调用myBind的函数
-  var args = Array.prototype.slice.call(arguments,1) // 获取myBind函数从第二个参数到最后一个参数
-  var bound =  function(){
-     // 这个时候的arguments是指bind返回的函数传入的参数
-    var bindArgs = Array.prototype.slice.call(arguments);
-    if(this instanceof bound){
-      if(that.prototype){  // that可能是ES6的箭头函数，没有prototype，所以就没必要再指向做prototype操作。
-        bound.prototype = Object.create(that.prototype)
-
-        // 可以模拟实现Object.create
-        // function Empty(){}
-        // Empty.prototype = that.prototype
-        // bound.prototype = new Empty()
-      }
-      var result =  that.apply(thisArg,[...args,...bindArgs])
-
-      var isObject = typeof result ==='object'&& result !== null
-      var isFunc = typeof result === 'function'
-
-      if(isObject || isFunc){
-        return result
-      }
-      return this
-    }else{
-      return that.apply(thisArg,[...args,...bindArgs])
-    }
-    
-  }
-  return bound
+  return function(){
+    var funcArgs = args.concat(slice.call(arguments))
+    return thatFunc.apply(thatArg, funcArgs);
+  };
 }
 ```
 参考资料：[能否模拟实现JS的bind方法](https://juejin.im/post/6844903718089916429)
+参考资料：[MDN bind](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Function/bind)
 
 
 
@@ -389,9 +367,11 @@ function deepCopy(obj){
 function debounce(fn,time){
   var timer = null;
   return function(){
+    var context = this;
+    let args = arguments;
     clearTimeout(timer);
-    timer = setTimeout(()=>{
-      fn()
+    timer = setTimeout(function(){
+      fn.apply(context, args);
     },time)
   }
 }
@@ -404,14 +384,16 @@ function throttle(fn,time){
   var timer = null;
   var stratTime = + new Date()
   return furnction(){
+    var context = this;
+    let args = arguments;
     clearTimeout(timer);
     var now = + new Date();
     if(now - startTime <= time){
       timer = setTimeout(()=>{
-        fn()
+        fn.apply(context, args);
       },time)
     }else{
-      fn();
+      fn.apply(context, args);
       startTime = now
     }
   }
@@ -473,38 +455,10 @@ console.log(addCurry3(1)(2)) // Uncaught TypeError: addCurry3(...) is not a func
 #### 第二版
 
 ```javascript
-function subCurry(fn){
-  var params = [].slice.call(arguments,1)
-  return function(){
-    var _params = [].slice.call(arguments);
-    return fn.apply(this,params.concat(_params))
-  }
-}
-
-function curry(fn,length){
-  var lenghth = length || fn.length // 参数长度
-  return function(){
-    var len = arguments.length
-    if(len < length){
-      var params = [fn].concat([].slice.call(arguments))
-      return curry(subCurry.apply(this,params),len)
-    }else{
-      return fn.apply(this,arguments)
-    }
-  }
+const curry = (fn,..args) => {
+  fn.length <= args.length ? fn(...args) : curry.bind(null,fn,..args)
 }
 ```
-
-#### ES6写法
-
-```javascript
-var curry = fn =>
-    judge = (...args) =>
-        args.length === fn.length
-            ? fn(...args)
-            : (arg) => judge(...args, arg)
-```
-
 
 
 ## instanceof 的实现
@@ -517,6 +471,9 @@ object 代表实例 constructor 代表构造函数
 
 ```javascript
 function instanceof(left,right){
+  if( typeof right !== 'object' || right === null){
+    throw error('right is need a object')
+  }
   let leftValue = left.__proto__
   let rightValue = right.prototype
   while(1){
@@ -539,6 +496,7 @@ function createObj(o) {
     function F() {}
     F.prototype = o;
     return new F();
+}
 ```
 
 ## Async函数实现
