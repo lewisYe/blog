@@ -67,6 +67,33 @@ module.exports = {
 
 ###  优化方案
 
+* 使用高版本的webpack 和 node.js
+* 多进程/多实例构建
+  * thread-loader
+  * happypack
+  * parallel-webpack
+* 多进程并行压缩
+  * terser-webpack-plugin
+  * uglifyjs-webpack-plugin
+  * parallel-uglify-plugin
+* 分包 与 预编译
+  * webpack externals
+* 开启缓存
+  * babel-loader 开始缓存
+  * terser-webpack-plugin 开启缓存 cache  true
+  * cache-loader 和 hard-source-webpack-plugin
+* 缩小构建目标
+  * babel-loader 的时候 不解析node_modules里面的内容 使用exclude,和include的使用
+  * 优化 resolve.modules 配置 缩小搜索范围层级
+  * 优化 resolve.mainFields 配置 查询入口文件
+  * 优化 resolve.extensions 后缀名
+  * 合理使用 resolve.alias
+* tree shaking 
+* 图片压缩
+* polyfill service优化构建体积
+* socpe hoisting
+
+
 #### 使用高版本的webpack 和 node.js
 
 比如webpack4 的打包速度就快于webpack3；node 的版本更高速度也会更快
@@ -392,13 +419,26 @@ Scope Hoisting 的实现原理其实很简单：分析出模块之间的依赖�
 
 比如实现一个中文转unicode
 
+```javascript
+module.exports = function unicodeLoader(source) {
+  const res = source.replace(/([\u0080-\uffff])/g, (str) => {
+    let hex = str.charCodeAt().toString(16);
+    for (let i = hex.length; i < 4; i += 1) {
+      hex = `0${hex}`;
+    }
+    return `\\u${hex}`;
+  })
+  this.callback(null, res)
+}
+```
+
 ## Writing a Plugin
 
-开发一个插件 必须是一个类，类中必须有一个apply 方法。 apply方法会有一个`complier`参数。
+开发一个插件 必须是一个类，类中必须有一个apply 方法。 apply方法会有一个`compiler`参数。
 
 然后通过监听hooks 进行操作 比如监听emit hook
 ```javascript
- complier.hooks.emit.tapAsync('MyPlugin',(compilation,callback)=>{
+ compiler.hooks.emit.tapAsync('MyPlugin',(compilation,callback)=>{
      // 插件功能
  })
 ```
@@ -407,27 +447,35 @@ Scope Hoisting 的实现原理其实很简单：分析出模块之间的依赖�
 
 
 ## webpack核心原理
+webpack本质上是一种事件流的机制，它的工作流程就是将各个插件串联起来，而实现这一切的核心就是Tapable，webpack中最核心的负责编译的Compiler和负责创建bundles的Compilation都是Tapable的实例。
+
+Tapable 提供了很多钩子函数 包含sync 和 async 的 供编写插件使用 有点事件监听的感觉 
 
 Webpack 的运行流程是一个串行的过程,从启动到结束会依次执行以下流程 :
 
 1. 初始化参数：从配置文件和 Shell 语句中读取与合并参数,得出最终的参数。
 2. 开始编译：用上一步得到的参数初始化 Compiler 对象,加载所有配置的插件,执行对象的 run 方法开始执行编译。
+  webpack的编译都按照下面的钩子调用顺序执行。
+  * before-run 清除缓存
+  * run 注册缓存数据钩子
+  * before-compile
+  * compile 开始编译
+  * make 从入口分析依赖以及间接依赖模块，创建模块对象
+  * build-module 模块构建
+  * seal 构建结果封装， 不可再更改
+  * after-compile 完成构建，缓存数据
+  * emit 输出到dist目录
 3. 确定入口：根据配置中的 entry 找出所有的入口文件。
+  在webpack make钩子中, tapAsync注册了一个DllEntryPlugin, 就是将入口模块通过调用compilation.addEntry方法将所有的入口模块添加到编译构建队列中，开启编译流程。在addEntry 中调用_addModuleChain开始编译。在_addModuleChain首先会生成模块，最后构建。
+  _addModuleChain调用buildModule方法进行编译代码，build中 其实是利用acorn编译生成AST 设计loader的加载使用
+  在编译完成后，调用compilation.seal方法封闭，生成资源，这些资源保存在compilation.assets, compilation.chunk
 4. 编译模块：从入口文件出发,调用所有配置的 Loader 对模块进行翻译,再找出该模块依赖的模块,再递归本步骤直到所有入口依赖的文件都经过了本步骤的处理。
 5. 完成模块编译：在经过第 4 步使用 Loader 翻译完所有模块后,得到了每个模块被翻译后的最终内容以及它们之间的依赖关系。
 6. 输出资源：根据入口和模块之间的依赖关系,组装成一个个包含多个模块的 Chunk,再把每个 Chunk 转换成一个单独的文件加入到输出列表,这步是可以修改输出内容的最后机会。
 7. 输出完成：在确定好输出内容后,根据配置确定输出的路径和文件名,把文件内容写入到文件系统。
 
-具体细节
 
-1. 获取主模块内容 读取入口文件`fs.readFileSync(file,'utf-8')`
-2. 分析模块
-3. 安装@babel/parser包（转AST）
-4. 对模块内容进行处理
-5. 安装@babel/traverse包（遍历AST收集依赖）
-6. 安装@babel/core和@babel/preset-env包 （es6转ES5）
-7. 递归所有模块
-8. 生成最终代码
+## webpack 热更新原理
 
 
 
