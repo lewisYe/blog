@@ -380,26 +380,26 @@ function debounce(fn,time){
 ```
 
 ### 函数节流实现
-
 ```javascript
-function throttle(fn,time){
-  var timer = null;
-  var stratTime = + new Date()
-  return furnction(){
-    var context = this;
-    let args = arguments;
-    clearTimeout(timer);
-    var now = + new Date();
-    if(now - startTime <= time){
-      timer = setTimeout(()=>{
-        fn.apply(context, args);
-      },time)
-    }else{
+const throttle = (fn, wait) => {
+  let inThrottle, lastFn, lastTime;
+  return function() {
+    const context = this, args = arguments;
+    if (!inThrottle) {
       fn.apply(context, args);
-      startTime = now
+      lastTime = Date.now();
+      inThrottle = true;
+    } else {
+      clearTimeout(lastFn);
+      lastFn = setTimeout(function() {
+        if (Date.now() - lastTime >= wait) {
+          fn.apply(context, args);
+          lastTime = Date.now();
+        }
+      }, Math.max(wait - (Date.now() - lastTime), 0));
     }
-  }
-}
+  };
+};
 ```
 
 
@@ -457,8 +457,8 @@ console.log(addCurry3(1)(2)) // Uncaught TypeError: addCurry3(...) is not a func
 #### 第二版
 
 ```javascript
-const curry = (fn,..args) => {
-  fn.length <= args.length ? fn(...args) : curry.bind(null,fn,..args)
+const curry = (fn, arity = fn.length, ...args) => {
+	return arity <= args.length ? fn(...args) : curry.bind(null, fn, arity, ...args);
 }
 ```
 
