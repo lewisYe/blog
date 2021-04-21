@@ -1,4 +1,4 @@
-# JS 进阶
+# 手写JS
 
 ## call、apply、bind
 
@@ -321,19 +321,21 @@ function shallowCopy(obj){
 ### 深拷贝实现
 
 ```javascript
-function deepCopy(obj){
-  if(typeof(obj) !== 'object') return;
-  var newObj = Array.isArray(obj) ? [] : {}
-  for(var key in obj){
-    if(obj.hasOwnProperty(key)){
-      if(typeof(obj[key]) == 'object'){
-        deepCopy(obj[key])
-      }else{
-        newObj[key] = obj[key]
-      }
-    }
+function deepCopy(obj,map = new WeakMap()){
+	if(typeof obj !== 'object' || obj === null) return 
+	let newObj = Array.isArray(obj) ? [] : {}
+
+	if (map.get(obj)) {  // 解决循环引用
+    return map.get(obj);
   }
-  return newObj
+  map.set(obj, newObj); // 解决循环引用
+
+	for( let key in obj){
+		if(obj.hasOwnProperty(key)){
+			newObj[key] = typeof obj[key] == 'object' ? deepCopy(obj[key],map) : obj[key]
+		}
+	}
+	return newObj
 }
 ```
 思路与浅拷贝类似，只是添加在遍历中判断子项是否为object，如果是递归遍历，不是就赋值。
@@ -712,3 +714,23 @@ function test(){
 #### 时间复杂度和空间复杂度
 
 以上的所有数组去重方式，应该 Object 对象去重复的方式是时间复杂度是最低的，除了一次遍历时间复杂度为O(n) 后，查找到重复数据的时间复杂度是O(1)，但是对象去重复的空间复杂度是最高的。
+
+
+## 数字千分位
+
+### 正则实现
+
+```javascript
+var a = '12345678912345612312312'
+let res  =  a.replace(/(\d)(?=(\d{3})+(?!\d))/g,$1=>{
+	return $1 + ','
+})
+console.log(res) // 12,345,678,912,345,612,312,312
+```
+
+### toLocaleString
+
+```javascript
+var a = 121231
+console.log(a.toLocaleString()) // 121,231
+```
