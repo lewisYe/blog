@@ -326,8 +326,8 @@ function deepCopy(obj,map = new WeakMap()){
 	let newObj = Array.isArray(obj) ? [] : {}
 
 	if (map.get(obj)) {  // 解决循环引用
-    return map.get(obj);
-  }
+      return map.get(obj);
+    }
   map.set(obj, newObj); // 解决循环引用
 
 	for( let key in obj){
@@ -503,10 +503,109 @@ function createObj(o) {
 
 ## Async函数实现
 
+```javascript
+async function fn(args) {
+  // ...
+}
+
+// 等同于
+
+function fn(args) {
+  return spawn(function* () {
+    // ...
+  });
+}
+
+function spawn(genF) {
+  return new Promise(function(resolve, reject) {
+    const gen = genF();
+    function step(nextF) {
+      let next;
+      try {
+        next = nextF();
+      } catch(e) {
+        return reject(e);
+      }
+      if(next.done) {
+        return resolve(next.value);
+      }
+      Promise.resolve(next.value).then(function(v) {
+        step(function() { return gen.next(v); });
+      }, function(e) {
+        step(function() { return gen.throw(e); });
+      });
+    }
+    step(function() { return gen.next(undefined); });
+  });
+}
+
+function asyncToGenerator(generatorFunc) {
+    return function() {
+      const gen = generatorFunc.apply(this, arguments)
+      return newPromise((resolve, reject) => {
+        function step(key, arg) {
+          let generatorResult
+          try {
+            generatorResult = gen[key](arg)
+          } catch (error) {
+            return reject(error)
+          }
+          const { value, done } = generatorResult
+          if (done) {
+            return resolve(value)
+          } else {
+            returnPromise.resolve(value).then(val => step('next', val), err => step('throw', err))
+          }
+        }
+        step("next")
+      })
+    }
+}
+```
+
 <!-- [async参考链接](https://mp.weixin.qq.com/s/ykrZZxCoC8O8D__Qimrtrg) -->
-<!-- https://mp.weixin.qq.com/s/-Jf48IVOoOSLgOV60rm0Wg -->
 
 ## EventEmitter
+```javascript
+function EventEmit() {
+  this.listeners = {};
+}
+
+EventEmit.prototype.on = function(eventName, cb) {
+  // 因为事件是可以重复注册的，所以需要用一个数组来存储事件回调的队列
+  if (!this.listeners[eventName]) {
+    this.listeners[eventName] = [cb];
+  } else {
+    this.listeners[eventName].push(cb);
+  }
+}
+
+EventEmit.prototype.once = function(eventName, cb) {
+  if (!this.listeners[eventName]) {
+    this.listeners[eventName] = [cb];
+  } else {
+    this.listeners[eventName].push(cb);
+  }
+  // 使用一个标记来标明这是一个一次性的事件回调
+  this.listeners[eventName].once = true;
+}
+
+EventEmit.prototype.off = function(eventName) {
+  if (this.listeners[eventName]) {
+    this.listeners[eventName] = null;
+  }
+}
+
+EventEmit.prototype.emit = function(eventName, args) {
+  if (this.listeners[eventName]) {
+    this.listeners[eventName].forEach(fn => fn.apply(this, args));
+    // 如果这个是一次性的事件的话，执行完成后销毁该事件
+    if (this.listeners[eventName].once) this.off(eventName);
+  }
+}
+
+
+```
 
 ## Class继承ES5实现
 
