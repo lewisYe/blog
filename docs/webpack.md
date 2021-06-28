@@ -50,7 +50,7 @@ swp.warp({
 npm i webpack-bundle-analyzer -D
 
 //webpack.config.js
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 module.exports = {
     plugins: [
